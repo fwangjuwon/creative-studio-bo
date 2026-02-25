@@ -121,9 +121,9 @@ ADMIN > MANAGER > USER
 
 - **PK**: `BIGINT GENERATED ALWAYS AS IDENTITY` (sequence)
 - **FK 제약조건**: DB에 생성하지 않음. 논리적 관계만 유지, 정합성은 Service에서 보장
-- **공통 컬럼**:
-  - `INIT_REGI_PIC` / `INIT_REGI_DTTM` — 등록자 / 등록일시
-  - `FINAL_RVIS_PIC` / `FINAL_RVIS_DTTM` — 최종수정자 / 최종수정일시
+- **공통 컬럼** (DB: snake_case → Java: camelCase 자동 매핑):
+  - `init_regi_pic` / `init_regi_dttm` — 등록자(login_id) / 등록일시
+  - `final_rvis_pic` / `final_rvis_dttm` — 최종수정자(login_id) / 최종수정일시
 - **카테고리 계층 구분**: `category_type` 컬럼 (`LCS` / `MCS` / `SCS` / `DCS`)
 
 > ⚠️ `createdAt`, `updatedAt` 사용 금지. 반드시 위의 공통 컬럼 네이밍을 사용할 것.
@@ -132,14 +132,14 @@ ADMIN > MANAGER > USER
 
 ## 주요 엔티티 요약
 
-| 엔티티 | 테이블명(예정) | 설명 |
-|--------|-------------|------|
-| User | USER | 회원 정보, 권한, 팀명, 일일 한도 |
-| Category | CATEGORY | 상품 카테고리 계층 (LCS~DCS) |
-| TagGroup | TAG_GROUP | 태그 묶음 (인물, 분위기 등) |
-| Tag | TAG | 태그 값 (남자, 화사한 등) |
-| PromptHistory | PROMPT_HISTORY | 생성된 프롬프트 저장 |
-| PromptHistoryTag | PROMPT_HISTORY_TAG | 프롬프트-태그 매핑 |
+| 엔티티 | 테이블명 | 설명 |
+|--------|---------|------|
+| User | `user` | 회원 정보, 권한, 팀명, 일일 한도 |
+| Category | `category` | 상품 카테고리 계층 (LCS~DCS) |
+| TagGroup | `tag_group` | 태그 묶음 (인물, 분위기 등) |
+| Tag | `tag` | 태그 값 (남자, 화사한 등) |
+| PromptHistory | `prompt_history` | 생성된 프롬프트 저장 |
+| PromptHistoryTag | `prompt_history_tag` | 프롬프트-태그 매핑 |
 
 ---
 

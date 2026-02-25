@@ -95,7 +95,7 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
 
 ```
 프롬프트 생성 요청
-  → PromptHistory WHERE user_id = ? AND DATE(INIT_REGI_DTTM) = 오늘 → COUNT
+  → PromptHistory WHERE user_id = ? AND DATE(init_regi_dttm) = 오늘 → COUNT
   → COUNT >= daily_limit → 에러 응답
   → COUNT < daily_limit  → Gemini 호출 허용
 ```
@@ -187,11 +187,11 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
 - **FK 제약조건**: 논리적 관계는 ERD로 관리하되, **실제 DB에 FK CONSTRAINT는 생성하지 않음**
   - 참조 무결성은 Service 레이어에서 보장
   - CUD 편의성 및 배치 작업 유연성 확보
-- **공통 컬럼 네이밍**:
-  - `INIT_REGI_PIC` — 등록자
-  - `INIT_REGI_DTTM` — 등록일시
-  - `FINAL_RVIS_PIC` — 최종수정자
-  - `FINAL_RVIS_DTTM` — 최종수정일시
+- **공통 컬럼 네이밍** (DB: snake_case / Java: camelCase, MyBatis 자동 매핑):
+  - `init_regi_pic` → `initRegiPic` — 등록자 (login_id 저장)
+  - `init_regi_dttm` → `initRegiDttm` — 등록일시
+  - `final_rvis_pic` → `finalRvisPic` — 최종수정자 (login_id 저장)
+  - `final_rvis_dttm` → `finalRvisDttm` — 최종수정일시
 - **카테고리 계층**: `depth` 숫자 대신 `category_type` 으로 명시 (`LCS` / `MCS` / `SCS` / `DCS`)
 
 ---
@@ -207,10 +207,10 @@ User
   - role              VARCHAR  (ADMIN / MANAGER / USER)
   - team_name         VARCHAR  (FK 제약 없음, 팀명 직접 저장)
   - daily_limit       INT      (하루 생성 가능 횟수, ADMIN이 설정)
-  - INIT_REGI_PIC     VARCHAR
-  - INIT_REGI_DTTM    TIMESTAMP
-  - FINAL_RVIS_PIC    VARCHAR
-  - FINAL_RVIS_DTTM   TIMESTAMP
+  - init_regi_pic     VARCHAR
+  - init_regi_dttm    TIMESTAMP
+  - final_rvis_pic    VARCHAR
+  - final_rvis_dttm   TIMESTAMP
 
 Category
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
@@ -218,38 +218,38 @@ Category
   - category_type     VARCHAR  (LCS=대분류 / MCS=중분류 / SCS=소분류 / DCS=세분류)
   - parent_id         BIGINT   (self-reference, nullable → LCS는 null)
   - sort_order        INT
-  - INIT_REGI_PIC     VARCHAR
-  - INIT_REGI_DTTM    TIMESTAMP
-  - FINAL_RVIS_PIC    VARCHAR
-  - FINAL_RVIS_DTTM   TIMESTAMP
+  - init_regi_pic     VARCHAR
+  - init_regi_dttm    TIMESTAMP
+  - final_rvis_pic    VARCHAR
+  - final_rvis_dttm   TIMESTAMP
 
 TagGroup (태그 그룹)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - name              VARCHAR  (ex: 인물, 분위기)
   - is_multi_select   BOOLEAN  (복수 선택 가능 여부)
   - sort_order        INT
-  - INIT_REGI_PIC     VARCHAR
-  - INIT_REGI_DTTM    TIMESTAMP
-  - FINAL_RVIS_PIC    VARCHAR
-  - FINAL_RVIS_DTTM   TIMESTAMP
+  - init_regi_pic     VARCHAR
+  - init_regi_dttm    TIMESTAMP
+  - final_rvis_pic    VARCHAR
+  - final_rvis_dttm   TIMESTAMP
 
 Tag (태그 값)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - tag_group_id      BIGINT   (논리 FK → TagGroup, 제약 없음)
   - name              VARCHAR  (ex: 남자, 여자, 화사한)
   - sort_order        INT
-  - INIT_REGI_PIC     VARCHAR
-  - INIT_REGI_DTTM    TIMESTAMP
-  - FINAL_RVIS_PIC    VARCHAR
-  - FINAL_RVIS_DTTM   TIMESTAMP
+  - init_regi_pic     VARCHAR
+  - init_regi_dttm    TIMESTAMP
+  - final_rvis_pic    VARCHAR
+  - final_rvis_dttm   TIMESTAMP
 
 PromptHistory (프롬프트 저장)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - user_id           BIGINT   (논리 FK → User, 제약 없음)
   - category_id       BIGINT   (논리 FK → Category 최종 선택값, 제약 없음)
   - prompt_text       TEXT     (생성된 영문 프롬프트)
-  - INIT_REGI_PIC     VARCHAR
-  - INIT_REGI_DTTM    TIMESTAMP
+  - init_regi_pic     VARCHAR
+  - init_regi_dttm    TIMESTAMP
 
 PromptHistoryTag (프롬프트-태그 매핑)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
