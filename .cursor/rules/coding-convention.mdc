@@ -1,0 +1,205 @@
+---
+description: 코딩 컨벤션 및 아키텍처 규칙. 코드 생성 시 항상 준수.
+globs:
+alwaysApply: true
+---
+
+# 코딩 컨벤션
+
+## 기술 스택
+
+- Java 17, Spring Boot 3.5.11, Gradle
+- MyBatis (JPA/Hibernate 사용 안 함)
+- Spring Security + JWT (Stateless)
+- PostgreSQL
+
+---
+
+## 패키지 구조
+
+```
+com.nsmall.ns_creative_studio_bo
+├── domain
+│   ├── user
+│   ├── category
+│   ├── tag
+│   └── prompt
+├── global
+│   ├── config        # Spring Security, MyBatis, Gemini 등 설정
+│   ├── exception     # 공통 예외 처리
+│   ├── response      # 공통 API 응답 형식
+│   └── util
+└── NsCreativeStudioBoApplication.java
+```
+
+각 도메인 패키지 내부 구조:
+```
+{domain}
+├── controller
+├── service
+├── mapper          # MyBatis Mapper 인터페이스
+├── dto
+│   ├── request
+│   └── response
+└── entity
+```
+
+---
+
+## DB 컬럼 네이밍 규칙
+
+### ✅ 공통 감사(Audit) 컬럼 — 반드시 이 이름 사용
+
+| DB 컬럼명 (snake_case) | Java 필드명 (camelCase) | 타입 | 설명 |
+|----------------------|----------------------|------|------|
+| `init_regi_pic` | `initRegiPic` | VARCHAR | 등록자 (login_id 저장) |
+| `init_regi_dttm` | `initRegiDttm` | TIMESTAMP | 등록일시 |
+| `final_rvis_pic` | `finalRvisPic` | VARCHAR | 최종수정자 (login_id 저장) |
+| `final_rvis_dttm` | `finalRvisDttm` | TIMESTAMP | 최종수정일시 |
+
+### ❌ 사용 금지 네이밍
+
+```java
+// 절대 사용 금지
+private LocalDateTime createdAt;
+private LocalDateTime updatedAt;
+private String createdBy;
+private String updatedBy;
+```
+
+### PK 정의
+
+```sql
+-- 모든 테이블 PK는 이 방식 사용
+id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY
+```
+
+### FK 제약조건
+
+```sql
+-- DB에 FK CONSTRAINT 생성하지 않음
+-- 논리적 관계만 주석/ERD로 관리, 참조 무결성은 Service에서 보장
+user_id BIGINT  -- 논리 FK → USER.id
+```
+
+---
+
+## MyBatis 매핑 방식
+
+- `resultMap` **사용 안 함**
+- **DTO** 클래스로 직접 매핑
+- `mybatis-config.xml`에 `mapUnderscoreToCamelCase=true` 설정 예정
+  → DB의 `init_regi_pic` → Java의 `initRegiPic` 자동 매핑
+
+> ⚠️ `mybatis-config.xml` 및 MyBatis 관련 설정 파일은 **AI가 생성하지 않음** — 직접 작성 예정
+
+## Entity / DTO 클래스 규칙
+
+```java
+// Entity — DB 테이블 1:1 매핑 객체 (Lombok 사용)
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class User {
+
+    private Long id;
+    private String loginId;
+    private String password;
+    private String name;
+    private String role;           // "ADMIN" / "MANAGER" / "USER"
+    private String teamName;
+    private Integer dailyLimit;
+
+    // 감사 컬럼 (DB: init_regi_pic → Java: initRegiPic 자동 매핑)
+    private String initRegiPic;
+    private LocalDateTime initRegiDttm;
+    private String finalRvisPic;
+    private LocalDateTime finalRvisDttm;
+}
+```
+
+```java
+// DTO — API 요청/응답 전용 (Entity와 분리)
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class UserRespDto {
+    private Long id;
+    private String loginId;
+    private String name;
+    private String role;
+    private String teamName;
+}
+```
+
+---
+
+## API 응답 형식
+
+모든 API는 공통 응답 래퍼를 사용한다.
+
+```java
+// 성공
+{
+    "success": true,
+    "data": { ... }
+}
+
+// 실패
+{
+    "success": false,
+    "error": {
+        "code": "ERROR_CODE",
+        "message": "에러 메시지"
+    }
+}
+```
+
+---
+
+## 네이밍 컨벤션
+
+| 대상 | 규칙 | 예시 |
+|------|------|------|
+| 클래스 | PascalCase | `UserService`, `PromptHistory` |
+| 메서드/변수 | camelCase | `getUserById`, `dailyLimit` |
+| 상수 | UPPER_SNAKE_CASE | `MAX_DAILY_LIMIT` |
+| DB 테이블명 | snake_case | `prompt_history` |
+| DB 컬럼명 | snake_case | `init_regi_dttm` |
+| MyBatis Mapper XML | 테이블명 기준 | `UserMapper.xml` |
+| DTO (요청) | `{도메인}{동작}ReqDto` | `UserCreateReqDto`, `UserSearchReqDto` |
+| DTO (응답) | `{도메인}RespDto` | `UserRespDto`, `TagGroupRespDto` |
+| DTO 동작 접미사 | `Create`, `Update`, `Delete`, `Search` | 이 4가지만 사용 |
+
+---
+
+## 금지 패턴
+
+```java
+// ❌ JPA/Hibernate 사용 금지
+@Entity
+@Table(name = "user")
+@Column(name = "created_at")
+
+// ❌ createdAt/updatedAt 필드명 사용 금지
+
+// ❌ DB에 FK CONSTRAINT 생성 금지
+FOREIGN KEY (user_id) REFERENCES USER(id)
+
+// ❌ category depth 숫자(1/2/3/4) 사용 금지 — category_type(LCS/MCS/SCS/DCS) 사용
+```
+
+---
+
+## 카테고리 계층 타입 상수
+
+```java
+public enum CategoryType {
+    LCS,  // 대분류
+    MCS,  // 중분류
+    SCS,  // 소분류
+    DCS   // 세분류
+}
+```
