@@ -1,0 +1,31 @@
+package com.nsmall.ns_creative_studio_bo.domain.user.service;
+
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserUpdateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * User 서비스 인터페이스
+ *
+ * @author jjhoo8936
+ * @since 2026-02-26
+ */
+public interface UserService {
+
+    UserRespDto createUser(UserCreateReqDto dto);
+
+    /**
+     * 단건 조회 — 결과 없으면 Optional.empty() 반환 (컨트롤러에서 200 + data:null 처리)
+     */
+    Optional<UserRespDto> getUser(Long id);
+
+    List<UserRespDto> getUsers(UserSearchReqDto dto);
+
+    UserRespDto updateUser(Long id, UserUpdateReqDto dto);
+
+    void deleteUser(Long id);
+}

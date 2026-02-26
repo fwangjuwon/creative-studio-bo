@@ -7,23 +7,72 @@
 
 ## 진행 중
 
-### Step 3. 기능 개발 (Security 없이)
-- [ ] User CRUD (`/api/users`)
-  - [ ] entity, mapper, service, controller, dto
-  - [ ] `UserMapper.xml` 작성
-  - [ ] 비밀번호 BCrypt 암호화 (Security 없이 `BCryptPasswordEncoder` 직접 사용)
-- [ ] Category CRUD (`/api/categories`)
-  - [ ] entity, mapper, service, controller, dto
-  - [ ] `CategoryMapper.xml` 작성
-  - [ ] 단계별 드릴다운 조회 (parent_id 기반)
-- [ ] Tag / TagGroup CRUD (`/api/tag-groups`, `/api/tags`)
-  - [ ] entity, mapper, service, controller, dto
-  - [ ] `TagGroupMapper.xml`, `TagMapper.xml` 작성
-- [ ] Prompt 생성 (`/api/prompts`)
-  - [ ] Gemini API 연동 서비스 (Spring RestClient 사용)
-  - [ ] 일일 사용량 체크 (PromptHistory COUNT)
-  - [ ] `PromptHistoryMapper.xml`, `PromptHistoryTagMapper.xml` 작성
-- [ ] Prompt 히스토리 조회
+### Step 3-A. User CRUD
+- [x] `User` entity
+- [x] `UserMapper` 인터페이스 + `UserMapper.xml`
+- [x] `UserService`
+- [x] `UserController` (`/api/users`)
+- [x] `UserCreateReqDto`, `UserUpdateReqDto`, `UserSearchReqDto`, `UserRespDto`
+- [x] 비밀번호 BCrypt 암호화 (`BCryptPasswordEncoder` 직접 사용, Security 없이)
+- [x] `common/exception` — `BizException`, `ErrorCode`(인터페이스), `GlobalExceptionHandler` (`NotFoundException`, `BusinessException` 제거)
+- [x] `common/config/PasswordEncoderConfig` — `BCryptPasswordEncoder` Bean 등록
+
+---
+
+## 예정
+
+### Step 3-A-T. User Service 단위 테스트
+- [ ] `UserServiceTest` 작성
+  - [ ] 회원 생성 — 비밀번호 BCrypt 암호화 검증
+  - [ ] 회원 생성 — 중복 loginId 처리
+  - [ ] 회원 단건 조회 — 존재 / 미존재
+  - [ ] 회원 목록 조회
+  - [ ] 회원 수정
+  - [ ] 회원 삭제
+
+### Step 3-B. Category CRUD
+- [ ] `Category` entity + `CategoryType` enum
+- [ ] `CategoryMapper` 인터페이스 + `CategoryMapper.xml`
+- [ ] `CategoryService`
+- [ ] `CategoryController` (`/api/categories`)
+- [ ] `CategoryCreateReqDto`, `CategoryUpdateReqDto`, `CategoryRespDto`
+- [ ] 단계별 드릴다운 조회 (parent_id 기반)
+
+### Step 3-B-T. Category Service 단위 테스트
+- [ ] `CategoryServiceTest` 작성
+  - [ ] 카테고리 생성
+  - [ ] 단계별 드릴다운 조회 — LCS / MCS / SCS / DCS
+  - [ ] 수정 / 삭제
+
+### Step 3-C. TagGroup / Tag CRUD
+- [ ] `TagGroup`, `Tag` entity
+- [ ] `TagGroupMapper`, `TagMapper` 인터페이스 + XML
+- [ ] `TagGroupService`, `TagService`
+- [ ] `TagGroupController` (`/api/tag-groups`), `TagController` (`/api/tags`)
+- [ ] 관련 Req/Resp DTO
+
+### Step 3-C-T. TagGroup / Tag Service 단위 테스트
+- [ ] `TagGroupServiceTest` 작성
+  - [ ] TagGroup 생성 / 수정 / 삭제
+  - [ ] TagGroup 목록 조회
+- [ ] `TagServiceTest` 작성
+  - [ ] Tag 생성 / 수정 / 삭제
+  - [ ] TagGroup별 Tag 목록 조회
+
+### Step 3-D. Prompt 생성 + 히스토리
+- [ ] `PromptHistory`, `PromptHistoryTag` entity
+- [ ] `PromptHistoryMapper`, `PromptHistoryTagMapper` 인터페이스 + XML
+- [ ] Gemini API 연동 서비스 (Spring RestClient 사용)
+- [ ] 일일 사용량 체크 (PromptHistory COUNT)
+- [ ] `PromptController` (`/api/prompts`)
+- [ ] 히스토리 조회 (USER: 같은 팀, MANAGER/ADMIN: 전체)
+
+### Step 3-D-T. Prompt Service 단위 테스트
+- [ ] `PromptServiceTest` 작성
+  - [ ] 일일 사용량 체크 — 한도 미만 → 허용
+  - [ ] 일일 사용량 체크 — 한도 초과 → 거부
+  - [ ] 히스토리 조회 — USER: 같은 팀만
+  - [ ] 히스토리 조회 — MANAGER/ADMIN: 전체
 
 ---
 
@@ -73,8 +122,6 @@
 - [x] Security 개발 순서 확정: Step 4에서 일괄 추가 (비즈니스 로직 먼저, 인증 나중)
 
 ---
-
-## 예정
 
 ### Step 4. Security 추가 (기능 개발 완료 후)
 - [ ] `build.gradle` 의존성 추가

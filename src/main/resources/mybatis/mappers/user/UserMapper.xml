@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO "user" (
+            login_id,
+            password,
+            name,
+            role,
+            team_name,
+            daily_limit,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        ) VALUES (
+            #{loginId},
+            #{password},
+            #{name},
+            #{role},
+            #{teamName},
+            #{dailyLimit},
+            #{initRegiPic},
+            #{initRegiDttm},
+            #{finalRvisPic},
+            #{finalRvisDttm}
+        )
+    </insert>
+
+    <select id="selectById" resultType="User">
+        SELECT
+            id,
+            login_id,
+            password,
+            name,
+            role,
+            team_name,
+            daily_limit,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM "user"
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByLoginId" resultType="User">
+        SELECT
+            id,
+            login_id,
+            password,
+            name,
+            role,
+            team_name,
+            daily_limit,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM "user"
+        WHERE login_id = #{loginId}
+    </select>
+
+    <select id="selectList" resultType="User">
+        SELECT
+            id,
+            login_id,
+            password,
+            name,
+            role,
+            team_name,
+            daily_limit,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM "user"
+        <where>
+            <if test="name != null and name != ''">
+                AND name LIKE '%' || #{name} || '%'
+            </if>
+            <if test="teamName != null and teamName != ''">
+                AND team_name = #{teamName}
+            </if>
+            <if test="role != null and role != ''">
+                AND role = #{role}
+            </if>
+        </where>
+        ORDER BY id ASC
+    </select>
+
+    <update id="update">
+        UPDATE "user"
+        <set>
+            <if test="password != null and password != ''">
+                password = #{password},
+            </if>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="role != null and role != ''">
+                role = #{role},
+            </if>
+            <if test="teamName != null">
+                team_name = #{teamName},
+            </if>
+            <if test="dailyLimit != null">
+                daily_limit = #{dailyLimit},
+            </if>
+            final_rvis_pic = #{finalRvisPic},
+            final_rvis_dttm = #{finalRvisDttm}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM "user"
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

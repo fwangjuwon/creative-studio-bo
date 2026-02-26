@@ -43,6 +43,16 @@ dependencies {
     compileOnly "org.projectlombok:lombok:${lombokVersion}"
     annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
+    // Validation
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // BCryptPasswordEncoder (Security 없이 crypto 모듈만 사용 — Step 4에서 Security 전환 예정)
+    implementation 'org.springframework.security:spring-security-crypto'
+
+    // Swagger (springdoc-openapi)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14'
+    implementation 'org.apache.commons:commons-lang3:3.20.0'    // CVE-2025-48924 취약점 대응 (springdoc 전이 의존성 버전 고정)
+
     // Gemini API — Spring RestClient 사용 (별도 SDK 없음, spring-boot-starter-web 포함)
 
     // Step 4에서 추가 예정

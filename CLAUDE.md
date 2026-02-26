@@ -29,6 +29,7 @@ Gemini API를 통해 최적화된 **영문 이미지 생성 프롬프트**를 �
 | ORM | MyBatis |
 | 인증 | Spring Security + JWT (Stateless) — Step 4에서 추가 예정 |
 | AI | Gemini API (`gemini-3-flash-preview` 기본, 필요 시 `gemini-3-pro-preview`) |
+| API 문서 | Swagger UI (`springdoc-openapi-starter-webmvc-ui:2.8.14`) |
 
 ---
 
@@ -69,11 +70,14 @@ com.nsmall.ns_creative_studio_bo
 {domain}
 ├── controller
 ├── service
-├── mapper          # MyBatis Mapper 인터페이스
+│   ├── {Domain}Service.java        # 인터페이스
+│   └── {Domain}ServiceImpl.java    # 구현체 (@Service)
+├── mapper                          # MyBatis Mapper 인터페이스
 ├── dto
 │   ├── request
 │   └── response
-└── entity          # DB 테이블 매핑 객체
+├── entity                          # DB 테이블 매핑 객체
+└── {Domain}ErrorCode.java          # 도메인 에러 코드 enum
 ```
 
 ---
@@ -129,7 +133,9 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 |------|------|
 | URL prefix | `/api/{domain}` (예: `/api/users`, `/api/categories`) |
 | 공통 응답 | `CommonResponse<T>(int code, String message, T data)` |
-| code 값 | HTTP 상태코드 (`HttpStatus.OK.value()` 등) |
+| Controller 반환 타입 | `CommonResponse<T>` 직접 반환 — `ResponseEntity` 사용 금지 |
+| 성공 HTTP 상태 | **무조건 200** — CUD/READ 구분 없음, 201/204 사용 금지 |
+| 조회 결과 없음 | 200 + `data: null` — 404 사용 안 함 (내부 API 개발 편의성) |
 | 페이지네이션 | PoC 단계 없음, 추후 PageHelper 적용 예정 |
 | JWT | Step 4에서 추가 예정 (Access Token 1시간, Refresh Token 없음, PoC) |
 | Gemini API Key | `.env` 파일의 `GEMINI_API_KEY` 환경변수 |
@@ -162,8 +168,80 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 
 ---
 
+## 코딩 컨벤션 핵심 규칙
+
+> 세부 규칙 전체는 `.cursor/rules/coding-convention.mdc` 참조
+
+### Service 레이어 패턴
+
+모든 Service는 **인터페이스 + 구현체** 패턴으로 작성한다.
+
+```java
+// ✅ 인터페이스
+public interface UserService { ... }
+
+// ✅ 구현체
+@Service
+@RequiredArgsConstructor
+public class UserServiceImpl implements UserService { ... }
+
+// Controller 주입 — 반드시 인터페이스 타입으로
+private final UserService userService;
+```
+
+### JavaDoc
+
+모든 `.java` 파일 최상단에 JavaDoc 필수.
+
+```java
+/**
+ * 클래스 설명
+ *
+ * @author jjhoo8936
+ * @since 2026-02-26
+ */
+```
+
+### Swagger API 문서화
+
+`@RestController` 메서드는 **JavaDoc 주석 대신 Swagger 어노테이션**으로 문서화한다.
+클래스 레벨 JavaDoc (`@author`, `@since`)은 별개로 유지.
+
+```java
+@Tag(name = "User", description = "회원 관리 API")   // 클래스
+@Operation(summary = "회원 생성", description = "...")  // 메서드
+@ApiResponse(responseCode = "201", description = "...")
+```
+
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+
+### MyBatis Type Alias
+
+`application.yml`에 `type-aliases-package: com.nsmall.ns_creative_studio_bo.domain` 설정.
+Mapper XML에서 **전체 패키지 경로 사용 금지** — 클래스 짧은 이름만 사용.
+
+```xml
+<!-- ✅ -->
+<select id="selectById" resultType="User">
+<!-- ❌ -->
+<select id="selectById" resultType="com.nsmall.ns_creative_studio_bo.domain.user.entity.User">
+```
+
+### 예외 처리 구조
+
+- `ErrorCode` 인터페이스 → 도메인별 enum으로 구현 (예: `UserErrorCode`)
+- `BizException(ErrorCode)` — 비즈니스 예외 발생 시 사용
+- `errorCode`는 **로그에만** 사용, API 응답 body에 포함하지 않음
+
+```java
+throw new BizException(UserErrorCode.DUPLICATE_LOGIN_ID);
+```
+
+---
+
 ## 참고 문서
 
 - 전체 요구사항: [`docs/requirements.md`](docs/requirements.md)
 - ERD 및 테이블 정의: [`docs/erd.md`](docs/erd.md)
 - 개발 진행 현황: [`docs/todo.md`](docs/todo.md)
+- 코딩 컨벤션 전체: [`.cursor/rules/coding-convention.mdc`](.cursor/rules/coding-convention.mdc)
