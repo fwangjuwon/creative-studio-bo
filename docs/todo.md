@@ -1,7 +1,7 @@
 # TODO
 
 > 상태: 🟡 Step 3 진행 중
-> 최종 업데이트: 2026-02-26
+> 최종 업데이트: 2026-02-26 (Step 3-A-T 완료)
 
 ---
 
@@ -22,13 +22,16 @@
 ## 예정
 
 ### Step 3-A-T. User Service 단위 테스트
-- [ ] `UserServiceTest` 작성
-  - [ ] 회원 생성 — 비밀번호 BCrypt 암호화 검증
-  - [ ] 회원 생성 — 중복 loginId 처리
-  - [ ] 회원 단건 조회 — 존재 / 미존재
-  - [ ] 회원 목록 조회
-  - [ ] 회원 수정
-  - [ ] 회원 삭제
+- [x] `UserServiceTest` 작성
+  - [x] 회원 생성 — 비밀번호 BCrypt 암호화 검증
+  - [x] 회원 생성 — 중복 loginId 처리
+  - [x] 회원 단건 조회 — 존재 / 미존재
+  - [x] 회원 목록 조회 (전체 / 조건별 필터링 / 이름 LIKE 검색)
+  - [x] 회원 수정 (이름·권한·팀명·한도 / 비밀번호 변경 BCrypt 재검증 / 미존재 예외)
+  - [x] 회원 삭제 (삭제 후 미존재 확인 / 미존재 예외)
+- [x] `UserServiceTests` Suite 작성
+- [x] `AllServiceTests` Suite 작성
+- [x] `AllLayersTests` Suite 작성
 
 ### Step 3-B. Category CRUD
 - [ ] `Category` entity + `CategoryType` enum
@@ -77,6 +80,11 @@
 ---
 
 ## 완료
+
+### 테스트 환경 설정
+- [x] `build.gradle` — `test` 태스크에 `.env` 로딩 추가 (Gradle 실행 시 환경변수 자동 주입)
+- [x] `application.yml` — `GEMINI_API_KEY` 기본값 설정 (`${GEMINI_API_KEY:}`)
+- [x] IntelliJ `Run tests using: Gradle` 로 변경
 
 ### Step 2. 프로젝트 의존성 / 설정
 - [x] `build.gradle` 의존성 추가

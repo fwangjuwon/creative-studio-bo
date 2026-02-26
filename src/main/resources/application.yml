@@ -14,6 +14,6 @@ mybatis:
   type-aliases-package: com.nsmall.ns_creative_studio_bo.domain
 
 gemini:
-  api-key: ${GEMINI_API_KEY}
+  api-key: ${GEMINI_API_KEY:}
   model: gemini-3-flash-preview
   base-url: https://generativelanguage.googleapis.com/v1beta
