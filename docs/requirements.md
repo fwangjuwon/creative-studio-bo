@@ -73,6 +73,8 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
 - **자체 로그인만** (소셜 로그인 없음)
 - ID/PW 입력 → JWT 발급 (Access Token)
 - Stateless 방식
+- **Access Token 유효시간**: 1시간
+- **Refresh Token**: PoC 단계에서는 사용하지 않음 (만료 시 재로그인). 추후 추가 가능.
 
 #### 회원가입
 - **Closed 방식**: ADMIN이 시스템(API)을 통해 직접 계정 생성
@@ -122,6 +124,10 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
 #### 출력값
 - **영어** 이미지 생성 프롬프트 텍스트
 
+#### Gemini API Key 관리
+- `.env` 파일의 환경변수 `GEMINI_API_KEY` 로 관리
+- `application.yml`에서 `${GEMINI_API_KEY}` 로 주입
+
 #### 이미지 생성 AI 연동
 - **현재**: 이 서버는 프롬프트 텍스트만 생성, 실제 이미지 생성은 사용자가 직접 수행
 - **추후**: 이미지 생성 AI 직접 연동 가능성 있음 (현재 범위 외)
@@ -142,6 +148,18 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
   ```
 - **관리**: ADMIN, MANAGER만 CUD 가능
 - **조회**: 전체 회원 가능
+
+#### 카테고리 조회 API 흐름 (단계별 드릴다운)
+사용자가 프롬프트 생성 시 카테고리를 선택하는 흐름:
+```
+1. 대분류(LCS) 전체 목록 조회
+2. 선택한 LCS의 중분류(MCS) 목록 조회 (parent_id = LCS.id)
+3. 선택한 MCS의 소분류(SCS) 목록 조회 (parent_id = MCS.id)
+4. 선택한 SCS의 세분류(DCS) 목록 조회 (parent_id = SCS.id)
+5. DCS를 최종 선택 → 프롬프트 생성 요청에 포함
+```
+- 사용자(USER)는 DCS를 최종 선택하여 프롬프트 생성에 사용
+- 각 단계별로 `parent_id` 파라미터를 받는 단일 API로 구현 가능
 
 #### 태그 (이미지 스타일)
 - **목적**: 생성될 이미지의 **스타일/분위기** 지정
@@ -250,11 +268,17 @@ PromptHistory (프롬프트 저장)
   - prompt_text       TEXT     (생성된 영문 프롬프트)
   - init_regi_pic     VARCHAR
   - init_regi_dttm    TIMESTAMP
+  - final_rvis_pic    VARCHAR
+  - final_rvis_dttm   TIMESTAMP
 
 PromptHistoryTag (프롬프트-태그 매핑)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - prompt_history_id BIGINT   (논리 FK → PromptHistory, 제약 없음)
   - tag_id            BIGINT   (논리 FK → Tag, 제약 없음)
+  - init_regi_pic     VARCHAR
+  - init_regi_dttm    TIMESTAMP
+  - final_rvis_pic    VARCHAR
+  - final_rvis_dttm   TIMESTAMP
 ```
 
 ---
@@ -268,10 +292,47 @@ PromptHistoryTag (프롬프트-태그 매핑)
 | API 방식 | REST API |
 | 응답 형식 | JSON |
 | 인증 방식 | JWT Bearer Token |
+| **API URL prefix** | `/api/{domain}` (예: `/api/users`, `/api/categories`, `/api/prompts`) |
+| **페이지네이션** | PoC 단계에서는 전체 리스트 한 번에 반환. 추후 필요 시 PageHelper 적용 예정 |
+| **공통 응답 래퍼** | `CommonResponse<T>(int code, String message, T data)` — `code`는 HTTP 상태코드 |
 
 ---
 
-## 7. 향후 고려 사항 (현재 범위 외)
+## 7. 환경변수 / 시크릿 관리
+
+### `.env` 파일 전략
+- `.env` 파일은 **`.gitignore`에 추가** — 실제 키 값은 절대 커밋하지 않음
+- **`.env.example`** 파일을 키 이름만 빈 값으로 작성하여 커밋 → 팀원이 복사 후 값 채워서 사용
+
+```bash
+# .env.example (커밋 O — 키 이름 공유용)
+GEMINI_API_KEY=
+DB_USER=
+DB_PASSWORD=
+
+# .env (커밋 X — 실제 값, .gitignore 처리)
+GEMINI_API_KEY=실제키값
+DB_USER=실제유저
+DB_PASSWORD=실제비밀번호
+```
+
+### Spring Profile 전략
+Spring Boot는 `.env` 파일을 자동으로 읽지 않음. Spring Profile과 조합하여 환경별로 분리:
+
+| 파일 | 커밋 | 역할 |
+|---|:---:|---|
+| `application.yml` | O | 공통 설정 + `spring.profiles.active: local` 기본값 |
+| `application-local.yml` | O | 로컬 전용 설정 (`${...}` 참조만 사용, 실제 값 없음) |
+| `.env` | X | 실제 시크릿 값 (`.gitignore` 처리) |
+| `.env.example` | O | 키 이름만 빈 값으로 공유 |
+
+**환경별 실행 방식**
+- **로컬**: IDE Run Configuration에서 `.env` 파일 지정 → `${...}` 환경변수 주입
+- **Docker/k8s**: `env_file` 옵션 또는 Secret으로 주입, `SPRING_PROFILES_ACTIVE=prod`로 프로파일 오버라이드
+
+---
+
+## 8. 향후 고려 사항 (현재 범위 외)
 
 - [ ] 이미지 생성 AI(nanobanana, Midjourney 등) 직접 API 연동
 - [ ] Dockerfile 및 배포 환경 확정

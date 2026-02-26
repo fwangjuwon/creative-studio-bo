@@ -56,11 +56,11 @@ com.nsmall.ns_creative_studio_bo
 │   ├── category
 │   ├── tag
 │   └── prompt
-├── global
+├── common
 │   ├── config        # Spring Security, MyBatis, Gemini 설정
 │   ├── exception     # 공통 예외 처리
-│   ├── response      # 공통 API 응답 형식
-│   └── util
+│   ├── util
+│   └── CommonResponse.java  # 공통 API 응답 래퍼 (서브패키지 없이 바로)
 └── NsCreativeStudioBoApplication.java
 ```
 
@@ -105,15 +105,34 @@ ADMIN > MANAGER > USER
 - 그룹별 단일/복수 선택 여부 다름 (`is_multi_select`)
 - ex: `인물(단일) → 남자/여자`, `분위기(복수) → 화사한/추운/따뜻한`
 
+### 카테고리 조회 흐름 (단계별 드릴다운)
+```
+LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS 최종 선택
+```
+사용자는 DCS를 최종 선택하여 프롬프트 생성에 사용
+
 ### 프롬프트 생성 흐름
 ```
-카테고리 선택 + 태그 선택 → Gemini API → 영문 프롬프트 반환 → PromptHistory 저장
+카테고리(DCS) 선택 + 태그 선택 → Gemini API → 영문 프롬프트 반환 → PromptHistory 저장
 ```
 
 ### 사용량 체크 (배치 없음)
 ```
 요청 시 PromptHistory COUNT(오늘, 해당 유저) >= User.daily_limit → 거부
 ```
+
+---
+
+## API 스펙 요약
+
+| 항목 | 내용 |
+|------|------|
+| URL prefix | `/api/{domain}` (예: `/api/users`, `/api/categories`) |
+| 공통 응답 | `CommonResponse<T>(int code, String message, T data)` |
+| code 값 | HTTP 상태코드 (`HttpStatus.OK.value()` 등) |
+| 페이지네이션 | PoC 단계 없음, 추후 PageHelper 적용 예정 |
+| JWT | Access Token 1시간, Refresh Token 없음 (PoC) |
+| Gemini API Key | `.env` 파일의 `GEMINI_API_KEY` 환경변수 |
 
 ---
 

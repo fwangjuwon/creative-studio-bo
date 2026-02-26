@@ -24,11 +24,11 @@ com.nsmall.ns_creative_studio_bo
 │   ├── category
 │   ├── tag
 │   └── prompt
-├── global
+├── common
 │   ├── config        # Spring Security, MyBatis, Gemini 등 설정
 │   ├── exception     # 공통 예외 처리
-│   ├── response      # 공통 API 응답 형식
-│   └── util
+│   ├── util
+│   └── CommonResponse.java  # 공통 API 응답 래퍼 (서브패키지 없이 바로)
 └── NsCreativeStudioBoApplication.java
 ```
 
@@ -91,6 +91,23 @@ user_id BIGINT  -- 논리 FK → USER.id
 - `mybatis-config.xml`에 `mapUnderscoreToCamelCase=true` 설정 예정
   → DB의 `init_regi_pic` → Java의 `initRegiPic` 자동 매핑
 
+### MyBatis 파일 경로
+
+```
+src/main/resources/mybatis/mybatis-config.xml
+src/main/resources/mybatis/mappers/
+  ├── user/
+  │   └── UserMapper.xml
+  ├── category/
+  │   └── CategoryMapper.xml
+  ├── tag/
+  │   ├── TagGroupMapper.xml
+  │   └── TagMapper.xml
+  └── prompt/
+      ├── PromptHistoryMapper.xml
+      └── PromptHistoryTagMapper.xml
+```
+
 > ⚠️ `mybatis-config.xml` 및 MyBatis 관련 설정 파일은 **AI가 생성하지 않음** — 직접 작성 예정
 
 ## Entity / DTO 클래스 규칙
@@ -141,21 +158,31 @@ public class UserRespDto {
 모든 API는 공통 응답 래퍼를 사용한다.
 
 ```java
-// 성공
+// common 패키지 직하위에 위치 (com.nsmall.ns_creative_studio_bo.common.CommonResponse)
+public record CommonResponse<T>(int code, String message, T data) {}
+```
+
+- `code`: HTTP 상태코드 (ex: `HttpStatus.OK.value()` → 200)
+- `message`: 사람이 읽을 수 있는 메시지
+- `data`: 응답 데이터 (실패 시 `null`)
+
+```json
+// 성공 예시
 {
-    "success": true,
+    "code": 200,
+    "message": "OK",
     "data": { ... }
 }
 
-// 실패
+// 실패 예시
 {
-    "success": false,
-    "error": {
-        "code": "ERROR_CODE",
-        "message": "에러 메시지"
-    }
+    "code": 401,
+    "message": "인증이 필요합니다.",
+    "data": null
 }
 ```
+
+> ⚠️ `CommonResponse` 클래스는 직접 작성 예정. AI가 생성하지 않음.
 
 ---
 
@@ -194,6 +221,8 @@ FOREIGN KEY (user_id) REFERENCES USER(id)
 ---
 
 ## 카테고리 계층 타입 상수
+
+- 위치: `domain.category` 패키지 직하위 (`com.nsmall.ns_creative_studio_bo.domain.category.CategoryType`)
 
 ```java
 public enum CategoryType {
