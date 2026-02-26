@@ -27,7 +27,7 @@ Gemini API를 통해 최적화된 **영문 이미지 생성 프롬프트**를 �
 | Base Package | `com.nsmall.ns_creative_studio_bo` |
 | DB | PostgreSQL |
 | ORM | MyBatis |
-| 인증 | Spring Security + JWT (Stateless) |
+| 인증 | Spring Security + JWT (Stateless) — Step 4에서 추가 예정 |
 | AI | Gemini API (`gemini-3-flash-preview` 기본, 필요 시 `gemini-3-pro-preview`) |
 
 ---
@@ -57,7 +57,7 @@ com.nsmall.ns_creative_studio_bo
 │   ├── tag
 │   └── prompt
 ├── common
-│   ├── config        # Spring Security, MyBatis, Gemini 설정
+│   ├── config        # MyBatis, Gemini 설정 (Security는 Step 4에서 추가 예정)
 │   ├── exception     # 공통 예외 처리
 │   ├── util
 │   └── CommonResponse.java  # 공통 API 응답 래퍼 (서브패키지 없이 바로)
@@ -131,7 +131,7 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 | 공통 응답 | `CommonResponse<T>(int code, String message, T data)` |
 | code 값 | HTTP 상태코드 (`HttpStatus.OK.value()` 등) |
 | 페이지네이션 | PoC 단계 없음, 추후 PageHelper 적용 예정 |
-| JWT | Access Token 1시간, Refresh Token 없음 (PoC) |
+| JWT | Step 4에서 추가 예정 (Access Token 1시간, Refresh Token 없음, PoC) |
 | Gemini API Key | `.env` 파일의 `GEMINI_API_KEY` 환경변수 |
 
 ---
