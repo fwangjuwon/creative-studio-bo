@@ -13,6 +13,8 @@ services:
     networks:
       - prmpt-network
     volumes:
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/1_schema.sql
+      - ./db/data.sql:/docker-entrypoint-initdb.d/2_data.sql
       - prmpt_postgres_volume:/var/lib/postgresql/data
 
 networks:
