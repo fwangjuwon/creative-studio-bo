@@ -235,6 +235,24 @@ public class UserServiceTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 회원 수정 - 비밀번호 null 전달 시 기존 비밀번호 유지")
+    void 성공_회원_수정_비밀번호_null_시_기존_비밀번호_유지() {
+        UserRespDto created = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "update_pw_null"));
+
+        User before = userMapper.selectById(created.getId()).orElseThrow();
+        String originalEncodedPassword = before.getPassword();
+
+        userService.updateUser(created.getId(),
+                UserUpdateReqDto.builder().name("이름만변경").build());
+
+        User after = userMapper.selectById(created.getId()).orElseThrow();
+        assertThat(after.getPassword()).isEqualTo(originalEncodedPassword);
+        assertThat(passwordEncoder.matches("testPassword123!", after.getPassword())).isTrue();
+    }
+
+    @Test
     @DisplayName("[예외] 회원 수정 - 미존재 회원")
     void 예외_회원_수정_미존재() {
         UserUpdateReqDto updateDto = UserUpdateReqDto.builder().name("수정요청").build();
