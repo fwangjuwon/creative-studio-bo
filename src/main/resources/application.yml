@@ -1,3 +1,18 @@
 spring:
   application:
     name: ns-creative-studio-bo
+  profiles:
+    active: local
+
+logging:
+  level:
+    org.apache.coyote.http11: INFO
+
+mybatis:
+  config-location: classpath:mybatis-config.xml
+  mapper-locations: classpath:mybatis/mappers/**/*.xml
+
+gemini:
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-3-flash-preview
+  base-url: https://generativelanguage.googleapis.com/v1beta

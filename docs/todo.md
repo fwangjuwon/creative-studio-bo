@@ -1,26 +1,44 @@
 # TODO
 
-> 상태: 🟡 Step 2 진행 중
+> 상태: 🟡 Step 3 진행 중
 > 최종 업데이트: 2026-02-26
 
 ---
 
 ## 진행 중
 
-### Step 2. 프로젝트 의존성 / 설정
-- [ ] `build.gradle` 의존성 추가
-  - [ ] `mybatis-spring-boot-starter` 주석 해제 (Spring Boot 3.5.x 호환 버전 확인)
-  - [ ] `postgresql` 드라이버 주석 해제
-  - [ ] Gemini SDK 추가
-  - [ ] ~~`spring-boot-starter-security`~~ — Step 4에서 추가
-  - [ ] ~~JWT 라이브러리 (`jjwt`)~~ — Step 4에서 추가
-- [ ] `src/main/resources/mybatis/mybatis-config.xml` 작성 (`mapUnderscoreToCamelCase=true` 포함)
-- [ ] `src/main/resources/application.yml` 작성 (공통 설정, `spring.profiles.active: local` 기본값)
-- [ ] `src/main/resources/application-local.yml` 작성 (로컬 DB 연결, `${...}` 참조 방식)
+### Step 3. 기능 개발 (Security 없이)
+- [ ] User CRUD (`/api/users`)
+  - [ ] entity, mapper, service, controller, dto
+  - [ ] `UserMapper.xml` 작성
+  - [ ] 비밀번호 BCrypt 암호화 (Security 없이 `BCryptPasswordEncoder` 직접 사용)
+- [ ] Category CRUD (`/api/categories`)
+  - [ ] entity, mapper, service, controller, dto
+  - [ ] `CategoryMapper.xml` 작성
+  - [ ] 단계별 드릴다운 조회 (parent_id 기반)
+- [ ] Tag / TagGroup CRUD (`/api/tag-groups`, `/api/tags`)
+  - [ ] entity, mapper, service, controller, dto
+  - [ ] `TagGroupMapper.xml`, `TagMapper.xml` 작성
+- [ ] Prompt 생성 (`/api/prompts`)
+  - [ ] Gemini API 연동 서비스 (Spring RestClient 사용)
+  - [ ] 일일 사용량 체크 (PromptHistory COUNT)
+  - [ ] `PromptHistoryMapper.xml`, `PromptHistoryTagMapper.xml` 작성
+- [ ] Prompt 히스토리 조회
 
 ---
 
 ## 완료
+
+### Step 2. 프로젝트 의존성 / 설정
+- [x] `build.gradle` 의존성 추가
+  - [x] `mybatis-spring-boot-starter:3.0.5` 주석 해제
+  - [x] `postgresql` 드라이버 주석 해제
+  - [x] Gemini — Spring RestClient 사용 (별도 SDK 없음, starter-web 포함)
+  - [x] ~~`spring-boot-starter-security`~~ — Step 4에서 추가
+  - [x] ~~JWT 라이브러리 (`jjwt`)~~ — Step 4에서 추가
+- [x] `src/main/resources/mybatis-config.xml` 작성 (`mapUnderscoreToCamelCase=true` 포함)
+- [x] `src/main/resources/application.yml` 작성 (공통 설정, `spring.profiles.active: local` 기본값)
+- [x] `src/main/resources/application-local.yml` 작성 (로컬 DB 연결, `${...}` 참조 방식)
 
 ### Step 1. 로컬 DB 준비
 - [x] `.env` 파일 생성 (`.env.example` 복사 후 실제 값 입력, 커밋 금지)
@@ -57,24 +75,6 @@
 ---
 
 ## 예정
-
-### Step 3. 기능 개발 (Security 없이)
-- [ ] User CRUD (`/api/users`)
-  - [ ] entity, mapper, service, controller, dto
-  - [ ] `UserMapper.xml` 작성
-  - [ ] 비밀번호 BCrypt 암호화 (Security 없이 `BCryptPasswordEncoder` 직접 사용)
-- [ ] Category CRUD (`/api/categories`)
-  - [ ] entity, mapper, service, controller, dto
-  - [ ] `CategoryMapper.xml` 작성
-  - [ ] 단계별 드릴다운 조회 (parent_id 기반)
-- [ ] Tag / TagGroup CRUD (`/api/tag-groups`, `/api/tags`)
-  - [ ] entity, mapper, service, controller, dto
-  - [ ] `TagGroupMapper.xml`, `TagMapper.xml` 작성
-- [ ] Prompt 생성 (`/api/prompts`)
-  - [ ] Gemini API 연동 서비스
-  - [ ] 일일 사용량 체크 (PromptHistory COUNT)
-  - [ ] `PromptHistoryMapper.xml`, `PromptHistoryTagMapper.xml` 작성
-- [ ] Prompt 히스토리 조회
 
 ### Step 4. Security 추가 (기능 개발 완료 후)
 - [ ] `build.gradle` 의존성 추가
