@@ -237,6 +237,17 @@ Mapper XML에서 **전체 패키지 경로 사용 금지** — 클래스 짧은 
 throw new BizException(UserErrorCode.DUPLICATE_LOGIN_ID);
 ```
 
+### 테스트 코드
+
+- **Mapper 단독 테스트 작성 안 함** — ServiceTest가 DB 연동 포함 검증
+- `@DisplayName` 및 메서드명은 **한글** 작성
+- 네이밍: `[예상결과] 테스트 주제 - 세부설명` (예: `[성공] 회원 생성 - 중복 loginId`)
+- CUD 테스트: `@Transactional` + `@Rollback` 필수
+- 파라미터 여러 개: `@ParameterizedTest` + `@CsvSource` / `@ValueSource`
+- 도메인별 테스트 완료 후 `@Suite`로 묶어 관리
+
+> 상세 규칙: [`.cursor/rules/coding-convention.mdc`](.cursor/rules/coding-convention.mdc) — "테스트 코드 규칙" 섹션
+
 ---
 
 ## 참고 문서
