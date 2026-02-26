@@ -1,13 +1,21 @@
 # TODO
 
-> 상태: 🟡 개발 준비 단계
+> 상태: 🟡 Step 1 진행 중
 > 최종 업데이트: 2026-02-26
 
 ---
 
 ## 진행 중
 
-없음
+### Step 1. 로컬 DB 준비
+- [x] `.env` 파일 생성 (`.env.example` 복사 후 실제 값 입력, 커밋 금지)
+- [x] `Dockerfile.postgres` 작성
+- [x] `docker-compose.yml` 작성 (`env_file` 연동 완료)
+- [ ] `docs/erd.md` 작성 (테이블 정의, 컬럼 설명, mermaid ERD)
+- [ ] `db/schema.sql` 작성 (DDL — 테이블 6개, `erd.md` 기반)
+- [ ] `db/data.sql` 작성 (초기 데이터 — ADMIN 계정, 기초 카테고리/태그)
+- [ ] `docker-compose.yml` SQL 마운트 추가 (`docker-entrypoint-initdb.d`)
+- [ ] 로컬 PostgreSQL 컨테이너 최초 실행 및 DB 연결 확인
 
 ---
 
@@ -37,14 +45,6 @@
 ---
 
 ## 예정
-
-### Step 1. 로컬 DB 준비
-- [ ] `.env` 파일 생성 (`.env.example` 복사 후 실제 값 입력, 커밋 금지)
-- [ ] `Dockerfile.postgres` 작성 (루트, PostgreSQL 커스텀 이미지)
-- [ ] `docker-compose.yml` 작성 (Dockerfile.postgres 참조, `.env` 파일 연동)
-- [ ] `db/schema.sql` 작성 (DDL — 테이블 6개)
-- [ ] `db/data.sql` 작성 (초기 데이터 — ADMIN 계정, 기초 카테고리/태그)
-- [ ] 로컬 PostgreSQL 컨테이너 실행 확인
 
 ### Step 2. 프로젝트 의존성 / 설정
 - [ ] `build.gradle` 의존성 추가

@@ -1,0 +1,15 @@
+# Postgres Docker 컨테이너 설정
+FROM postgres:15-alpine
+
+ENV TZ=Asia/Seoul
+
+EXPOSE 5432
+
+VOLUME ["/var/lib/postgresql/data"]
+
+# postgres 설정 필요 시
+# COPY pg_hba.conf /etc/postgresql/pg_hba.conf
+# COPY postgresql.conf /etc/postgresql/postgresql.conf
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB} || exit 1
