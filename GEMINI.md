@@ -165,4 +165,5 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 ## 참고 문서
 
 - 전체 요구사항: [`docs/requirements.md`](docs/requirements.md)
+- ERD 및 테이블 정의: [`docs/erd.md`](docs/erd.md)
 - 개발 진행 현황: [`docs/todo.md`](docs/todo.md)
