@@ -37,7 +37,7 @@ public class TagGroupServiceImpl implements TagGroupService {
         TagGroup tagGroup = TagGroup.builder()
                 .name(dto.getName())
                 .isMultiSelect(dto.getIsMultiSelect())
-                .sortOrder(dto.getSortOrder())
+                .sortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0)
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -75,7 +75,7 @@ public class TagGroupServiceImpl implements TagGroupService {
                 .id(id)
                 .name(dto.getName())
                 .isMultiSelect(dto.getIsMultiSelect())
-                .sortOrder(dto.getSortOrder())
+                .sortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0)
                 .finalRvisPic(requesterId)
                 .finalRvisDttm(LocalDateTime.now())
                 .build();
