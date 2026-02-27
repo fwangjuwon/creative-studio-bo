@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagGroupMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tag_group (
+            name,
+            is_multi_select,
+            sort_order,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        ) VALUES (
+            #{name},
+            #{isMultiSelect},
+            #{sortOrder},
+            #{initRegiPic},
+            #{initRegiDttm},
+            #{finalRvisPic},
+            #{finalRvisDttm}
+        )
+    </insert>
+
+    <select id="selectById" resultType="TagGroup">
+        SELECT
+            id,
+            name,
+            is_multi_select,
+            sort_order,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM tag_group
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectAll" resultType="TagGroup">
+        SELECT
+            id,
+            name,
+            is_multi_select,
+            sort_order,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM tag_group
+        ORDER BY sort_order ASC NULLS LAST, id ASC
+    </select>
+
+    <update id="update">
+        UPDATE tag_group
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="isMultiSelect != null">
+                is_multi_select = #{isMultiSelect},
+            </if>
+            <if test="sortOrder != null">
+                sort_order = #{sortOrder},
+            </if>
+            final_rvis_pic = #{finalRvisPic},
+            final_rvis_dttm = #{finalRvisDttm}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM tag_group
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

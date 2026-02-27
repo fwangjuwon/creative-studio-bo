@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO tag (
+            tag_group_id,
+            name,
+            sort_order,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        ) VALUES (
+            #{tagGroupId},
+            #{name},
+            #{sortOrder},
+            #{initRegiPic},
+            #{initRegiDttm},
+            #{finalRvisPic},
+            #{finalRvisDttm}
+        )
+    </insert>
+
+    <select id="selectById" resultType="Tag">
+        SELECT
+            id,
+            tag_group_id,
+            name,
+            sort_order,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM tag
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="Tag">
+        SELECT
+            id,
+            tag_group_id,
+            name,
+            sort_order,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM tag
+        <if test="tagGroupId != null">
+            WHERE tag_group_id = #{tagGroupId}
+        </if>
+        ORDER BY sort_order ASC NULLS LAST, id ASC
+    </select>
+
+    <select id="existsByTagGroupId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM tag WHERE tag_group_id = #{tagGroupId}
+        )
+    </select>
+
+    <update id="update">
+        UPDATE tag
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="sortOrder != null">
+                sort_order = #{sortOrder},
+            </if>
+            final_rvis_pic = #{finalRvisPic},
+            final_rvis_dttm = #{finalRvisDttm}
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM tag
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

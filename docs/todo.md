@@ -1,26 +1,11 @@
 # TODO
 
 > 상태: 🟡 Step 3 진행 중
-> 최종 업데이트: 2026-02-27 (Step 3-B 계층 검증 보완 + Step 3-B-T 테스트 보완)
+> 최종 업데이트: 2026-02-27 (Step 3-C TagGroup/Tag CRUD + Step 3-C-T 테스트 완료 + TagGroup 삭제 제한 추가)
 
 ---
 
 ## 진행 중
-
-### Step 3-C. TagGroup / Tag CRUD
-- [ ] `TagGroup`, `Tag` entity
-- [ ] `TagGroupMapper`, `TagMapper` 인터페이스 + XML
-- [ ] `TagGroupService`, `TagService`
-- [ ] `TagGroupController` (`/api/tag-groups`), `TagController` (`/api/tags`)
-- [ ] 관련 Req/Resp DTO
-
-### Step 3-C-T. TagGroup / Tag Service 단위 테스트
-- [ ] `TagGroupServiceTest` 작성
-  - [ ] TagGroup 생성 / 수정 / 삭제
-  - [ ] TagGroup 목록 조회
-- [ ] `TagServiceTest` 작성
-  - [ ] Tag 생성 / 수정 / 삭제
-  - [ ] TagGroup별 Tag 목록 조회
 
 ### Step 3-D. Prompt 생성 + 히스토리
 - [ ] `PromptHistory`, `PromptHistoryTag` entity
@@ -40,6 +25,34 @@
 ---
 
 ## 완료
+
+### Step 3-C. TagGroup / Tag CRUD
+- [x] `TagGroup`, `Tag` entity
+- [x] `TagGroupMapper`, `TagMapper` 인터페이스 + XML
+- [x] `TagGroupService`, `TagService` (인터페이스 + 구현체)
+- [x] `TagGroupController` (`/api/tag-groups`), `TagController` (`/api/tags`)
+- [x] `TagGroupCreateReqDto`, `TagGroupUpdateReqDto`, `TagGroupRespDto`
+- [x] `TagCreateReqDto`, `TagUpdateReqDto`, `TagRespDto`
+- [x] `TagGroupErrorCode` (TG001 미존재, TG002 소속태그존재), `TagErrorCode` (T001 미존재, T002 그룹 미존재)
+- [x] Tag 생성 시 TagGroup 존재 여부 검증
+- [x] TagGroup 삭제 시 소속 Tag 존재하면 거부 (`TAG_GROUP_HAS_TAGS` TG002) — `TagMapper.existsByTagGroupId` 추가
+
+### Step 3-C-T. TagGroup / Tag Service 단위 테스트
+- [x] `TagGroupServiceTest` 작성
+  - [x] TagGroup 생성 — 단일/복수 선택
+  - [x] TagGroup 단건 조회 — 존재 / 미존재
+  - [x] TagGroup 전체 목록 조회
+  - [x] TagGroup 수정 (이름·isMultiSelect·정렬순서 / 미존재 예외)
+  - [x] TagGroup 삭제 — 소속 태그 없을 때 허용 / 소속 태그 존재 시 거부 / 미존재 예외
+- [x] `TagServiceTest` 작성
+  - [x] Tag 생성 — 정상 케이스
+  - [x] Tag 생성 — 존재하지 않는 TagGroup 예외
+  - [x] Tag 단건 조회 — 존재 / 미존재
+  - [x] Tag 목록 조회 — TagGroup별 필터링 / 전체 / 그룹 격리 검증
+  - [x] Tag 수정 (이름·정렬순서 / 미존재 예외)
+  - [x] Tag 삭제 (삭제 후 미존재 확인 / 미존재 예외)
+- [x] `TagServiceTests` Suite 작성
+- [x] `AllServiceTests` — `TagServiceTests` 추가
 
 ### Step 3-B. Category CRUD
 - [x] `Category` entity + `CategoryType` enum
