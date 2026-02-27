@@ -1,26 +1,43 @@
 # TODO
 
-> 상태: 🟡 Step 3 진행 중
-> 최종 업데이트: 2026-02-27 (Step 3-C TagGroup/Tag CRUD + Step 3-C-T 테스트 완료 + TagGroup 삭제 제한 추가)
+> 상태: 🟡 Step 3 완료, Step 4 대기
+> 최종 업데이트: 2026-02-27 (Step 3-D 보강 — DCS 검증, 카테고리 전체경로, 빈응답 예외처리 등)
 
 ---
 
-## 진행 중
-
 ### Step 3-D. Prompt 생성 + 히스토리
-- [ ] `PromptHistory`, `PromptHistoryTag` entity
-- [ ] `PromptHistoryMapper`, `PromptHistoryTagMapper` 인터페이스 + XML
-- [ ] Gemini API 연동 서비스 (Spring RestClient 사용)
-- [ ] 일일 사용량 체크 (PromptHistory COUNT)
-- [ ] `PromptController` (`/api/prompts`)
-- [ ] 히스토리 조회 (USER: 같은 팀, MANAGER/ADMIN: 전체)
+- [x] `PromptHistory`, `PromptHistoryTag` entity
+- [x] `PromptHistoryMapper`, `PromptHistoryTagMapper` 인터페이스 + XML
+- [x] `GeminiProperties` (`@ConfigurationProperties(prefix = "gemini")`) — apiKey, model, baseUrl
+- [x] `GeminiConfig` — `RestClient` Bean 등록
+- [x] `GeminiService` + `GeminiServiceImpl` (Spring RestClient, 내부 DTO는 private record)
+  - [x] 시스템 프롬프트 — `GeminiServiceImpl` 내 `private static final String SYSTEM_PROMPT` 상수 (비즈니스 로직)
+  - [x] Gemini 응답 비어있을 때 `BizException(P006)` 발생 (빈 프롬프트 저장 방지)
+  - ℹ️ 추후 Spring RestClient → Google AI 공식 라이브러리로 교체 예정
+- [x] `PromptErrorCode` (P001 일일한도초과, P002 유저미존재, P003 카테고리미존재, P004 태그미존재, P005 DCS아닌카테고리, P006 Gemini빈응답)
+- [x] `PromptService` + `PromptServiceImpl`
+  - [x] 일일 한도 체크, Gemini 호출, 히스토리 저장 (`@Transactional`)
+  - [x] DCS 카테고리 타입 검증 (`INVALID_CATEGORY_TYPE` P005)
+  - [x] 카테고리 전체 경로 조합 후 Gemini 전달 (`식품 > 건강식품 > 약재 > 인삼`)
+- [x] `PromptController` (`/api/prompts`) — POST 생성, GET 조회
+- [x] 히스토리 조회 권한 분기 — USER: 같은 팀 / 팀 미배정 USER는 빈 목록 반환, MANAGER/ADMIN: 전체
+- [x] `application.yml` — model: `gemini-3-flash-preview` (system-prompt는 코드로 이전)
 
 ### Step 3-D-T. Prompt Service 단위 테스트
-- [ ] `PromptServiceTest` 작성
-  - [ ] 일일 사용량 체크 — 한도 미만 → 허용
-  - [ ] 일일 사용량 체크 — 한도 초과 → 거부
-  - [ ] 히스토리 조회 — USER: 같은 팀만
-  - [ ] 히스토리 조회 — MANAGER/ADMIN: 전체
+- [x] `PromptServiceTest` 작성 (`@MockBean GeminiService` 모킹)
+  - [x] 프롬프트 생성 — 일일 한도 미만 → 허용 (태그 포함 / 태그 없이)
+  - [x] 프롬프트 생성 — 일일 한도 초과 → 거부 (`P001`)
+  - [x] 프롬프트 생성 — 유저 미존재 예외 (`P002`)
+  - [x] 프롬프트 생성 — 카테고리 미존재 예외 (`P003`)
+  - [x] 프롬프트 생성 — DCS가 아닌 카테고리 선택 예외 (`P005`)
+  - [x] 프롬프트 생성 — Gemini에 LCS→DCS 전체 경로 전달 검증 (`ArgumentCaptor`)
+  - [x] 히스토리 조회 — USER: 같은 팀만
+  - [x] 히스토리 조회 — USER 팀 미배정: 빈 목록 반환
+  - [x] 히스토리 조회 — MANAGER: 전체
+  - [x] 히스토리 조회 — ADMIN: 전체
+  - [x] 히스토리 조회 — 유저 미존재 예외 (`P002`)
+- [x] `PromptServiceTests` Suite 작성
+- [x] `AllServiceTests` — `PromptServiceTests` 추가
 
 ---
 
@@ -56,24 +73,31 @@
 
 ### Step 3-B. Category CRUD
 - [x] `Category` entity + `CategoryType` enum
+  - [x] `categoryType` 필드 `String` → `CategoryType` enum으로 변경 (타입 안정성)
 - [x] `CategoryMapper` 인터페이스 + `CategoryMapper.xml`
+  - [x] `existsByParentId(Long parentId)` — 자식 카테고리 존재 여부 확인
+  - [x] `selectCategoryPath(Long id)` — 재귀 CTE로 LCS→DCS 전체 경로 조회
 - [x] `CategoryService` (인터페이스 + 구현체)
+  - [x] 생성 시 부모 타입 계층 유효성 검증 (`INVALID_CATEGORY_HIERARCHY` C003)
+  - [x] 삭제 시 자식 카테고리 존재하면 거부 (`CATEGORY_HAS_CHILDREN` C004)
 - [x] `CategoryController` (`/api/categories`)
-- [x] `CategoryCreateReqDto`, `CategoryUpdateReqDto`, `CategoryRespDto`
+- [x] `CategoryCreateReqDto` — `categoryType` 필드 `@Pattern` → `@NotNull CategoryType` enum
+- [x] `CategoryUpdateReqDto`, `CategoryRespDto`
 - [x] 단계별 드릴다운 조회 (parent_id 기반)
-- [x] `CategoryErrorCode` enum
-- [x] 계층 구조 유효성 검증 (LCS↔parentId 일관성, `INVALID_CATEGORY_HIERARCHY` C003)
+- [x] `CategoryErrorCode` enum (C001 미존재, C002 부모미존재, C003 계층오류, C004 자식존재시삭제불가)
 
 ### Step 3-B-T. Category Service 단위 테스트
 - [x] `CategoryServiceTest` 작성
   - [x] 카테고리 생성 — LCS (parentId null)
   - [x] 카테고리 생성 — 하위 카테고리 (MCS/SCS/DCS)
   - [x] 카테고리 생성 — 계층 구조 위반 예외 (LCS에 parentId 입력 / MCS·SCS·DCS에 parentId null)
+  - [x] 카테고리 생성 — 잘못된 부모 타입 예외 (`C003`)
   - [x] 카테고리 생성 — 상위 카테고리 미존재 예외
   - [x] 단건 조회 — 존재 / 미존재
   - [x] 단계별 드릴다운 조회 — LCS / 하위 카테고리 / 4단계 전체
   - [x] 수정 (이름·정렬순서 / 미존재 예외)
   - [x] 삭제 (삭제 후 미존재 확인 / 미존재 예외)
+  - [x] 삭제 — 자식 카테고리 존재 시 거부 (`C004`)
 - [x] `CategoryServiceTests` Suite 작성
 - [x] `AllServiceTests` — `CategoryServiceTests` 추가
 

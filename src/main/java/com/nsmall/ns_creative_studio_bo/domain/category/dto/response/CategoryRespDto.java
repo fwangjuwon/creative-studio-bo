@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.category.dto.response;
 
+import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +23,7 @@ public class CategoryRespDto {
 
     private Long id;
     private String name;
-    private String categoryType;
+    private CategoryType categoryType;
     private Long parentId;
     private Integer sortOrder;
     private LocalDateTime initRegiDttm;

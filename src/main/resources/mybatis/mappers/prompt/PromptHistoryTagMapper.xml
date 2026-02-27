@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryTagMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO prompt_history_tag (
+            prompt_history_id,
+            tag_id,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.promptHistoryId},
+                #{item.tagId},
+                #{item.initRegiPic},
+                #{item.initRegiDttm},
+                #{item.finalRvisPic},
+                #{item.finalRvisDttm}
+            )
+        </foreach>
+    </insert>
+
+    <select id="selectTagIdsByPromptHistoryId" resultType="Long">
+        SELECT tag_id
+        FROM prompt_history_tag
+        WHERE prompt_history_id = #{promptHistoryId}
+        ORDER BY id ASC
+    </select>
+
+</mapper>

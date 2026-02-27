@@ -63,6 +63,31 @@
         ORDER BY sort_order ASC NULLS LAST, id ASC
     </select>
 
+    <!--
+        DCS id → 상위 계층을 재귀적으로 탐색하여 LCS→MCS→SCS→DCS 이름 목록 반환
+        depth 기준 내림차순 정렬로 LCS(depth 최대)가 먼저 오도록 함
+    -->
+    <select id="selectCategoryPath" resultType="String">
+        WITH RECURSIVE category_path AS (
+            SELECT id, name, parent_id, 0 AS depth
+            FROM category
+            WHERE id = #{id}
+            UNION ALL
+            SELECT c.id, c.name, c.parent_id, cp.depth + 1
+            FROM category c
+            INNER JOIN category_path cp ON c.id = cp.parent_id
+        )
+        SELECT name
+        FROM category_path
+        ORDER BY depth DESC
+    </select>
+
+    <select id="existsByParentId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM category WHERE parent_id = #{parentId}
+        )
+    </select>
+
     <update id="update">
         UPDATE category
         <set>

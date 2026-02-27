@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo;
 
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryServiceTests;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptServiceTests;
 import com.nsmall.ns_creative_studio_bo.domain.tag.TagServiceTests;
 import com.nsmall.ns_creative_studio_bo.domain.user.UserServiceTests;
 import org.junit.platform.suite.api.SelectClasses;
@@ -18,8 +19,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SelectClasses({
         UserServiceTests.class,
         CategoryServiceTests.class,
-        TagServiceTests.class
-        // PromptServiceTests.class    — Step 3-D-T에서 추가 예정
+        TagServiceTests.class,
+        PromptServiceTests.class
 })
 public class AllServiceTests {
 }

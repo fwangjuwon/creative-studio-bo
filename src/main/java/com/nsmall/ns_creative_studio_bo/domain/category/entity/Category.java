@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.category.entity;
 
+import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,7 +27,7 @@ public class Category {
 
     private Long id;
     private String name;
-    private String categoryType;
+    private CategoryType categoryType;
     private Long parentId;
     private Integer sortOrder;
 

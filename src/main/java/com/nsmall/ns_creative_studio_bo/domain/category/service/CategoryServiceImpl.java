@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.category.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRespDto;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -24,11 +26,18 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
+    /** 하위 타입 → 기대되는 부모 타입 매핑 (MCS 부모=LCS, SCS 부모=MCS, DCS 부모=SCS) */
+    private static final Map<CategoryType, CategoryType> EXPECTED_PARENT_TYPE = Map.of(
+            CategoryType.MCS, CategoryType.LCS,
+            CategoryType.SCS, CategoryType.MCS,
+            CategoryType.DCS, CategoryType.SCS
+    );
+
     private final CategoryMapper categoryMapper;
 
     @Override
     public CategoryRespDto createCategory(CategoryCreateReqDto dto) {
-        boolean isLcs = "LCS".equals(dto.getCategoryType());
+        boolean isLcs = CategoryType.LCS == dto.getCategoryType();
 
         if (isLcs && dto.getParentId() != null) {
             throw new BizException(CategoryErrorCode.INVALID_CATEGORY_HIERARCHY,
@@ -40,9 +49,16 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         if (dto.getParentId() != null) {
-            categoryMapper.selectById(dto.getParentId())
+            Category parent = categoryMapper.selectById(dto.getParentId())
                     .orElseThrow(() -> new BizException(CategoryErrorCode.PARENT_CATEGORY_NOT_FOUND,
                             "상위 카테고리를 찾을 수 없습니다. parentId=" + dto.getParentId()));
+
+            CategoryType expectedParent = EXPECTED_PARENT_TYPE.get(dto.getCategoryType());
+            if (expectedParent != parent.getCategoryType()) {
+                throw new BizException(CategoryErrorCode.INVALID_CATEGORY_HIERARCHY,
+                        dto.getCategoryType() + "의 상위 카테고리는 " + expectedParent
+                        + "이어야 합니다. 실제 타입: " + parent.getCategoryType());
+            }
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -108,6 +124,11 @@ public class CategoryServiceImpl implements CategoryService {
         categoryMapper.selectById(id)
                 .orElseThrow(() -> new BizException(CategoryErrorCode.CATEGORY_NOT_FOUND,
                         "카테고리를 찾을 수 없습니다. id=" + id));
+
+        if (categoryMapper.existsByParentId(id)) {
+            throw new BizException(CategoryErrorCode.CATEGORY_HAS_CHILDREN,
+                    "하위 카테고리가 존재하여 삭제할 수 없습니다. id=" + id);
+        }
 
         categoryMapper.deleteById(id);
     }

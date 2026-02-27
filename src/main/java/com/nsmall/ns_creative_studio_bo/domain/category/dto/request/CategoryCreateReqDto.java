@@ -1,7 +1,8 @@
 package com.nsmall.ns_creative_studio_bo.domain.category.dto.request;
 
+import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -27,9 +28,8 @@ public class CategoryCreateReqDto {
     @NotBlank(message = "카테고리명은 필수입니다.")
     private String name;
 
-    @NotBlank(message = "카테고리 타입은 필수입니다.")
-    @Pattern(regexp = "^(LCS|MCS|SCS|DCS)$", message = "카테고리 타입은 LCS, MCS, SCS, DCS 중 하나여야 합니다.")
-    private String categoryType;
+    @NotNull(message = "카테고리 타입은 필수입니다.")
+    private CategoryType categoryType;
 
     private Long parentId;
 
