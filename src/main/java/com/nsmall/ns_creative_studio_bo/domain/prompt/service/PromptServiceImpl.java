@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
 import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
@@ -52,16 +53,16 @@ public class PromptServiceImpl implements PromptService {
 
     @Override
     @Transactional
-    public PromptHistoryRespDto createPrompt(PromptCreateReqDto dto) {
+    public PromptHistoryRespDto createPrompt(Long currentUserId, PromptCreateReqDto dto) {
         // 1. 사용자 조회 + 일일 한도 체크
-        User user = userMapper.selectById(dto.getUserId())
+        User user = userMapper.selectById(currentUserId)
                 .orElseThrow(() -> new BizException(PromptErrorCode.USER_NOT_FOUND,
-                        "사용자를 찾을 수 없습니다. userId=" + dto.getUserId()));
+                        "사용자를 찾을 수 없습니다. userId=" + currentUserId));
 
-        int todayCount = promptHistoryMapper.countTodayByUserId(dto.getUserId());
+        int todayCount = promptHistoryMapper.countTodayByUserId(currentUserId);
         if (todayCount >= user.getDailyLimit()) {
             log.warn("일일 한도 초과 — userId={}, todayCount={}, dailyLimit={}",
-                    dto.getUserId(), todayCount, user.getDailyLimit());
+                    currentUserId, todayCount, user.getDailyLimit());
             throw new BizException(PromptErrorCode.DAILY_LIMIT_EXCEEDED);
         }
 
@@ -92,11 +93,10 @@ public class PromptServiceImpl implements PromptService {
 
         // 5. PromptHistory 저장
         LocalDateTime now = LocalDateTime.now();
-        // TODO: Step 4 (Security 추가) 이후 SecurityContext에서 현재 로그인 사용자 loginId로 교체
-        String requesterId = user.getLoginId();
+        String requesterId = SecurityUtil.getCurrentLoginId();
 
         PromptHistory history = PromptHistory.builder()
-                .userId(dto.getUserId())
+                .userId(currentUserId)
                 .categoryId(dto.getCategoryId())
                 .promptText(promptText)
                 .initRegiPic(requesterId)

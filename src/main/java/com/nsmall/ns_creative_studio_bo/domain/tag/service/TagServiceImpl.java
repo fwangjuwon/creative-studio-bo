@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.tag.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.tag.TagErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagUpdateReqDto;
@@ -35,8 +36,7 @@ public class TagServiceImpl implements TagService {
                         "태그 그룹을 찾을 수 없습니다. tagGroupId=" + dto.getTagGroupId()));
 
         LocalDateTime now = LocalDateTime.now();
-        // TODO: Step 4 (Security 추가) 이후 SecurityContext에서 현재 로그인 사용자 loginId로 교체
-        String requesterId = "system";
+        String requesterId = SecurityUtil.getCurrentLoginId();
 
         Tag tag = Tag.builder()
                 .tagGroupId(dto.getTagGroupId())
@@ -73,8 +73,7 @@ public class TagServiceImpl implements TagService {
                 .orElseThrow(() -> new BizException(TagErrorCode.TAG_NOT_FOUND,
                         "태그를 찾을 수 없습니다. id=" + id));
 
-        // TODO: Step 4 (Security 추가) 이후 SecurityContext에서 현재 로그인 사용자 loginId로 교체
-        String requesterId = "system";
+        String requesterId = SecurityUtil.getCurrentLoginId();
 
         Tag updated = Tag.builder()
                 .id(id)

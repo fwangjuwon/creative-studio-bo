@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.category.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
@@ -62,8 +63,7 @@ public class CategoryServiceImpl implements CategoryService {
         }
 
         LocalDateTime now = LocalDateTime.now();
-        // TODO: Step 4 (Security 추가) 이후 SecurityContext에서 현재 로그인 사용자 loginId로 교체
-        String requesterId = "system";
+        String requesterId = SecurityUtil.getCurrentLoginId();
 
         Category category = Category.builder()
                 .name(dto.getName())
@@ -101,8 +101,7 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new BizException(CategoryErrorCode.CATEGORY_NOT_FOUND,
                         "카테고리를 찾을 수 없습니다. id=" + id));
 
-        // TODO: Step 4 (Security 추가) 이후 SecurityContext에서 현재 로그인 사용자 loginId로 교체
-        String requesterId = "system";
+        String requesterId = SecurityUtil.getCurrentLoginId();
 
         Category updated = Category.builder()
                 .id(id)

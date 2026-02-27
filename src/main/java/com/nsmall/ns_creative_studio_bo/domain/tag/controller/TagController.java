@@ -7,9 +7,11 @@ import com.nsmall.ns_creative_studio_bo.domain.tag.dto.response.TagRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.service.TagService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,15 +30,20 @@ public class TagController {
 
     private final TagService tagService;
 
-    @Operation(summary = "태그 생성", description = "ADMIN / MANAGER 전용 — Step 4 Security 적용 후 접근 제어 추가 예정")
+    @Operation(summary = "태그 생성", description = "MANAGER 이상",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "태그 생성 성공")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
+    @PreAuthorize("hasRole('MANAGER')")
     @PostMapping
     public CommonResponse<TagRespDto> createTag(@RequestBody @Valid TagCreateReqDto dto) {
         return CommonResponse.success(tagService.createTag(dto));
     }
 
-    @Operation(summary = "태그 단건 조회", description = "존재하지 않는 id면 200 + data: null 반환")
+    @Operation(summary = "태그 단건 조회", description = "인증된 모든 사용자 허용 — 존재하지 않는 id면 200 + data: null",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "조회 성공 (미존재 시 data: null)")
+    @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
     public CommonResponse<TagRespDto> getTag(@PathVariable Long id) {
         return CommonResponse.success(tagService.getTag(id).orElse(null));
@@ -44,17 +51,22 @@ public class TagController {
 
     @Operation(
             summary = "태그 목록 조회",
-            description = "tagGroupId 미입력 → 전체 태그 목록, tagGroupId 입력 → 해당 그룹의 태그 목록"
+            description = "tagGroupId 미입력 → 전체 태그 목록, tagGroupId 입력 → 해당 그룹의 태그 목록. 인증된 모든 사용자 허용.",
+            security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "목록 조회 성공")
+    @PreAuthorize("hasRole('USER')")
     @GetMapping
     public CommonResponse<List<TagRespDto>> getTags(
             @RequestParam(required = false) Long tagGroupId) {
         return CommonResponse.success(tagService.getTags(tagGroupId));
     }
 
-    @Operation(summary = "태그 수정", description = "ADMIN / MANAGER 전용 — name, sortOrder 수정 가능")
+    @Operation(summary = "태그 수정", description = "MANAGER 이상 — name, sortOrder 수정 가능",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "수정 성공")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
+    @PreAuthorize("hasRole('MANAGER')")
     @PutMapping("/{id}")
     public CommonResponse<TagRespDto> updateTag(
             @PathVariable Long id,
@@ -62,8 +74,11 @@ public class TagController {
         return CommonResponse.success(tagService.updateTag(id, dto));
     }
 
-    @Operation(summary = "태그 삭제", description = "ADMIN / MANAGER 전용 — Step 4 Security 적용 후 접근 제어 추가 예정")
+    @Operation(summary = "태그 삭제", description = "MANAGER 이상",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "삭제 성공")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
+    @PreAuthorize("hasRole('MANAGER')")
     @DeleteMapping("/{id}")
     public CommonResponse<Void> deleteTag(@PathVariable Long id) {
         tagService.deleteTag(id);

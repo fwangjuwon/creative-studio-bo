@@ -17,3 +17,7 @@ gemini:
   api-key: ${GEMINI_API_KEY:}
   model: gemini-3-flash-preview
   base-url: https://generativelanguage.googleapis.com/v1beta
+
+jwt:
+  secret: ${JWT_SECRET:ns-creative-studio-bo-default-secret-key-for-local-dev-only}
+  expiration: 3600

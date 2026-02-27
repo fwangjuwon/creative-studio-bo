@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: 🟡 Step 3 완료, Step 4 대기
-> 최종 업데이트: 2026-02-27 (Step 3-D 보강 — DCS 검증, 카테고리 전체경로, 빈응답 예외처리 등)
+> 상태: ✅ Step 4 완료
+> 최종 업데이트: 2026-02-27 (Step 4 — Spring Security + JWT 인증/인가 추가)
 
 ---
 
@@ -173,17 +173,35 @@
 
 ---
 
-### Step 4. Security 추가 (기능 개발 완료 후)
-- [ ] `build.gradle` 의존성 추가
-  - [ ] `spring-boot-starter-security`
-  - [ ] `jjwt-api`, `jjwt-impl`, `jjwt-jackson`
-  - [ ] `spring-security-test`
-- [ ] `SecurityConfig` 작성 (JWT 필터 체인)
-- [ ] `JwtTokenProvider` 작성 (토큰 발급 / 검증)
-- [ ] `JwtAuthFilter` 작성 (요청마다 토큰 검증)
-- [ ] `UserDetailsService` 구현 (User 도메인 연동)
-- [ ] 로그인 API (`POST /api/auth/login`) 구현
-- [ ] 각 API Role 기반 접근 제어 (`@PreAuthorize`)
+### Step 4. Security 추가
+- [x] `build.gradle` 의존성 추가
+  - [x] `spring-boot-starter-security`
+  - [x] `jjwt-api:0.12.6`, `jjwt-impl:0.12.6`, `jjwt-jackson:0.12.6`
+  - [x] `spring-security-test`
+- [x] `application.yml` — `jwt.secret` / `jwt.expiration` 설정 추가
+- [x] `JwtProperties` (`@ConfigurationProperties(prefix = "jwt")`)
+- [x] `common/security/CustomUserDetails` — `UserDetails` 구현체 (User 엔티티 래핑)
+- [x] `common/security/CustomUserDetailsService` — `UserDetailsService` 구현 (loginId 기반 조회)
+- [x] `common/security/JwtTokenProvider` — 토큰 발급 / 검증 (HMAC-SHA256)
+- [x] `common/security/JwtAuthFilter` — `OncePerRequestFilter` (Bearer 토큰 검증 → SecurityContext 등록)
+- [x] `common/util/SecurityUtil` — 현재 로그인 사용자 loginId 추출 유틸리티 (미인증 시 "system" 반환)
+- [x] `SecurityConfig` — JWT 필터 체인, `RoleHierarchy` (ADMIN > MANAGER > USER), `@EnableMethodSecurity`
+  - [x] `PasswordEncoderConfig` 삭제 → `SecurityConfig`로 통합
+- [x] 로그인 API (`POST /api/auth/login`) — `AuthController`, `AuthService`, `AuthServiceImpl`
+  - [x] `AuthErrorCode` (A001 아이디/비밀번호 불일치)
+  - [x] `LoginReqDto` / `LoginRespDto` (accessToken, tokenType, expiresIn)
+- [x] 각 Controller `@PreAuthorize` 접근 제어
+  - [x] `UserController` — 전체 ADMIN 전용
+  - [x] `CategoryController` — GET: USER 이상, CUD: MANAGER 이상
+  - [x] `TagGroupController` — GET: USER 이상, CUD: MANAGER 이상
+  - [x] `TagController` — GET: USER 이상, CUD: MANAGER 이상
+  - [x] `PromptController` — 전체 USER 이상, `@AuthenticationPrincipal` 적용
+- [x] `PromptCreateReqDto` — `userId` 필드 제거 (SecurityContext에서 추출)
+- [x] `PromptService.createPrompt(Long currentUserId, PromptCreateReqDto dto)` 시그니처 변경
+- [x] `UserServiceImpl` / `CategoryServiceImpl` / `TagGroupServiceImpl` / `TagServiceImpl` — `SecurityUtil.getCurrentLoginId()` 적용
+- [x] `GlobalExceptionHandler` — `AuthenticationException` (401), `AccessDeniedException` (403) 핸들러 추가
+- [x] `SwaggerConfig` — JWT Bearer 인증 스킴 (`bearerAuth`) 등록
+- [x] `PromptServiceTest` — `createPrompt(userId, dto)` 시그니처 변경 반영
 
 ---
 

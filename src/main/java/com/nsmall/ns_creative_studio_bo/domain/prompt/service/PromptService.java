@@ -23,10 +23,11 @@ public interface PromptService {
     /**
      * 프롬프트를 생성하고 히스토리를 저장한다.
      *
-     * @param dto 프롬프트 생성 요청 DTO (userId, categoryId, tagIds)
+     * @param currentUserId JWT SecurityContext에서 추출한 현재 로그인 사용자 ID
+     * @param dto           프롬프트 생성 요청 DTO (categoryId, tagIds)
      * @return 생성된 프롬프트 히스토리 응답 DTO
      */
-    PromptHistoryRespDto createPrompt(PromptCreateReqDto dto);
+    PromptHistoryRespDto createPrompt(Long currentUserId, PromptCreateReqDto dto);
 
     /**
      * 요청 사용자의 권한에 따라 프롬프트 히스토리 목록을 조회한다.

@@ -138,12 +138,11 @@ public class PromptServiceTest {
         TagRespDto tag = 태그_생성("분위기_한도미만", "화사한");
 
         PromptCreateReqDto dto = PromptCreateReqDto.builder()
-                .userId(user.getId())
                 .categoryId(dcs.getId())
                 .tagIds(List.of(tag.getId()))
                 .build();
 
-        PromptHistoryRespDto result = promptService.createPrompt(dto);
+        PromptHistoryRespDto result = promptService.createPrompt(user.getId(), dto);
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isNotNull();
@@ -164,12 +163,11 @@ public class PromptServiceTest {
         CategoryRespDto dcs = DCS_카테고리_생성("태그없음");
 
         PromptCreateReqDto dto = PromptCreateReqDto.builder()
-                .userId(user.getId())
                 .categoryId(dcs.getId())
                 .tagIds(List.of())
                 .build();
 
-        PromptHistoryRespDto result = promptService.createPrompt(dto);
+        PromptHistoryRespDto result = promptService.createPrompt(user.getId(), dto);
 
         assertThat(result).isNotNull();
         assertThat(result.getTagIds()).isEmpty();
@@ -184,7 +182,6 @@ public class PromptServiceTest {
 
         UserRespDto user = 유저_생성("prompt_user_path", "USER", "팀A", 5);
 
-        // 의미 있는 이름으로 4단계 계층 생성
         CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
                 .name("식품").categoryType(CategoryType.LCS).sortOrder(1).build());
         CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
@@ -195,14 +192,12 @@ public class PromptServiceTest {
                 .name("인삼").categoryType(CategoryType.DCS).parentId(scs.getId()).sortOrder(1).build());
 
         PromptCreateReqDto dto = PromptCreateReqDto.builder()
-                .userId(user.getId())
                 .categoryId(dcs.getId())
                 .tagIds(List.of())
                 .build();
 
-        promptService.createPrompt(dto);
+        promptService.createPrompt(user.getId(), dto);
 
-        // Gemini에 전달된 categoryName 캡처
         ArgumentCaptor<String> categoryNameCaptor = ArgumentCaptor.forClass(String.class);
         verify(geminiService).generatePrompt(categoryNameCaptor.capture(), any());
 
@@ -222,12 +217,11 @@ public class PromptServiceTest {
         히스토리_직접_삽입(user.getId(), dcs.getId());
 
         PromptCreateReqDto dto = PromptCreateReqDto.builder()
-                .userId(user.getId())
                 .categoryId(dcs.getId())
                 .tagIds(List.of())
                 .build();
 
-        assertThatThrownBy(() -> promptService.createPrompt(dto))
+        assertThatThrownBy(() -> promptService.createPrompt(user.getId(), dto))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.DAILY_LIMIT_EXCEEDED));
@@ -237,12 +231,11 @@ public class PromptServiceTest {
     @DisplayName("[예외] 프롬프트 생성 - 존재하지 않는 사용자")
     void 예외_프롬프트_생성_사용자_미존재() {
         PromptCreateReqDto dto = PromptCreateReqDto.builder()
-                .userId(Long.MAX_VALUE)
                 .categoryId(1L)
                 .tagIds(List.of())
                 .build();
 
-        assertThatThrownBy(() -> promptService.createPrompt(dto))
+        assertThatThrownBy(() -> promptService.createPrompt(Long.MAX_VALUE, dto))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.USER_NOT_FOUND));
@@ -256,12 +249,11 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("prompt_user_nocat", "USER", "팀C", 5);
 
         PromptCreateReqDto dto = PromptCreateReqDto.builder()
-                .userId(user.getId())
                 .categoryId(Long.MAX_VALUE)
                 .tagIds(List.of())
                 .build();
 
-        assertThatThrownBy(() -> promptService.createPrompt(dto))
+        assertThatThrownBy(() -> promptService.createPrompt(user.getId(), dto))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.CATEGORY_NOT_FOUND));
@@ -278,12 +270,11 @@ public class PromptServiceTest {
                 .name("DCS검증_대분류").categoryType(CategoryType.LCS).sortOrder(1).build());
 
         PromptCreateReqDto dto = PromptCreateReqDto.builder()
-                .userId(user.getId())
                 .categoryId(lcs.getId())
                 .tagIds(List.of())
                 .build();
 
-        assertThatThrownBy(() -> promptService.createPrompt(dto))
+        assertThatThrownBy(() -> promptService.createPrompt(user.getId(), dto))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.INVALID_CATEGORY_TYPE));
@@ -310,10 +301,8 @@ public class PromptServiceTest {
         List<PromptHistoryRespDto> result = promptService.getPromptHistories(userA1.getId());
 
         assertThat(result).isNotEmpty();
-        // userB (팀Beta) 의 히스토리는 포함되지 않아야 한다
         List<Long> userIds = result.stream().map(PromptHistoryRespDto::getUserId).toList();
         assertThat(userIds).doesNotContain(userB.getId());
-        // 같은 팀(Alpha)의 히스토리는 포함
         assertThat(userIds).contains(userA1.getId(), userA2.getId());
     }
 

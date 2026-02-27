@@ -9,6 +9,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -32,6 +34,26 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    /** 인증 실패 (토큰 없음 / 만료 / 위조) — 401 */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<CommonResponse<Void>> handleAuthenticationException(
+            AuthenticationException e, HttpServletRequest request) {
+        log.warn("인증 실패 [API: {} {}]: {}", request.getMethod(), request.getRequestURI(), e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(CommonResponse.fail(HttpStatus.UNAUTHORIZED.value(), "인증이 필요합니다."));
+    }
+
+    /** 권한 부족 — 403 */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<CommonResponse<Void>> handleAccessDeniedException(
+            AccessDeniedException e, HttpServletRequest request) {
+        log.warn("접근 거부 [API: {} {}]: {}", request.getMethod(), request.getRequestURI(), e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.FORBIDDEN)
+                .body(CommonResponse.fail(HttpStatus.FORBIDDEN.value(), "접근 권한이 없습니다."));
+    }
 
     /** 비즈니스 예외 처리 */
     @ExceptionHandler(BizException.class)

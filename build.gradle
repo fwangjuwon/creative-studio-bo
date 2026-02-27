@@ -55,11 +55,11 @@ dependencies {
 
     // Gemini API — Spring RestClient 사용 (별도 SDK 없음, spring-boot-starter-web 포함)
 
-    // Step 4에서 추가 예정
-//  implementation 'org.springframework.boot:spring-boot-starter-security'
-//  implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
-//  runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-//  runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    // Spring Security + JWT (Step 4)
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 
     // Test
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -67,9 +67,7 @@ dependencies {
     testImplementation "org.junit.platform:junit-platform-suite-api:${junitPlatformVersion}"
     testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junitPlatformVersion}"
     testRuntimeOnly "org.junit.platform:junit-platform-suite-engine:${junitPlatformVersion}"
-
-    // Step 4에서 추가 예정
-//  testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {

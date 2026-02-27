@@ -8,9 +8,11 @@ import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -30,30 +32,43 @@ public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "회원 생성", description = "ADMIN 전용 — Step 4 Security 적용 후 접근 제어 추가 예정")
+    @Operation(summary = "회원 생성", description = "ADMIN 전용",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "회원 생성 성공")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public CommonResponse<UserRespDto> createUser(@RequestBody @Valid UserCreateReqDto dto) {
         return CommonResponse.success(userService.createUser(dto));
     }
 
-    @Operation(summary = "회원 단건 조회", description = "존재하지 않는 id면 200 + data: null 반환")
+    @Operation(summary = "회원 단건 조회", description = "ADMIN 전용 — 존재하지 않는 id면 200 + data: null 반환",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "조회 성공 (미존재 시 data: null)")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
     public CommonResponse<UserRespDto> getUser(@PathVariable Long id) {
         Optional<UserRespDto> result = userService.getUser(id);
         return CommonResponse.success(result.orElse(null));
     }
 
-    @Operation(summary = "회원 목록 조회", description = "name / teamName / role 검색 조건 선택 가능 (미입력 시 전체 조회)")
+    @Operation(summary = "회원 목록 조회", description = "ADMIN 전용 — name / teamName / role 검색 조건 선택 가능",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "목록 조회 성공")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public CommonResponse<List<UserRespDto>> getUsers(UserSearchReqDto searchDto) {
         return CommonResponse.success(userService.getUsers(searchDto));
     }
 
-    @Operation(summary = "회원 수정", description = "ADMIN 전용 — Step 4 Security 적용 후 접근 제어 추가 예정")
+    @Operation(summary = "회원 수정", description = "ADMIN 전용",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "수정 성공")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public CommonResponse<UserRespDto> updateUser(
             @PathVariable Long id,
@@ -61,8 +76,11 @@ public class UserController {
         return CommonResponse.success(userService.updateUser(id, dto));
     }
 
-    @Operation(summary = "회원 삭제", description = "ADMIN 전용 — Step 4 Security 적용 후 접근 제어 추가 예정")
+    @Operation(summary = "회원 삭제", description = "ADMIN 전용",
+            security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "삭제 성공")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public CommonResponse<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);

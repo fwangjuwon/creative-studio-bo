@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.user.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
@@ -36,8 +37,7 @@ public class UserServiceImpl implements UserService {
         });
 
         LocalDateTime now = LocalDateTime.now();
-        // TODO: Step 4 (Security 추가) 이후 SecurityContext에서 현재 로그인 사용자 loginId로 교체
-        String requesterId = "system";
+        String requesterId = SecurityUtil.getCurrentLoginId();
 
         User user = User.builder()
                 .loginId(dto.getLoginId())
@@ -76,8 +76,7 @@ public class UserServiceImpl implements UserService {
         User existing = userMapper.selectById(id)
                 .orElseThrow(() -> new BizException(UserErrorCode.USER_NOT_FOUND, "회원을 찾을 수 없습니다. id=" + id));
 
-        // TODO: Step 4 (Security 추가) 이후 SecurityContext에서 현재 로그인 사용자 loginId로 교체
-        String requesterId = "system";
+        String requesterId = SecurityUtil.getCurrentLoginId();
 
         String encodedPassword = (dto.getPassword() != null && !dto.getPassword().isBlank())
                 ? passwordEncoder.encode(dto.getPassword())
