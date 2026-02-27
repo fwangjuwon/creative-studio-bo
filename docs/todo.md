@@ -1,51 +1,11 @@
 # TODO
 
 > 상태: 🟡 Step 3 진행 중
-> 최종 업데이트: 2026-02-26 (Step 3-A-T 완료)
+> 최종 업데이트: 2026-02-27 (Step 3-B 계층 검증 보완 + Step 3-B-T 테스트 보완)
 
 ---
 
 ## 진행 중
-
-### Step 3-A. User CRUD
-- [x] `User` entity
-- [x] `UserMapper` 인터페이스 + `UserMapper.xml`
-- [x] `UserService`
-- [x] `UserController` (`/api/users`)
-- [x] `UserCreateReqDto`, `UserUpdateReqDto`, `UserSearchReqDto`, `UserRespDto`
-- [x] 비밀번호 BCrypt 암호화 (`BCryptPasswordEncoder` 직접 사용, Security 없이)
-- [x] `common/exception` — `BizException`, `ErrorCode`(인터페이스), `GlobalExceptionHandler` (`NotFoundException`, `BusinessException` 제거)
-- [x] `common/config/PasswordEncoderConfig` — `BCryptPasswordEncoder` Bean 등록
-
----
-
-## 예정
-
-### Step 3-A-T. User Service 단위 테스트
-- [x] `UserServiceTest` 작성
-  - [x] 회원 생성 — 비밀번호 BCrypt 암호화 검증
-  - [x] 회원 생성 — 중복 loginId 처리
-  - [x] 회원 단건 조회 — 존재 / 미존재
-  - [x] 회원 목록 조회 (전체 / 조건별 필터링 / 이름 LIKE 검색)
-  - [x] 회원 수정 (이름·권한·팀명·한도 / 비밀번호 변경 BCrypt 재검증 / 비밀번호 null 시 기존 유지 / 미존재 예외)
-  - [x] 회원 삭제 (삭제 후 미존재 확인 / 미존재 예외)
-- [x] `UserServiceTests` Suite 작성
-- [x] `AllServiceTests` Suite 작성
-- [x] `AllLayersTests` Suite 작성
-
-### Step 3-B. Category CRUD
-- [ ] `Category` entity + `CategoryType` enum
-- [ ] `CategoryMapper` 인터페이스 + `CategoryMapper.xml`
-- [ ] `CategoryService`
-- [ ] `CategoryController` (`/api/categories`)
-- [ ] `CategoryCreateReqDto`, `CategoryUpdateReqDto`, `CategoryRespDto`
-- [ ] 단계별 드릴다운 조회 (parent_id 기반)
-
-### Step 3-B-T. Category Service 단위 테스트
-- [ ] `CategoryServiceTest` 작성
-  - [ ] 카테고리 생성
-  - [ ] 단계별 드릴다운 조회 — LCS / MCS / SCS / DCS
-  - [ ] 수정 / 삭제
 
 ### Step 3-C. TagGroup / Tag CRUD
 - [ ] `TagGroup`, `Tag` entity
@@ -80,6 +40,51 @@
 ---
 
 ## 완료
+
+### Step 3-B. Category CRUD
+- [x] `Category` entity + `CategoryType` enum
+- [x] `CategoryMapper` 인터페이스 + `CategoryMapper.xml`
+- [x] `CategoryService` (인터페이스 + 구현체)
+- [x] `CategoryController` (`/api/categories`)
+- [x] `CategoryCreateReqDto`, `CategoryUpdateReqDto`, `CategoryRespDto`
+- [x] 단계별 드릴다운 조회 (parent_id 기반)
+- [x] `CategoryErrorCode` enum
+- [x] 계층 구조 유효성 검증 (LCS↔parentId 일관성, `INVALID_CATEGORY_HIERARCHY` C003)
+
+### Step 3-B-T. Category Service 단위 테스트
+- [x] `CategoryServiceTest` 작성
+  - [x] 카테고리 생성 — LCS (parentId null)
+  - [x] 카테고리 생성 — 하위 카테고리 (MCS/SCS/DCS)
+  - [x] 카테고리 생성 — 계층 구조 위반 예외 (LCS에 parentId 입력 / MCS·SCS·DCS에 parentId null)
+  - [x] 카테고리 생성 — 상위 카테고리 미존재 예외
+  - [x] 단건 조회 — 존재 / 미존재
+  - [x] 단계별 드릴다운 조회 — LCS / 하위 카테고리 / 4단계 전체
+  - [x] 수정 (이름·정렬순서 / 미존재 예외)
+  - [x] 삭제 (삭제 후 미존재 확인 / 미존재 예외)
+- [x] `CategoryServiceTests` Suite 작성
+- [x] `AllServiceTests` — `CategoryServiceTests` 추가
+
+### Step 3-A. User CRUD
+- [x] `User` entity
+- [x] `UserMapper` 인터페이스 + `UserMapper.xml`
+- [x] `UserService`
+- [x] `UserController` (`/api/users`)
+- [x] `UserCreateReqDto`, `UserUpdateReqDto`, `UserSearchReqDto`, `UserRespDto`
+- [x] 비밀번호 BCrypt 암호화 (`BCryptPasswordEncoder` 직접 사용, Security 없이)
+- [x] `common/exception` — `BizException`, `ErrorCode`(인터페이스), `GlobalExceptionHandler` (`NotFoundException`, `BusinessException` 제거)
+- [x] `common/config/PasswordEncoderConfig` — `BCryptPasswordEncoder` Bean 등록
+
+### Step 3-A-T. User Service 단위 테스트
+- [x] `UserServiceTest` 작성
+  - [x] 회원 생성 — 비밀번호 BCrypt 암호화 검증
+  - [x] 회원 생성 — 중복 loginId 처리
+  - [x] 회원 단건 조회 — 존재 / 미존재
+  - [x] 회원 목록 조회 (전체 / 조건별 필터링 / 이름 LIKE 검색)
+  - [x] 회원 수정 (이름·권한·팀명·한도 / 비밀번호 변경 BCrypt 재검증 / 비밀번호 null 시 기존 유지 / 미존재 예외)
+  - [x] 회원 삭제 (삭제 후 미존재 확인 / 미존재 예외)
+- [x] `UserServiceTests` Suite 작성
+- [x] `AllServiceTests` Suite 작성
+- [x] `AllLayersTests` Suite 작성
 
 ### 테스트 환경 설정
 - [x] `build.gradle` — `test` 태스크에 `.env` 로딩 추가 (Gradle 실행 시 환경변수 자동 주입)
