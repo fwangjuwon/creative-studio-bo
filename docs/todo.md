@@ -1,7 +1,46 @@
 # TODO
 
-> 상태: ✅ Step 4 완료
-> 최종 업데이트: 2026-02-27 (Step 4 — Spring Security + JWT 인증/인가 추가)
+> 상태: 🔧 Refactor 진행 중
+> 최종 업데이트: 2026-03-03 (Refactor — Goods 네이밍 명시)
+
+---
+
+## 진행 중
+
+### Refactor. Goods 네이밍 명시 (`refactor/goods-naming`)
+
+> **배경**: 인물(People) 프롬프트 생성 기능 추가 예정으로, 기존 상품(Goods) 프롬프트 관련
+> 메서드·클래스·DB 컬럼에 `Goods`를 명시하여 향후 `People`, `GoodsAndPeople` 구분을 명확히 한다.
+> `getPromptHistories()` 조회 메서드는 상품/인물 구분 없이 동일 관점이므로 변경하지 않는다.
+
+#### DTO
+- [ ] `PromptCreateReqDto` → `GoodsPromptCreateReqDto` (파일명 포함 rename)
+  - [ ] `categoryId` 필드 → `goodsCategoryId`
+
+#### GeminiService / GeminiServiceImpl
+- [ ] `GeminiService.generatePrompt()` → `generateGoodsPrompt()`
+- [ ] `GeminiServiceImpl.generatePrompt()` → `generateGoodsPrompt()`
+- [ ] `GeminiServiceImpl.SYSTEM_PROMPT` 상수 → `GOODS_SYSTEM_PROMPT`
+- [ ] `GeminiServiceImpl.buildUserMessage()` → `buildGoodsUserMessage()`
+
+#### PromptService / PromptServiceImpl
+- [ ] `PromptService.createPrompt()` → `createGoodsPrompt()`
+- [ ] `PromptServiceImpl.createPrompt()` → `createGoodsPrompt()`
+
+#### PromptController
+- [ ] `createPrompt()` → `createGoodsPrompt()`
+- [ ] 엔드포인트 URL `POST /api/prompts` → `POST /api/prompts/goods`
+  - ℹ️ `GET /api/prompts` 히스토리 조회는 URL 유지
+
+#### DB 컬럼 + 관련 파일
+- [ ] `db/schema.sql` — `prompt_history.category_id` → `goods_category_id`
+- [ ] `PromptHistory` entity — `categoryId` → `goodsCategoryId`
+- [ ] `PromptHistoryRespDto` — `categoryId` → `goodsCategoryId`
+- [ ] `PromptHistoryMapper.xml` — SQL 컬럼명 수정
+- [ ] `docs/erd.md` — `category_id` → `goods_category_id` 반영
+
+#### 테스트 코드
+- [ ] `PromptServiceTest` — 변경된 메서드명 및 DTO 필드명 반영
 
 ---
 
