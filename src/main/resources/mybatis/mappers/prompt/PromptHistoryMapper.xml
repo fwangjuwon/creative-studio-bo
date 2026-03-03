@@ -6,7 +6,7 @@
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO prompt_history (
             user_id,
-            category_id,
+            goods_category_id,
             prompt_text,
             init_regi_pic,
             init_regi_dttm,
@@ -14,7 +14,7 @@
             final_rvis_dttm
         ) VALUES (
             #{userId},
-            #{categoryId},
+            #{goodsCategoryId},
             #{promptText},
             #{initRegiPic},
             #{initRegiDttm},
@@ -27,7 +27,7 @@
         SELECT
             id,
             user_id,
-            category_id,
+            goods_category_id,
             prompt_text,
             init_regi_pic,
             init_regi_dttm,
@@ -46,7 +46,7 @@
         SELECT
             ph.id,
             ph.user_id,
-            ph.category_id,
+            ph.goods_category_id,
             ph.prompt_text,
             ph.init_regi_pic,
             ph.init_regi_dttm,

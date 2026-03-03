@@ -23,7 +23,7 @@ public class PromptHistoryRespDto {
 
     private Long id;
     private Long userId;
-    private Long categoryId;
+    private Long goodsCategoryId;
     private String promptText;
     private List<Long> tagIds;
     private String initRegiPic;
@@ -34,7 +34,7 @@ public class PromptHistoryRespDto {
         return PromptHistoryRespDto.builder()
                 .id(history.getId())
                 .userId(history.getUserId())
-                .categoryId(history.getCategoryId())
+                .goodsCategoryId(history.getGoodsCategoryId())
                 .promptText(history.getPromptText())
                 .tagIds(tagIds)
                 .initRegiPic(history.getInitRegiPic())

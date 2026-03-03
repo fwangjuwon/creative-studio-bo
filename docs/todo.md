@@ -1,6 +1,6 @@
 # TODO
 
-> 상태: 🔧 Refactor 진행 중
+> 상태: ✅ Refactor 완료
 > 최종 업데이트: 2026-03-03 (Refactor — Goods 네이밍 명시)
 
 ---
@@ -14,33 +14,33 @@
 > `getPromptHistories()` 조회 메서드는 상품/인물 구분 없이 동일 관점이므로 변경하지 않는다.
 
 #### DTO
-- [ ] `PromptCreateReqDto` → `GoodsPromptCreateReqDto` (파일명 포함 rename)
-  - [ ] `categoryId` 필드 → `goodsCategoryId`
+- [x] `PromptCreateReqDto` → `GoodsPromptCreateReqDto` (파일명 포함 rename)
+  - [x] `categoryId` 필드 → `goodsCategoryId`
 
 #### GeminiService / GeminiServiceImpl
-- [ ] `GeminiService.generatePrompt()` → `generateGoodsPrompt()`
-- [ ] `GeminiServiceImpl.generatePrompt()` → `generateGoodsPrompt()`
-- [ ] `GeminiServiceImpl.SYSTEM_PROMPT` 상수 → `GOODS_SYSTEM_PROMPT`
-- [ ] `GeminiServiceImpl.buildUserMessage()` → `buildGoodsUserMessage()`
+- [x] `GeminiService.generatePrompt()` → `generateGoodsPrompt()`
+- [x] `GeminiServiceImpl.generatePrompt()` → `generateGoodsPrompt()`
+- [x] `GeminiServiceImpl.SYSTEM_PROMPT` 상수 → `GOODS_SYSTEM_PROMPT`
+- [x] `GeminiServiceImpl.buildUserMessage()` → `buildGoodsUserMessage()`
 
 #### PromptService / PromptServiceImpl
-- [ ] `PromptService.createPrompt()` → `createGoodsPrompt()`
-- [ ] `PromptServiceImpl.createPrompt()` → `createGoodsPrompt()`
+- [x] `PromptService.createPrompt()` → `createGoodsPrompt()`
+- [x] `PromptServiceImpl.createPrompt()` → `createGoodsPrompt()`
 
 #### PromptController
-- [ ] `createPrompt()` → `createGoodsPrompt()`
-- [ ] 엔드포인트 URL `POST /api/prompts` → `POST /api/prompts/goods`
+- [x] `createPrompt()` → `createGoodsPrompt()`
+- [x] 엔드포인트 URL `POST /api/prompts` → `POST /api/prompts/goods`
   - ℹ️ `GET /api/prompts` 히스토리 조회는 URL 유지
 
 #### DB 컬럼 + 관련 파일
-- [ ] `db/schema.sql` — `prompt_history.category_id` → `goods_category_id`
-- [ ] `PromptHistory` entity — `categoryId` → `goodsCategoryId`
-- [ ] `PromptHistoryRespDto` — `categoryId` → `goodsCategoryId`
-- [ ] `PromptHistoryMapper.xml` — SQL 컬럼명 수정
-- [ ] `docs/erd.md` — `category_id` → `goods_category_id` 반영
+- [x] `db/schema.sql` — `prompt_history.category_id` → `goods_category_id`
+- [x] `PromptHistory` entity — `categoryId` → `goodsCategoryId`
+- [x] `PromptHistoryRespDto` — `categoryId` → `goodsCategoryId`
+- [x] `PromptHistoryMapper.xml` — SQL 컬럼명 수정
+- [x] `docs/erd.md` — `category_id` → `goods_category_id` 반영
 
 #### 테스트 코드
-- [ ] `PromptServiceTest` — 변경된 메서드명 및 DTO 필드명 반영
+- [x] `PromptServiceTest` — 변경된 메서드명 및 DTO 필드명 반영
 
 ---
 

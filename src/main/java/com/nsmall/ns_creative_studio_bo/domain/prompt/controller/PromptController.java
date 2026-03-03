@@ -2,7 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
 import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.PromptService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,20 +32,20 @@ public class PromptController {
     private final PromptService promptService;
 
     @Operation(
-            summary = "프롬프트 생성",
-            description = "카테고리와 태그를 기반으로 Gemini API를 통해 영문 이미지 생성 프롬프트를 생성한다. " +
+            summary = "상품 프롬프트 생성",
+            description = "상품 카테고리와 태그를 기반으로 Gemini API를 통해 영문 이미지 생성 프롬프트를 생성한다. " +
                           "일일 한도 초과 시 400 에러 응답. USER 이상 모든 권한 허용.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
-    @ApiResponse(responseCode = "200", description = "프롬프트 생성 성공")
+    @ApiResponse(responseCode = "200", description = "상품 프롬프트 생성 성공")
     @ApiResponse(responseCode = "400", description = "일일 한도 초과 / 유효하지 않은 입력값")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PreAuthorize("hasRole('USER')")
-    @PostMapping
-    public CommonResponse<PromptHistoryRespDto> createPrompt(
+    @PostMapping("/goods")
+    public CommonResponse<PromptHistoryRespDto> createGoodsPrompt(
             @AuthenticationPrincipal CustomUserDetails userDetails,
-            @RequestBody @Valid PromptCreateReqDto dto) {
-        return CommonResponse.success(promptService.createPrompt(userDetails.getId(), dto));
+            @RequestBody @Valid GoodsPromptCreateReqDto dto) {
+        return CommonResponse.success(promptService.createGoodsPrompt(userDetails.getId(), dto));
     }
 
     @Operation(
