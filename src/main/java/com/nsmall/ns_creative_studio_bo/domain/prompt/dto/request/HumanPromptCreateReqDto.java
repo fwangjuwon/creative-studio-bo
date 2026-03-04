@@ -34,4 +34,13 @@ public class HumanPromptCreateReqDto {
 
     /** 추가 지시 사항 (선택) */
     private String additionalNotes;
+
+    /**
+     * 프롬프트 스타일 (선택, 기본값: NANO_BANANA).
+     * <ul>
+     *   <li>{@code NANO_BANANA} — 문장형 (NanaBanana/Gemini 최적화)</li>
+     *   <li>{@code MID_JOURNEY} — 키워드 나열형 (MidJourney 최적화)</li>
+     * </ul>
+     */
+    private String promptStyle;
 }

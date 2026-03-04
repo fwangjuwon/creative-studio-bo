@@ -80,8 +80,10 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         log.debug("인간 이미지 프롬프트 생성 — stepOptionValues: {}", stepOptionValues);
 
-        // 4. Gemini 호출
-        String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes());
+        // 4. Gemini 호출 (promptStyle 기본값: NANO_BANANA)
+        String style = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
+                ? dto.getPromptStyle() : "NANO_BANANA";
+        String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes(), style);
 
         // 5. PromptHistory 저장 (PERSON 타입, categoryId=null, imageUrl=null)
         LocalDateTime now = LocalDateTime.now();

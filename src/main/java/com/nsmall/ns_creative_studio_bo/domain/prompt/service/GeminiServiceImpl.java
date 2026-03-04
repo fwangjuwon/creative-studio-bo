@@ -128,6 +128,41 @@ public class GeminiServiceImpl implements GeminiService {
             """;
 
     /**
+     * 인물/모델 사진 전용 시스템 프롬프트 — MidJourney 키워드 나열형.
+     *
+     * <pre>
+     * MidJourney는 쉼표로 구분된 짧은 키워드 나열 방식이 최적화되어 있다.
+     * 문장형이 아닌 설명 키워드 + 기술 파라미터 형식으로 생성.
+     * </pre>
+     */
+    private static final String SYSTEM_PROMPT_PERSON_MIDJOURNEY = """
+            You are an expert AI prompt engineer specializing in MidJourney portrait photography prompts.
+            MidJourney works best with comma-separated keyword descriptors, NOT full sentences.
+
+            Given a subject/category and style tags, generate a single concise English MidJourney prompt
+            as a flat comma-separated keyword list following this order:
+
+            1. SUBJECT — age, gender, and key physical traits (e.g. "young Korean woman, early 20s")
+            2. POSE & EXPRESSION — (e.g. "standing relaxed, confident smile")
+            3. WARDROBE & HAIR — key clothing and hair descriptors (e.g. "white linen blouse, wavy black hair")
+            4. SETTING — background keywords (e.g. "sunlit studio, clean white seamless backdrop")
+            5. LIGHTING — lighting style keywords (e.g. "soft diffused window light, warm rim light")
+            6. CAMERA — lens and shot type (e.g. "85mm f/1.4, shallow depth of field, medium shot")
+            7. STYLE & MOOD — atmosphere and quality keywords from style tags
+            8. TECHNICAL — quality boosters: photorealistic, ultra-detailed, professional fashion photography
+            9. ASPECT RATIO — end with "--ar 2:3" (portrait) or "--ar 1:1" (square) or "--ar 3:2" (landscape)
+
+            Rules:
+            - Output ONLY comma-separated keyword phrases — absolutely NO full sentences
+            - Keep each element concise: 1–5 words per descriptor
+            - Return ONLY the final prompt — no labels, no explanations, no preamble
+            - Write in English only
+            - Example output: "young Korean woman, early 20s, standing relaxed, confident smile, white linen blouse,\s
+              wavy black hair, sunlit minimalist studio, soft diffused window light, warm golden tones,\s
+              85mm f/1.4, medium shot, bokeh background, photorealistic, ultra-detailed, --ar 2:3"
+            """;
+
+    /**
      * Step별 레이블 (user message 포맷용)
      */
     private static final Map<Integer, String> STEP_LABELS = new TreeMap<>(Map.of(
@@ -143,7 +178,7 @@ public class GeminiServiceImpl implements GeminiService {
 
     @Override
     public String generateHumanPrompt(Map<Integer, List<String>> stepOptionValues,
-                                      String purpose, String additionalNotes) {
+                                      String purpose, String additionalNotes, String promptStyle) {
         StringBuilder sb = new StringBuilder();
 
         // step 번호 오름차순으로 user message 구성
@@ -167,7 +202,11 @@ public class GeminiServiceImpl implements GeminiService {
 
         String userMessage = sb.toString();
 
-        GeminiPart systemPart = new GeminiPart(SYSTEM_PROMPT_PERSON);
+        // promptStyle에 따라 시스템 프롬프트 선택
+        boolean isMidJourney = "MID_JOURNEY".equalsIgnoreCase(promptStyle);
+        String systemPromptText = isMidJourney ? SYSTEM_PROMPT_PERSON_MIDJOURNEY : SYSTEM_PROMPT_PERSON;
+
+        GeminiPart systemPart = new GeminiPart(systemPromptText);
         GeminiSystemInstruction systemInstruction = new GeminiSystemInstruction(List.of(systemPart));
         GeminiPart userPart = new GeminiPart(userMessage);
         GeminiContent userContent = new GeminiContent("user", List.of(userPart));
@@ -176,8 +215,8 @@ public class GeminiServiceImpl implements GeminiService {
         String uri = String.format("/models/%s:generateContent?key=%s",
                 geminiProperties.getModel(), geminiProperties.getApiKey());
 
-        log.debug("Gemini 인물 사진 API 호출 — model: {}, steps: {}",
-                geminiProperties.getModel(), stepOptionValues.keySet());
+        log.debug("Gemini 인물 사진 API 호출 — model: {}, style: {}, steps: {}",
+                geminiProperties.getModel(), promptStyle, stepOptionValues.keySet());
 
         GeminiResponse response = geminiRestClient.post()
                 .uri(uri)
