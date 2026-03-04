@@ -2,17 +2,16 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 
 import java.util.List;
-
-
 
 /**
  * 인간 이미지 프롬프트 서비스 인터페이스
  *
  * <pre>
  * 5단계 구조 조회 및 인간 이미지 전용 프롬프트 생성을 담당한다.
- * 히스토리 저장 없음 (MVP 단계).
+ * 프롬프트 생성 시 prompt_history 테이블에 이력 저장 (promptType='PERSON').
  * </pre>
  *
  * @author jjhoo8936
@@ -29,19 +28,20 @@ public interface HumanPromptService {
     List<HumanPromptStepRespDto> getSteps();
 
     /**
-     * 선택된 옵션 기반으로 인간 이미지 프롬프트를 생성한다.
-     * 히스토리 저장 없음 (daily limit 체크 없음).
+     * 선택된 옵션 기반으로 인간 이미지 프롬프트를 생성하고 이력을 저장한다.
      *
-     * @param dto 선택 항목 맵 + 생성 목적 + 추가 지시
-     * @return Gemini가 생성한 영문 프롬프트 텍스트
+     * @param userId 현재 로그인 사용자 ID
+     * @param dto    선택 항목 맵 + 생성 목적 + 추가 지시
+     * @return 생성된 이력 DTO (id + promptText 포함)
      */
-    String createPrompt(HumanPromptCreateReqDto dto);
+    PromptHistoryRespDto createPrompt(Long userId, HumanPromptCreateReqDto dto);
 
     /**
-     * 영문 프롬프트 텍스트로 NanaBanana 이미지를 생성하고 접근 URL을 반환한다.
+     * NanaBanana 이미지를 생성하고, 기존 이력에 imageUrl을 업데이트한다.
      *
+     * @param historyId  업데이트할 prompt_history ID
      * @param promptText 이미지 생성에 사용할 영문 프롬프트
      * @return 생성된 이미지 접근 URL (/images/{uuid}.jpg)
      */
-    String generateImage(String promptText);
+    String generateImage(Long historyId, String promptText);
 }

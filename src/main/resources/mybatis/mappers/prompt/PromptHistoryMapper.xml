@@ -7,7 +7,9 @@
         INSERT INTO prompt_history (
             user_id,
             category_id,
+            prompt_type,
             prompt_text,
+            image_url,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -15,7 +17,9 @@
         ) VALUES (
             #{userId},
             #{categoryId},
+            #{promptType},
             #{promptText},
+            #{imageUrl},
             #{initRegiPic},
             #{initRegiDttm},
             #{finalRvisPic},
@@ -28,7 +32,9 @@
             id,
             user_id,
             category_id,
+            prompt_type,
             prompt_text,
+            image_url,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -47,7 +53,9 @@
             ph.id,
             ph.user_id,
             ph.category_id,
+            ph.prompt_type,
             ph.prompt_text,
+            ph.image_url,
             ph.init_regi_pic,
             ph.init_regi_dttm,
             ph.final_rvis_pic,
@@ -59,6 +67,13 @@
         </if>
         ORDER BY ph.init_regi_dttm DESC
     </select>
+
+    <update id="updateImageUrl">
+        UPDATE prompt_history
+        SET image_url       = #{imageUrl},
+            final_rvis_dttm = NOW()
+        WHERE id = #{id}
+    </update>
 
     <select id="countTodayByUserId" resultType="int">
         SELECT COUNT(*)

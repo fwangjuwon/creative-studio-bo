@@ -97,8 +97,10 @@ CREATE TABLE tag (
 CREATE TABLE prompt_history (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id         BIGINT          NOT NULL,           -- 논리 FK → user.id
-    category_id     BIGINT          NOT NULL,           -- 논리 FK → category.id (DCS)
+    category_id     BIGINT,                            -- 논리 FK → category.id (DCS), 인물 프롬프트는 NULL
+    prompt_type     VARCHAR(10)     NOT NULL DEFAULT 'PRODUCT',  -- 'PRODUCT' | 'PERSON'
     prompt_text     TEXT            NOT NULL,
+    image_url       VARCHAR(500),                      -- NanaBanana 이미지 생성 URL (없으면 NULL)
     init_regi_pic   VARCHAR(50),
     init_regi_dttm  TIMESTAMP,
     final_rvis_pic  VARCHAR(50),

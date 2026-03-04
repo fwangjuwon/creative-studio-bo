@@ -14,6 +14,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ImageGenerateReqDto {
 
+    /** 이력 업데이트용 — 프롬프트 생성 후 반환된 historyId (없으면 이력 업데이트 생략) */
+    private Long historyId;
+
     @NotBlank(message = "promptText는 필수입니다.")
     private String promptText;
 }

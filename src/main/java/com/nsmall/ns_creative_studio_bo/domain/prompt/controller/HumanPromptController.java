@@ -1,10 +1,12 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
+import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.ImageGenerateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.ImageGenerateRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -46,8 +49,7 @@ public class HumanPromptController {
 
     @Operation(
             summary = "인간 이미지 프롬프트 생성",
-            description = "5단계 구조에서 선택된 옵션 기반으로 Gemini API를 통해 영문 인간 이미지 프롬프트를 생성한다. " +
-                          "히스토리 저장 없음.",
+            description = "5단계 구조에서 선택된 옵션 기반으로 Gemini API를 통해 영문 인간 이미지 프롬프트를 생성하고 이력을 저장한다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "프롬프트 생성 성공")
@@ -55,14 +57,16 @@ public class HumanPromptController {
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PreAuthorize("hasRole('USER')")
     @PostMapping
-    public CommonResponse<String> createPrompt(@RequestBody @Valid HumanPromptCreateReqDto dto) {
-        return CommonResponse.success(humanPromptService.createPrompt(dto));
+    public CommonResponse<PromptHistoryRespDto> createPrompt(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestBody @Valid HumanPromptCreateReqDto dto) {
+        return CommonResponse.success(humanPromptService.createPrompt(userDetails.getId(), dto));
     }
 
     @Operation(
             summary = "인간 이미지 생성 (NanaBanana)",
             description = "영문 프롬프트 텍스트를 NanaBanana(gemini-3-pro-image-preview)에 전달하여 이미지를 생성하고 " +
-                          "서버에 저장 후 접근 URL을 반환한다.",
+                          "서버에 저장 후 접근 URL을 반환한다. historyId를 전달하면 이력의 imageUrl도 업데이트된다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "이미지 생성 성공")
@@ -71,7 +75,7 @@ public class HumanPromptController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/generate-image")
     public CommonResponse<ImageGenerateRespDto> generateImage(@RequestBody @Valid ImageGenerateReqDto dto) {
-        String imageUrl = humanPromptService.generateImage(dto.getPromptText());
+        String imageUrl = humanPromptService.generateImage(dto.getHistoryId(), dto.getPromptText());
         return CommonResponse.success(ImageGenerateRespDto.builder().imageUrl(imageUrl).build());
     }
 }
