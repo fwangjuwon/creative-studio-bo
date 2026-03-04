@@ -25,4 +25,7 @@ public class GeminiProperties {
     private String apiKey;
     private String model;
     private String baseUrl;
+
+    /** 이미지 생성 전용 모델 (NanoBanana) — gemini-3-pro-image-preview */
+    private String imageModel;
 }

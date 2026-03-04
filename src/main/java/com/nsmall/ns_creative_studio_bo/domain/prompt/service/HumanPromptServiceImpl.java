@@ -39,6 +39,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
     private final HumanPromptStepMapper humanPromptStepMapper;
     private final HumanPromptOptionMapper humanPromptOptionMapper;
     private final GeminiService geminiService;
+    private final ImageGenerationService imageGenerationService;
 
     @Override
     public List<HumanPromptStepRespDto> getSteps() {
@@ -72,5 +73,10 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         // 4. Gemini 호출
         return geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes());
+    }
+
+    @Override
+    public String generateImage(String promptText) {
+        return imageGenerationService.generateImage(promptText);
     }
 }

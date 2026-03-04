@@ -2,7 +2,9 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.ImageGenerateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.ImageGenerateRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -55,5 +57,21 @@ public class HumanPromptController {
     @PostMapping
     public CommonResponse<String> createPrompt(@RequestBody @Valid HumanPromptCreateReqDto dto) {
         return CommonResponse.success(humanPromptService.createPrompt(dto));
+    }
+
+    @Operation(
+            summary = "인간 이미지 생성 (NanaBanana)",
+            description = "영문 프롬프트 텍스트를 NanaBanana(gemini-3-pro-image-preview)에 전달하여 이미지를 생성하고 " +
+                          "서버에 저장 후 접근 URL을 반환한다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponse(responseCode = "200", description = "이미지 생성 성공")
+    @ApiResponse(responseCode = "400", description = "promptText 누락")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @PreAuthorize("hasRole('USER')")
+    @PostMapping("/generate-image")
+    public CommonResponse<ImageGenerateRespDto> generateImage(@RequestBody @Valid ImageGenerateReqDto dto) {
+        String imageUrl = humanPromptService.generateImage(dto.getPromptText());
+        return CommonResponse.success(ImageGenerateRespDto.builder().imageUrl(imageUrl).build());
     }
 }

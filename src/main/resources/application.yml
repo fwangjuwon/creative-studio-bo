@@ -16,7 +16,11 @@ mybatis:
 gemini:
   api-key: ${GEMINI_API_KEY:}
   model: gemini-3-flash-preview
+  image-model: gemini-3-pro-image-preview
   base-url: https://generativelanguage.googleapis.com/v1beta
+
+image:
+  storage-path: ./generated-images
 
 jwt:
   secret: ${JWT_SECRET:ns-creative-studio-bo-default-secret-key-for-local-dev-only}

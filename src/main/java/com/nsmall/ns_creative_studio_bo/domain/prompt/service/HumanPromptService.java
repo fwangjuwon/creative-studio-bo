@@ -5,6 +5,8 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptSt
 
 import java.util.List;
 
+
+
 /**
  * 인간 이미지 프롬프트 서비스 인터페이스
  *
@@ -34,4 +36,12 @@ public interface HumanPromptService {
      * @return Gemini가 생성한 영문 프롬프트 텍스트
      */
     String createPrompt(HumanPromptCreateReqDto dto);
+
+    /**
+     * 영문 프롬프트 텍스트로 NanaBanana 이미지를 생성하고 접근 URL을 반환한다.
+     *
+     * @param promptText 이미지 생성에 사용할 영문 프롬프트
+     * @return 생성된 이미지 접근 URL (/images/{uuid}.jpg)
+     */
+    String generateImage(String promptText);
 }
