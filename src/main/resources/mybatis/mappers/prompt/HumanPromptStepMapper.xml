@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper">
+
+    <!--
+        중첩 ResultMap: HumanPromptStepRespDto → AttrDto → OptionDto
+        MyBatis는 step_id가 같으면 같은 Step 객체에 attr을 계속 추가하고,
+        attr_id가 같으면 같은 Attr 객체에 option을 계속 추가한다.
+        SELECT 절에서 각 id를 명확한 alias로 구분한다.
+    -->
+    <resultMap id="StepResultMap"
+               type="com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto">
+        <id     property="id"         column="step_id"/>
+        <result property="stepNumber" column="step_number"/>
+        <result property="stepCode"   column="step_code"/>
+        <result property="name"       column="step_name"/>
+        <collection property="attrs"
+                    ofType="com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto$AttrDto">
+            <id     property="id"          column="attr_id"/>
+            <result property="name"        column="attr_name"/>
+            <result property="multiSelect" column="is_multi_select"/>
+            <result property="required"    column="is_required"/>
+            <result property="sortOrder"   column="attr_sort_order"/>
+            <collection property="options"
+                        ofType="com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto$OptionDto">
+                <id     property="id"          column="opt_id"/>
+                <result property="name"        column="opt_name"/>
+                <result property="promptValue" column="prompt_value"/>
+                <result property="sortOrder"   column="opt_sort_order"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="selectAllWithAttrsAndOptions" resultMap="StepResultMap">
+        SELECT
+            s.id              AS step_id,
+            s.step_number,
+            s.step_code,
+            s.name            AS step_name,
+            a.id              AS attr_id,
+            a.name            AS attr_name,
+            a.is_multi_select,
+            a.is_required,
+            a.sort_order      AS attr_sort_order,
+            o.id              AS opt_id,
+            o.name            AS opt_name,
+            o.prompt_value,
+            o.sort_order      AS opt_sort_order
+        FROM human_prompt_step s
+        LEFT JOIN human_prompt_attr a
+            ON a.step_id = s.id
+        LEFT JOIN human_prompt_option o
+            ON o.attr_id = a.id
+        ORDER BY s.step_number    ASC,
+                 a.sort_order     ASC NULLS LAST,
+                 a.id             ASC,
+                 o.sort_order     ASC NULLS LAST,
+                 o.id             ASC
+    </select>
+
+</mapper>

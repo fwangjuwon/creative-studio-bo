@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Gemini API 호출 서비스 인터페이스
@@ -23,4 +24,15 @@ public interface GeminiService {
      * @return Gemini가 생성한 영문 프롬프트 텍스트
      */
     String generatePrompt(String categoryName, List<String> tagNames);
+
+    /**
+     * 5단계 구조적 선택 기반 인간 이미지 전용 영문 프롬프트를 생성한다.
+     *
+     * @param stepOptionValues stepNumber(1~5) → 선택된 prompt_value 목록
+     * @param purpose          생성 목적 (nullable)
+     * @param additionalNotes  추가 지시 사항 (nullable)
+     * @return Gemini가 생성한 영문 프롬프트 텍스트
+     */
+    String generateHumanPrompt(Map<Integer, List<String>> stepOptionValues,
+                               String purpose, String additionalNotes);
 }

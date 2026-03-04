@@ -11,6 +11,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Gemini API 호출 서비스 구현체
@@ -75,8 +77,117 @@ public class GeminiServiceImpl implements GeminiService {
             - Length: 3 to 5 descriptive sentences
             """;
 
+    /**
+     * 인물/모델 사진 전용 시스템 프롬프트 (7단계 구조).
+     *
+     * <pre>
+     * 인물 중심 portrait/fashion 사진에 최적화된 구조.
+     * </pre>
+     */
+    private static final String SYSTEM_PROMPT_PERSON = """
+            You are an expert AI portrait and fashion photography prompt engineer specializing
+            in high-quality human subject photography for AI image generation tools such as
+            Gemini and Midjourney.
+
+            Given a subject/category and style tags, generate a single vivid English portrait prompt
+            following this exact structure:
+
+            1. SUBJECT — Age aesthetic, gender presentation, pose, and facial expression:
+               "A [age aesthetic, e.g. young adult / mid-30s] [gender presentation, e.g. woman / man]
+                [pose, e.g. standing with relaxed posture / seated with crossed legs]
+                [expression, e.g. with a confident subtle smile / gazing thoughtfully into the distance]"
+
+            2. WARDROBE & STYLING — Clothing details, accessories, hair style and color:
+               Describe specific fabrics, fits, colors, and hair characteristics
+
+            3. SETTING — Location and background environment:
+               "in / against [specific environment, e.g. a sunlit minimalist studio / an urban
+                brick-wall alley / a lush green park at golden hour]"
+
+            4. LIGHTING — Portrait lighting setup and its effect:
+               "Lit with [setup, e.g. soft Rembrandt lighting / diffused window light /
+                warm rim lighting] to [effect, e.g. sculpt facial features / create a
+                dreamy ethereal glow / add depth and separation from the background]"
+
+            5. CAMERA — Lens choice, aperture, and angle:
+               "Shot on [lens, e.g. 85mm f/1.4 portrait lens / 50mm f/1.8] at [angle,
+                e.g. eye level / slight low angle], [depth of field detail,
+                e.g. with a creamy bokeh background / ultra-sharp throughout]"
+
+            6. MOOD & STYLE — Weave the style tags into the overall emotional tone and atmosphere
+
+            7. CLOSING — End with aspect ratio: "Portrait format." or "Square format."
+               or "Landscape format." depending on context
+
+            Rules:
+            - Write in NARRATIVE PARAGRAPH form — do NOT use comma-separated keyword lists
+            - Be hyper-specific: describe skin tone, hair texture, fabric materials, and fine details
+            - Return ONLY the final prompt text — no labels, no explanations, no preamble
+            - Write in English only
+            - Length: 3 to 5 descriptive sentences
+            """;
+
+    /**
+     * Step별 레이블 (user message 포맷용)
+     */
+    private static final Map<Integer, String> STEP_LABELS = new TreeMap<>(Map.of(
+            1, "Subject",
+            2, "Mood & Style",
+            3, "Realism",
+            4, "Lighting & Setting",
+            5, "Camera"
+    ));
+
     private final RestClient geminiRestClient;
     private final GeminiProperties geminiProperties;
+
+    @Override
+    public String generateHumanPrompt(Map<Integer, List<String>> stepOptionValues,
+                                      String purpose, String additionalNotes) {
+        StringBuilder sb = new StringBuilder();
+
+        // step 번호 오름차순으로 user message 구성
+        STEP_LABELS.forEach((stepNumber, label) -> {
+            List<String> values = stepOptionValues.get(stepNumber);
+            if (values != null && !values.isEmpty()) {
+                sb.append("Step ").append(stepNumber)
+                  .append(" (").append(label).append("): ")
+                  .append(String.join(", ", values))
+                  .append("\n");
+            }
+        });
+
+        if (purpose != null && !purpose.isBlank()) {
+            sb.append("Purpose: ").append(purpose).append("\n");
+        }
+        if (additionalNotes != null && !additionalNotes.isBlank()) {
+            sb.append("Additional notes: ").append(additionalNotes).append("\n");
+        }
+        sb.append("Use case: High-end commercial portrait photography");
+
+        String userMessage = sb.toString();
+
+        GeminiPart systemPart = new GeminiPart(SYSTEM_PROMPT_PERSON);
+        GeminiSystemInstruction systemInstruction = new GeminiSystemInstruction(List.of(systemPart));
+        GeminiPart userPart = new GeminiPart(userMessage);
+        GeminiContent userContent = new GeminiContent("user", List.of(userPart));
+        GeminiRequest requestBody = new GeminiRequest(systemInstruction, List.of(userContent));
+
+        String uri = String.format("/models/%s:generateContent?key=%s",
+                geminiProperties.getModel(), geminiProperties.getApiKey());
+
+        log.debug("Gemini 인물 사진 API 호출 — model: {}, steps: {}",
+                geminiProperties.getModel(), stepOptionValues.keySet());
+
+        GeminiResponse response = geminiRestClient.post()
+                .uri(uri)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .retrieve()
+                .body(GeminiResponse.class);
+
+        return extractText(response);
+    }
 
     @Override
     public String generatePrompt(String categoryName, List<String> tagNames) {
