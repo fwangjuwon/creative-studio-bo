@@ -264,7 +264,7 @@ Tag (태그 값)
 PromptHistory (프롬프트 저장)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - user_id           BIGINT   (논리 FK → User, 제약 없음)
-  - category_id       BIGINT   (논리 FK → Category 최종 선택값, 제약 없음)
+  - goods_category_id BIGINT   (논리 FK → Category 최종 선택값 DCS, 제약 없음)
   - prompt_text       TEXT     (생성된 영문 프롬프트)
   - init_regi_pic     VARCHAR
   - init_regi_dttm    TIMESTAMP

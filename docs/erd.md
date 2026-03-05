@@ -123,7 +123,7 @@ LCS: 식품 (parent_id = NULL)
 |---|---|---|---|
 | `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 프롬프트 히스토리 고유 ID |
 | `user_id` | BIGINT | NOT NULL | 생성자 ID (논리 FK → `user.id`) |
-| `category_id` | BIGINT | NOT NULL | 선택한 DCS 카테고리 ID (논리 FK → `category.id`) |
+| `goods_category_id` | BIGINT | NOT NULL | 선택한 상품 DCS 카테고리 ID (논리 FK → `category.id`) |
 | `prompt_text` | TEXT | NOT NULL | Gemini가 생성한 영문 프롬프트 |
 | `init_regi_pic` | VARCHAR | | 등록자 |
 | `init_regi_dttm` | TIMESTAMP | | 등록일시 (일일 사용량 집계 기준) |
@@ -191,7 +191,7 @@ erDiagram
     PROMPT_HISTORY {
         bigint id PK
         bigint user_id
-        bigint category_id
+        bigint goods_category_id
         text prompt_text
         timestamp init_regi_dttm
     }

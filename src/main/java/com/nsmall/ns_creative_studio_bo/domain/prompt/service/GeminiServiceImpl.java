@@ -40,7 +40,7 @@ public class GeminiServiceImpl implements GeminiService {
      *   Opening → Setting → Lighting → Camera → Mood &amp; Style → Aspect Ratio
      * </pre>
      */
-    private static final String SYSTEM_PROMPT = """
+    private static final String GOODS_SYSTEM_PROMPT = """
             You are an expert AI image prompt engineer specializing in high-quality commercial
             product photography prompts for AI image generation tools such as Gemini and Midjourney.
 
@@ -229,15 +229,15 @@ public class GeminiServiceImpl implements GeminiService {
     }
 
     @Override
-    public String generatePrompt(String categoryName, List<String> tagNames) {
-        String userMessage = buildUserMessage(categoryName, tagNames);
+    public String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames) {
+        String userMessage = buildGoodsUserMessage(goodsCategoryName, tagNames);
         GeminiRequest requestBody = buildRequest(userMessage);
 
         String uri = String.format("/models/%s:generateContent?key=%s",
                 geminiProperties.getModel(), geminiProperties.getApiKey());
 
-        log.debug("Gemini API 호출 — model: {}, category: {}, tags: {}",
-                geminiProperties.getModel(), categoryName, tagNames);
+        log.debug("Gemini API 호출 — model: {}, goodsCategory: {}, tags: {}",
+                geminiProperties.getModel(), goodsCategoryName, tagNames);
 
         GeminiResponse response = geminiRestClient.post()
                 .uri(uri)
@@ -249,9 +249,9 @@ public class GeminiServiceImpl implements GeminiService {
         return extractText(response);
     }
 
-    private String buildUserMessage(String categoryName, List<String> tagNames) {
+    private String buildGoodsUserMessage(String goodsCategoryName, List<String> tagNames) {
         StringBuilder sb = new StringBuilder();
-        sb.append("Product Category: ").append(categoryName);
+        sb.append("Product Category: ").append(goodsCategoryName);
         if (tagNames != null && !tagNames.isEmpty()) {
             sb.append("\nStyle & Mood Tags: ").append(String.join(", ", tagNames));
         }
@@ -260,7 +260,7 @@ public class GeminiServiceImpl implements GeminiService {
     }
 
     private GeminiRequest buildRequest(String userMessage) {
-        GeminiPart systemPart = new GeminiPart(SYSTEM_PROMPT);
+        GeminiPart systemPart = new GeminiPart(GOODS_SYSTEM_PROMPT);
         GeminiSystemInstruction systemInstruction = new GeminiSystemInstruction(List.of(systemPart));
 
         GeminiPart userPart = new GeminiPart(userMessage);
