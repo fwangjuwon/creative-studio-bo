@@ -6,7 +6,7 @@ import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
 import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistoryTag;
@@ -53,7 +53,7 @@ public class PromptServiceImpl implements PromptService {
 
     @Override
     @Transactional
-    public PromptHistoryRespDto createPrompt(Long currentUserId, PromptCreateReqDto dto) {
+    public PromptHistoryRespDto createGoodsPrompt(Long currentUserId, GoodsPromptCreateReqDto dto) {
         // 1. 사용자 조회 + 일일 한도 체크
         User user = userMapper.selectById(currentUserId)
                 .orElseThrow(() -> new BizException(PromptErrorCode.USER_NOT_FOUND,
@@ -66,10 +66,10 @@ public class PromptServiceImpl implements PromptService {
             throw new BizException(PromptErrorCode.DAILY_LIMIT_EXCEEDED);
         }
 
-        // 2. 카테고리 조회 + DCS 검증
-        Category category = categoryMapper.selectById(dto.getCategoryId())
+        // 2. 상품 카테고리 조회 + DCS 검증
+        Category category = categoryMapper.selectById(dto.getGoodsCategoryId())
                 .orElseThrow(() -> new BizException(PromptErrorCode.CATEGORY_NOT_FOUND,
-                        "카테고리를 찾을 수 없습니다. categoryId=" + dto.getCategoryId()));
+                        "카테고리를 찾을 수 없습니다. categoryId=" + dto.getGoodsCategoryId()));
 
         if (CategoryType.DCS != category.getCategoryType()) {
             throw new BizException(PromptErrorCode.INVALID_CATEGORY_TYPE,
@@ -77,8 +77,8 @@ public class PromptServiceImpl implements PromptService {
         }
 
         // DCS 이름만 보내면 맥락이 불분명하므로 LCS→DCS 전체 경로를 조합하여 전달
-        List<String> categoryPath = categoryMapper.selectCategoryPath(dto.getCategoryId());
-        String categoryName = String.join(" > ", categoryPath);
+        List<String> categoryPath = categoryMapper.selectCategoryPath(dto.getGoodsCategoryId());
+        String goodsCategoryName = String.join(" > ", categoryPath);
 
         // 3. 태그 조회
         List<String> tagNames = dto.getTagIds().stream()
@@ -89,7 +89,7 @@ public class PromptServiceImpl implements PromptService {
                 .toList();
 
         // 4. Gemini API 호출
-        String promptText = geminiService.generatePrompt(categoryName, tagNames);
+        String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames);
 
         // 5. PromptHistory 저장
         LocalDateTime now = LocalDateTime.now();
@@ -97,7 +97,7 @@ public class PromptServiceImpl implements PromptService {
 
         PromptHistory history = PromptHistory.builder()
                 .userId(currentUserId)
-                .categoryId(dto.getCategoryId())
+                .goodsCategoryId(dto.getGoodsCategoryId())
                 .promptText(promptText)
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)

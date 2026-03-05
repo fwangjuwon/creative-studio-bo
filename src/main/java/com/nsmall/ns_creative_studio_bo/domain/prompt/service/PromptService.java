@@ -1,6 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
-import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 
 import java.util.List;
@@ -21,13 +21,13 @@ import java.util.List;
 public interface PromptService {
 
     /**
-     * 프롬프트를 생성하고 히스토리를 저장한다.
+     * 상품(Goods) 프롬프트를 생성하고 히스토리를 저장한다.
      *
      * @param currentUserId JWT SecurityContext에서 추출한 현재 로그인 사용자 ID
-     * @param dto           프롬프트 생성 요청 DTO (categoryId, tagIds)
+     * @param dto           상품 프롬프트 생성 요청 DTO (goodsCategoryId, tagIds)
      * @return 생성된 프롬프트 히스토리 응답 DTO
      */
-    PromptHistoryRespDto createPrompt(Long currentUserId, PromptCreateReqDto dto);
+    PromptHistoryRespDto createGoodsPrompt(Long currentUserId, GoodsPromptCreateReqDto dto);
 
     /**
      * 요청 사용자의 권한에 따라 프롬프트 히스토리 목록을 조회한다.

@@ -16,11 +16,11 @@ import java.util.List;
 public interface GeminiService {
 
     /**
-     * 카테고리와 태그 정보를 기반으로 영문 이미지 생성 프롬프트를 생성한다.
+     * 상품 카테고리와 태그 정보를 기반으로 영문 이미지 생성 프롬프트를 생성한다.
      *
-     * @param categoryName 선택한 상품 카테고리명
-     * @param tagNames     선택한 태그명 목록
+     * @param goodsCategoryName 선택한 상품 카테고리명 (LCS→DCS 전체 경로)
+     * @param tagNames          선택한 태그명 목록
      * @return Gemini가 생성한 영문 프롬프트 텍스트
      */
-    String generatePrompt(String categoryName, List<String> tagNames);
+    String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames);
 }

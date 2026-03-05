@@ -36,7 +36,7 @@ CREATE TABLE "user" (
 -- 설명: 상품 카테고리 4단계 계층 (LCS → MCS → SCS → DCS)
 --       self-reference 구조로 관리. LCS는 parent_id = NULL
 -- 논리 FK: category.parent_id → category.id (self-ref)
---          prompt_history.category_id → category.id
+--          prompt_history.goods_category_id → category.id
 -- -----------------------------------------------------------------------------
 CREATE TABLE category (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -92,12 +92,12 @@ CREATE TABLE tag (
 -- 설명: Gemini가 생성한 영문 프롬프트 저장
 --       init_regi_dttm 기준으로 일일 사용량 집계 (DATE(init_regi_dttm) = 오늘)
 -- 논리 FK: prompt_history.user_id → user.id
---          prompt_history.category_id → category.id (DCS만 저장)
+--          prompt_history.goods_category_id → category.id (DCS만 저장)
 -- -----------------------------------------------------------------------------
 CREATE TABLE prompt_history (
-    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id         BIGINT          NOT NULL,           -- 논리 FK → user.id
-    category_id     BIGINT          NOT NULL,           -- 논리 FK → category.id (DCS)
+    id                  BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id             BIGINT          NOT NULL,           -- 논리 FK → user.id
+    goods_category_id   BIGINT          NOT NULL,           -- 논리 FK → category.id (DCS, 상품군)
     prompt_text     TEXT            NOT NULL,
     init_regi_pic   VARCHAR(50),
     init_regi_dttm  TIMESTAMP,
