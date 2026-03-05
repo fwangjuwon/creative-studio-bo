@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper">
+
+    <!--
+        selectByIds: 선택된 option ID 목록으로 option 정보 + step_number 조회.
+        JOIN을 통해 step_number를 포함하여, 서비스에서 Map<stepNumber, List<promptValue>> 구성에 사용.
+    -->
+    <select id="selectByIds" resultType="HumanPromptOption">
+        SELECT
+            o.id,
+            o.attr_id,
+            o.name,
+            o.prompt_value,
+            o.sort_order,
+            s.step_number
+        FROM human_prompt_option o
+        INNER JOIN human_prompt_attr a
+            ON a.id = o.attr_id
+        INNER JOIN human_prompt_step s
+            ON s.id = a.step_id
+        WHERE o.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY s.step_number ASC, o.sort_order ASC
+    </select>
+
+</mapper>

@@ -23,8 +23,10 @@ public class PromptHistoryRespDto {
 
     private Long id;
     private Long userId;
-    private Long goodsCategoryId;
+    private Long categoryId;
+    private String promptType;     // 'PRODUCT' | 'PERSON'
     private String promptText;
+    private String imageUrl;       // 이미지 생성된 경우에만 값 있음
     private List<Long> tagIds;
     private String initRegiPic;
     private LocalDateTime initRegiDttm;
@@ -34,8 +36,10 @@ public class PromptHistoryRespDto {
         return PromptHistoryRespDto.builder()
                 .id(history.getId())
                 .userId(history.getUserId())
-                .goodsCategoryId(history.getGoodsCategoryId())
+                .categoryId(history.getCategoryId())
+                .promptType(history.getPromptType())
                 .promptText(history.getPromptText())
+                .imageUrl(history.getImageUrl())
                 .tagIds(tagIds)
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())

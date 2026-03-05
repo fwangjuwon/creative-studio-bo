@@ -28,8 +28,10 @@ public class PromptHistory {
 
     private Long id;
     private Long userId;
-    private Long goodsCategoryId;
+    private Long categoryId;       // 상품 프롬프트만 값 있음, 인물 프롬프트는 null
+    private String promptType;     // 'PRODUCT' | 'PERSON'
     private String promptText;
+    private String imageUrl;       // NanaBanana 이미지 URL (없으면 null)
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;

@@ -97,7 +97,8 @@ public class PromptServiceImpl implements PromptService {
 
         PromptHistory history = PromptHistory.builder()
                 .userId(currentUserId)
-                .goodsCategoryId(dto.getGoodsCategoryId())
+                .categoryId(dto.getGoodsCategoryId())
+                .promptType("PRODUCT")
                 .promptText(promptText)
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)

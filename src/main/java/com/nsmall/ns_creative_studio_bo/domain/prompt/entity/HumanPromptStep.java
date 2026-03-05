@@ -1,0 +1,32 @@
+package com.nsmall.ns_creative_studio_bo.domain.prompt.entity;
+
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.LocalDateTime;
+
+/**
+ * 인간 이미지 프롬프트 생성 단계 엔티티
+ *
+ * <pre>
+ * human_prompt_step 테이블 매핑.
+ * 5단계 (A~E): 핵심 피사체 / 분위기·스타일 / 리얼리즘 / 조명·배경 / 촬영기술
+ * </pre>
+ *
+ * @author jjhoo8936
+ * @since 2026-03-03
+ */
+@Getter
+@Builder
+public class HumanPromptStep {
+
+    private Long id;
+    private int stepNumber;      // 1~5
+    private String stepCode;     // A/B/C/D/E
+    private String name;
+
+    private String initRegiPic;
+    private LocalDateTime initRegiDttm;
+    private String finalRvisPic;
+    private LocalDateTime finalRvisDttm;
+}

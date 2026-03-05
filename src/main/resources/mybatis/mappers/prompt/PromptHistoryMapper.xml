@@ -6,16 +6,20 @@
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO prompt_history (
             user_id,
-            goods_category_id,
+            category_id,
+            prompt_type,
             prompt_text,
+            image_url,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
             final_rvis_dttm
         ) VALUES (
             #{userId},
-            #{goodsCategoryId},
+            #{categoryId},
+            #{promptType},
             #{promptText},
+            #{imageUrl},
             #{initRegiPic},
             #{initRegiDttm},
             #{finalRvisPic},
@@ -27,8 +31,10 @@
         SELECT
             id,
             user_id,
-            goods_category_id,
+            category_id,
+            prompt_type,
             prompt_text,
+            image_url,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -46,8 +52,10 @@
         SELECT
             ph.id,
             ph.user_id,
-            ph.goods_category_id,
+            ph.category_id,
+            ph.prompt_type,
             ph.prompt_text,
+            ph.image_url,
             ph.init_regi_pic,
             ph.init_regi_dttm,
             ph.final_rvis_pic,
@@ -59,6 +67,13 @@
         </if>
         ORDER BY ph.init_regi_dttm DESC
     </select>
+
+    <update id="updateImageUrl">
+        UPDATE prompt_history
+        SET image_url       = #{imageUrl},
+            final_rvis_dttm = NOW()
+        WHERE id = #{id}
+    </update>
 
     <select id="countTodayByUserId" resultType="int">
         SELECT COUNT(*)

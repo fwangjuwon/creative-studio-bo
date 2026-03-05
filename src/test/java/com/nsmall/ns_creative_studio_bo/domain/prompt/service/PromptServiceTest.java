@@ -112,7 +112,8 @@ public class PromptServiceTest {
     private void 히스토리_직접_삽입(Long userId, Long goodsCategoryId) {
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
-                .goodsCategoryId(goodsCategoryId)
+                .categoryId(goodsCategoryId)
+                .promptType("PRODUCT")
                 .promptText("direct insert prompt")
                 .initRegiPic("test")
                 .initRegiDttm(LocalDateTime.now())
@@ -148,7 +149,7 @@ public class PromptServiceTest {
         assertThat(result.getId()).isNotNull();
         assertThat(result.getPromptText()).isEqualTo(MOCK_PROMPT);
         assertThat(result.getUserId()).isEqualTo(user.getId());
-        assertThat(result.getGoodsCategoryId()).isEqualTo(dcs.getId());
+        assertThat(result.getCategoryId()).isEqualTo(dcs.getId());
         assertThat(result.getTagIds()).containsExactly(tag.getId());
     }
 

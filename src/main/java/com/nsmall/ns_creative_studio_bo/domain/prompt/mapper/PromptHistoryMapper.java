@@ -34,4 +34,9 @@ public interface PromptHistoryMapper {
      * 오늘 날짜 기준 해당 유저의 프롬프트 생성 횟수 조회 (일일 한도 체크용)
      */
     int countTodayByUserId(@Param("userId") Long userId);
+
+    /**
+     * 이미지 URL 업데이트 — 이미지 생성 완료 후 호출
+     */
+    void updateImageUrl(@Param("id") Long id, @Param("imageUrl") String imageUrl);
 }

@@ -95,10 +95,12 @@ CREATE TABLE tag (
 --          prompt_history.goods_category_id → category.id (DCS만 저장)
 -- -----------------------------------------------------------------------------
 CREATE TABLE prompt_history (
-    id                  BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id             BIGINT          NOT NULL,           -- 논리 FK → user.id
-    goods_category_id   BIGINT          NOT NULL,           -- 논리 FK → category.id (DCS, 상품군)
+    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id         BIGINT          NOT NULL,           -- 논리 FK → user.id
+    category_id     BIGINT,                            -- 논리 FK → category.id (DCS), 인물 프롬프트는 NULL
+    prompt_type     VARCHAR(10)     NOT NULL DEFAULT 'PRODUCT',  -- 'PRODUCT' | 'PERSON'
     prompt_text     TEXT            NOT NULL,
+    image_url       VARCHAR(500),                      -- NanaBanana 이미지 생성 URL (없으면 NULL)
     init_regi_pic   VARCHAR(50),
     init_regi_dttm  TIMESTAMP,
     final_rvis_pic  VARCHAR(50),
@@ -145,3 +147,80 @@ CREATE INDEX idx_tag_tag_group_id
 -- 프롬프트-태그 매핑 조회 최적화
 CREATE INDEX idx_prompt_history_tag_history_id
     ON prompt_history_tag (prompt_history_id);
+
+
+-- =============================================================================
+-- 인간(인물) 이미지 생성 프롬프트 — 5단계 구조
+-- =============================================================================
+
+-- -----------------------------------------------------------------------------
+-- TABLE: human_prompt_step
+-- 설명: 인간 이미지 프롬프트 생성 단계 (1~5)
+--       step_code: A/B/C/D/E (각 단계 식별 코드)
+-- 논리 FK: human_prompt_attr.step_id → human_prompt_step.id
+-- -----------------------------------------------------------------------------
+CREATE TABLE human_prompt_step (
+    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    step_number     INT             NOT NULL,           -- 1~5
+    step_code       VARCHAR(2)      NOT NULL,           -- A/B/C/D/E
+    name            VARCHAR(100)    NOT NULL,
+    init_regi_pic   VARCHAR(50),
+    init_regi_dttm  TIMESTAMP,
+    final_rvis_pic  VARCHAR(50),
+    final_rvis_dttm TIMESTAMP
+);
+
+
+-- -----------------------------------------------------------------------------
+-- TABLE: human_prompt_attr
+-- 설명: 각 단계 내 세부 항목 (연령대, 성별, 국적/인종 등)
+--       is_multi_select: 복수 선택 허용 여부
+--       is_required: 필수 선택 여부
+-- 논리 FK: human_prompt_attr.step_id → human_prompt_step.id
+--          human_prompt_option.attr_id → human_prompt_attr.id
+-- -----------------------------------------------------------------------------
+CREATE TABLE human_prompt_attr (
+    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    step_id         BIGINT          NOT NULL,           -- 논리 FK → human_prompt_step.id
+    name            VARCHAR(100)    NOT NULL,
+    is_multi_select BOOLEAN         NOT NULL DEFAULT FALSE,
+    is_required     BOOLEAN         NOT NULL DEFAULT FALSE,
+    sort_order      INT             NOT NULL DEFAULT 0,
+    init_regi_pic   VARCHAR(50),
+    init_regi_dttm  TIMESTAMP,
+    final_rvis_pic  VARCHAR(50),
+    final_rvis_dttm TIMESTAMP
+);
+
+
+-- -----------------------------------------------------------------------------
+-- TABLE: human_prompt_option
+-- 설명: 세부 항목의 선택지
+--       name: 한국어 표시명 (UI 노출)
+--       prompt_value: Gemini에 전달할 영문 값
+-- 논리 FK: human_prompt_option.attr_id → human_prompt_attr.id
+-- -----------------------------------------------------------------------------
+CREATE TABLE human_prompt_option (
+    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    attr_id         BIGINT          NOT NULL,           -- 논리 FK → human_prompt_attr.id
+    name            VARCHAR(200)    NOT NULL,           -- 한국어 표시명
+    prompt_value    VARCHAR(500)    NOT NULL,           -- Gemini 전달 영문값
+    sort_order      INT             NOT NULL DEFAULT 0,
+    init_regi_pic   VARCHAR(50),
+    init_regi_dttm  TIMESTAMP,
+    final_rvis_pic  VARCHAR(50),
+    final_rvis_dttm TIMESTAMP
+);
+
+
+-- -----------------------------------------------------------------------------
+-- INDEX (human_prompt)
+-- -----------------------------------------------------------------------------
+
+-- 단계 → 속성 조회 최적화
+CREATE INDEX idx_human_prompt_attr_step_id
+    ON human_prompt_attr (step_id);
+
+-- 속성 → 옵션 조회 최적화
+CREATE INDEX idx_human_prompt_option_attr_id
+    ON human_prompt_option (attr_id);
