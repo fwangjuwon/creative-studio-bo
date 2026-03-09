@@ -8,7 +8,7 @@
 ## [버그 1 - Critical] HumanPromptServiceImpl — 인물 프롬프트 일일 한도 체크 누락
 
 - **파일**: `domain/prompt/service/HumanPromptServiceImpl.java`
-- **상태**: ⬜ 미처리
+- **상태**: ✅ 완료
 
 ### 현상
 요구사항 3-1에 "USER는 하루 N회 프롬프트 생성 요청 가능, 제한 초과 시 에러 응답"이 명시되어 있다.
@@ -134,7 +134,7 @@ DCS 카테고리를 삭제하면 기존 프롬프트 히스토리에서 `categor
 
 | # | 심각도 | 내용 | 상태 |
 |---|--------|------|------|
-| 버그 1 | 🔴 Critical | 인물 프롬프트 일일 한도 체크 누락 | ⬜ 미처리 |
+| 버그 1 | 🔴 Critical | 인물 프롬프트 일일 한도 체크 누락 | ✅ 완료 |
 | 버그 2 | 🟡 Minor | updateImageUrl final_rvis_pic 누락 | ⬜ 미처리 |
 | 불일치 | 🟢 Minor | requirements.md 컬럼명 오기재 | ⬜ 미처리 |
 | 설계 1 | 🟡 Minor | 사용 중인 태그 삭제 방어 없음 | ⬜ 미처리 |

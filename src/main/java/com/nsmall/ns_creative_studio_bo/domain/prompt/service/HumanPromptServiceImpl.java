@@ -3,6 +3,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
@@ -11,6 +12,8 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
+import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
+import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -27,12 +30,13 @@ import java.util.Map;
  *
  * <pre>
  * 프롬프트 생성 흐름:
- *   1. 선택된 모든 optionId를 플랫 목록으로 수집
- *   2. selectByIds(ids) 로 option 정보 + step_number 조회
- *   3. stepNumber 기준 Map 구성
- *   4. GeminiService.generateHumanPrompt() 호출
- *   5. PromptHistory 저장 (promptType='PERSON', categoryId=null)
- *   6. 생성된 이력 DTO 반환
+ *   1. 사용자 조회 + 일일 한도 체크
+ *   2. 선택된 모든 optionId를 플랫 목록으로 수집
+ *   3. selectByIds(ids) 로 option 정보 + step_number 조회
+ *   4. stepNumber 기준 Map 구성
+ *   5. GeminiService.generateHumanPrompt() 호출
+ *   6. PromptHistory 저장 (promptType='PERSON', categoryId=null)
+ *   7. 생성된 이력 DTO 반환
  * </pre>
  *
  * @author jjhoo8936
@@ -46,6 +50,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
     private final HumanPromptStepMapper humanPromptStepMapper;
     private final HumanPromptOptionMapper humanPromptOptionMapper;
     private final PromptHistoryMapper promptHistoryMapper;
+    private final UserMapper userMapper;
     private final GeminiService geminiService;
     private final ImageGenerationService imageGenerationService;
 
@@ -57,7 +62,19 @@ public class HumanPromptServiceImpl implements HumanPromptService {
     @Override
     @Transactional
     public PromptHistoryRespDto createPrompt(Long userId, HumanPromptCreateReqDto dto) {
-        // 1. 선택된 모든 optionId 플랫 목록 수집
+        // 1. 사용자 조회 + 일일 한도 체크
+        User user = userMapper.selectById(userId)
+                .orElseThrow(() -> new BizException(PromptErrorCode.USER_NOT_FOUND,
+                        "사용자를 찾을 수 없습니다. userId=" + userId));
+
+        int todayCount = promptHistoryMapper.countTodayByUserId(userId);
+        if (todayCount >= user.getDailyLimit()) {
+            log.warn("일일 한도 초과 — userId={}, todayCount={}, dailyLimit={}",
+                    userId, todayCount, user.getDailyLimit());
+            throw new BizException(PromptErrorCode.DAILY_LIMIT_EXCEEDED);
+        }
+
+        // 2. 선택된 모든 optionId 플랫 목록 수집
         List<Long> allOptionIds = dto.getSelections().values().stream()
                 .flatMap(List::stream)
                 .distinct()
@@ -67,10 +84,10 @@ public class HumanPromptServiceImpl implements HumanPromptService {
             throw new BizException(HumanPromptErrorCode.NO_OPTIONS_SELECTED);
         }
 
-        // 2. option 정보 + step_number 조회
+        // 3. option 정보 + step_number 조회
         List<HumanPromptOption> options = humanPromptOptionMapper.selectByIds(allOptionIds);
 
-        // 3. stepNumber 기준 Map<stepNumber, List<promptValue>> 구성
+        // 4. stepNumber 기준 Map<stepNumber, List<promptValue>> 구성
         Map<Integer, List<String>> stepOptionValues = new HashMap<>();
         for (HumanPromptOption option : options) {
             stepOptionValues
@@ -80,12 +97,12 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         log.debug("인간 이미지 프롬프트 생성 — stepOptionValues: {}", stepOptionValues);
 
-        // 4. Gemini 호출 (promptStyle 기본값: NANO_BANANA)
+        // 5. Gemini 호출 (promptStyle 기본값: NANO_BANANA)
         String style = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
                 ? dto.getPromptStyle() : "NANO_BANANA";
         String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes(), style);
 
-        // 5. PromptHistory 저장 (PERSON 타입, categoryId=null, imageUrl=null)
+        // 6. PromptHistory 저장 (PERSON 타입, categoryId=null, imageUrl=null)
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
