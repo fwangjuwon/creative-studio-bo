@@ -69,7 +69,7 @@ if (todayCount >= user.getDailyLimit()) {
 ## [요구사항 불일치] requirements.md 컬럼명 오기재
 
 - **파일**: `docs/requirements.md` 섹션 5, `domain/prompt/entity/PromptHistory.java` JavaDoc
-- **상태**: ⬜ 미처리
+- **상태**: ✅ 완료
 
 ### 현상
 | 위치 | 기재 내용 |
@@ -136,6 +136,6 @@ DCS 카테고리를 삭제하면 기존 프롬프트 히스토리에서 `categor
 |---|--------|------|------|
 | 버그 1 | 🔴 Critical | 인물 프롬프트 일일 한도 체크 누락 | ✅ 완료 |
 | 버그 2 | 🟡 Minor | updateImageUrl final_rvis_pic 누락 | ✅ 완료 |
-| 불일치 | 🟢 Minor | requirements.md 컬럼명 오기재 | ⬜ 미처리 |
+| 불일치 | 🟢 Minor | requirements.md 컬럼명 오기재 | ✅ 완료 |
 | 설계 1 | 🟡 Minor | 사용 중인 태그 삭제 방어 없음 | ✅ 완료 |
 | 설계 2 | 🟡 Minor | 참조 중인 카테고리 삭제 방어 없음 | ✅ 완료 |
