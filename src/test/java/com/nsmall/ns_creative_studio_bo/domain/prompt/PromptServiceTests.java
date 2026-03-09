@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt;
 
+import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptServiceTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.PromptServiceTest;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
@@ -14,7 +15,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @Suite
 @SuiteDisplayName("Prompt 서비스 전체 테스트")
 @SelectClasses({
-        PromptServiceTest.class
+        PromptServiceTest.class,
+        HumanPromptServiceTest.class
 })
 public class PromptServiceTests {
 }

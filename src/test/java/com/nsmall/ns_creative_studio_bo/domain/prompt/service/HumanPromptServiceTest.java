@@ -1,0 +1,279 @@
+package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
+
+import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.service.UserService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+
+/**
+ * HumanPromptService 통합 테스트 — 비즈니스 로직 + DB 연동 검증
+ *
+ * <pre>
+ * GeminiService는 외부 API 의존성이므로 @MockBean으로 모킹하여 테스트.
+ * human_prompt_step / attr / option 시드 데이터는 data.sql에서 로드된다.
+ * </pre>
+ *
+ * @author jjhoo8936
+ * @since 2026-03-09
+ */
+@SpringBootTest
+@ActiveProfiles("local")
+public class HumanPromptServiceTest {
+
+    @Autowired
+    private HumanPromptService humanPromptService;
+
+    @Autowired
+    private PromptHistoryMapper promptHistoryMapper;
+
+    @Autowired
+    private UserService userService;
+
+    @MockBean
+    private GeminiService geminiService;
+
+    private static final String MOCK_PROMPT = "A photorealistic portrait of a young Korean woman, soft natural daylight, blurred background.";
+
+    // ================================================================
+    // 테스트 데이터 헬퍼
+    // ================================================================
+
+    private UserRespDto 유저_생성(String loginId, String role, String teamName, int dailyLimit) {
+        return userService.createUser(UserCreateReqDto.builder()
+                .loginId(loginId)
+                .password("TestPass1!")
+                .name("테스트유저_" + loginId)
+                .role(role)
+                .teamName(teamName)
+                .dailyLimit(dailyLimit)
+                .build());
+    }
+
+    /**
+     * data.sql 시드 데이터에서 첫 번째 step의 첫 번째 option ID를 동적으로 조회하여
+     * 최소 1개 선택지가 담긴 selections 맵을 구성한다.
+     */
+    private Map<Long, List<Long>> 최소_선택지_구성() {
+        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
+        HumanPromptStepRespDto.AttrDto firstAttr = steps.get(0).getAttrs().get(0);
+        Long attrId = firstAttr.getId();
+        Long optionId = firstAttr.getOptions().get(0).getId();
+        return Map.of(attrId, List.of(optionId));
+    }
+
+    private void PERSON_히스토리_직접_삽입(Long userId) {
+        PromptHistory history = PromptHistory.builder()
+                .userId(userId)
+                .categoryId(null)
+                .promptType("PERSON")
+                .promptText("direct insert person prompt")
+                .initRegiPic("test")
+                .initRegiDttm(LocalDateTime.now())
+                .finalRvisPic("test")
+                .finalRvisDttm(LocalDateTime.now())
+                .build();
+        promptHistoryMapper.insert(history);
+    }
+
+    // ================================================================
+    // 단계 구조 조회
+    // ================================================================
+
+    @Test
+    @DisplayName("[성공] 단계 구조 조회 - 5단계 반환")
+    void 성공_단계_구조_조회_5단계_반환() {
+        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
+
+        assertThat(steps).hasSize(5);
+        assertThat(steps.get(0).getStepNumber()).isEqualTo(1);
+        assertThat(steps.get(0).getStepCode()).isEqualTo("A");
+        assertThat(steps.get(4).getStepNumber()).isEqualTo(5);
+        assertThat(steps.get(4).getStepCode()).isEqualTo("E");
+    }
+
+    @Test
+    @DisplayName("[성공] 단계 구조 조회 - 각 단계에 attrs와 options 포함")
+    void 성공_단계_구조_조회_attrs_options_포함() {
+        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
+
+        for (HumanPromptStepRespDto step : steps) {
+            assertThat(step.getAttrs()).isNotEmpty();
+            for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
+                assertThat(attr.getOptions()).isNotEmpty();
+            }
+        }
+    }
+
+    // ================================================================
+    // 인물 프롬프트 생성 — 성공
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 인물 프롬프트 생성 - 정상 케이스")
+    void 성공_인물_프롬프트_생성_정상() {
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("human_user_ok", "USER", "팀A", 5);
+        Map<Long, List<Long>> selections = 최소_선택지_구성();
+
+        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
+        setSelections(dto, selections);
+
+        PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getPromptText()).isEqualTo(MOCK_PROMPT);
+        assertThat(result.getUserId()).isEqualTo(user.getId());
+        assertThat(result.getPromptType()).isEqualTo("PERSON");
+        assertThat(result.getCategoryId()).isNull();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 인물 프롬프트 생성 - 일일 한도 미만")
+    void 성공_인물_프롬프트_생성_일일한도_미만() {
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("human_user_limit", "USER", "팀A", 3);
+        PERSON_히스토리_직접_삽입(user.getId());
+        PERSON_히스토리_직접_삽입(user.getId());
+
+        Map<Long, List<Long>> selections = 최소_선택지_구성();
+        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
+        setSelections(dto, selections);
+
+        PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getPromptText()).isEqualTo(MOCK_PROMPT);
+    }
+
+    // ================================================================
+    // 인물 프롬프트 생성 — 예외
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 인물 프롬프트 생성 - 일일 한도 초과")
+    void 예외_인물_프롬프트_생성_일일한도_초과() {
+        UserRespDto user = 유저_생성("human_user_over", "USER", "팀B", 2);
+        PERSON_히스토리_직접_삽입(user.getId());
+        PERSON_히스토리_직접_삽입(user.getId());
+
+        Map<Long, List<Long>> selections = 최소_선택지_구성();
+        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
+        setSelections(dto, selections);
+
+        assertThatThrownBy(() -> humanPromptService.createPrompt(user.getId(), dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(PromptErrorCode.DAILY_LIMIT_EXCEEDED));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 인물 프롬프트 생성 - PRODUCT 이력도 한도에 합산됨")
+    void 예외_인물_프롬프트_생성_PRODUCT_이력도_한도_합산() {
+        UserRespDto user = 유저_생성("human_user_mixed", "USER", "팀C", 2);
+
+        // PRODUCT 이력 2건으로 한도 채우기
+        PromptHistory productHistory = PromptHistory.builder()
+                .userId(user.getId())
+                .categoryId(null)
+                .promptType("PRODUCT")
+                .promptText("product prompt")
+                .initRegiPic("test")
+                .initRegiDttm(LocalDateTime.now())
+                .finalRvisPic("test")
+                .finalRvisDttm(LocalDateTime.now())
+                .build();
+        promptHistoryMapper.insert(productHistory);
+        promptHistoryMapper.insert(productHistory);
+
+        Map<Long, List<Long>> selections = 최소_선택지_구성();
+        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
+        setSelections(dto, selections);
+
+        assertThatThrownBy(() -> humanPromptService.createPrompt(user.getId(), dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(PromptErrorCode.DAILY_LIMIT_EXCEEDED));
+    }
+
+    @Test
+    @DisplayName("[예외] 인물 프롬프트 생성 - 존재하지 않는 사용자")
+    void 예외_인물_프롬프트_생성_사용자_미존재() {
+        Map<Long, List<Long>> selections = 최소_선택지_구성();
+        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
+        setSelections(dto, selections);
+
+        assertThatThrownBy(() -> humanPromptService.createPrompt(Long.MAX_VALUE, dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(PromptErrorCode.USER_NOT_FOUND));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 인물 프롬프트 생성 - 선택 옵션 없음 (빈 selections)")
+    void 예외_인물_프롬프트_생성_선택옵션_없음() {
+        UserRespDto user = 유저_생성("human_user_noopt", "USER", "팀D", 5);
+
+        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
+        setSelections(dto, Map.of());
+
+        assertThatThrownBy(() -> humanPromptService.createPrompt(user.getId(), dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(HumanPromptErrorCode.NO_OPTIONS_SELECTED));
+    }
+
+    // ================================================================
+    // 리플렉션 헬퍼 — HumanPromptCreateReqDto의 selections 필드 설정
+    // ================================================================
+
+    /**
+     * HumanPromptCreateReqDto.selections 필드가 @Getter + @NoArgsConstructor만 있어
+     * setter가 없으므로 리플렉션으로 직접 설정한다.
+     */
+    private void setSelections(HumanPromptCreateReqDto dto, Map<Long, List<Long>> selections) {
+        try {
+            var field = HumanPromptCreateReqDto.class.getDeclaredField("selections");
+            field.setAccessible(true);
+            field.set(dto, selections);
+        } catch (Exception e) {
+            throw new RuntimeException("selections 필드 설정 실패", e);
+        }
+    }
+}
