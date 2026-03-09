@@ -227,6 +227,22 @@ Mapper XML에서 **전체 패키지 경로 사용 금지** — 클래스 짧은 
 <select id="selectById" resultType="com.nsmall.ns_creative_studio_bo.domain.user.entity.User">
 ```
 
+### MyBatis XML 특수문자 처리 — 인라인 CDATA
+
+Mapper XML에서 `<`, `>`, `<>` 등 XML 특수문자가 포함된 SQL 연산자는 **인라인 CDATA**로 감싼다.
+
+```xml
+<!-- ✅ 연산자만 인라인 CDATA로 감싸기 -->
+SELECT COUNT(*) <![CDATA[ > ]]> 0
+WHERE age <![CDATA[ < ]]> 30
+
+<!-- ❌ 전체 SQL CDATA 감싸기 금지 -->
+<![CDATA[ SELECT COUNT(*) > 0 FROM ... ]]>
+
+<!-- ❌ 엔티티 이스케이프 금지 -->
+SELECT COUNT(*) &gt; 0
+```
+
 ### 예외 처리 구조
 
 - `ErrorCode` 인터페이스 → 도메인별 enum으로 구현 (예: `UserErrorCode`)
