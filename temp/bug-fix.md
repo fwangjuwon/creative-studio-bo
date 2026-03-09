@@ -41,7 +41,7 @@ if (todayCount >= user.getDailyLimit()) {
 ## [버그 2 - Minor] PromptHistoryMapper.xml — updateImageUrl에서 final_rvis_pic 누락
 
 - **파일**: `resources/mybatis/mappers/prompt/PromptHistoryMapper.xml`
-- **상태**: ⬜ 미처리
+- **상태**: ✅ 완료
 
 ### 현상
 `updateImageUrl` UPDATE 쿼리에서 `final_rvis_dttm`(최종수정일시)만 업데이트하고
@@ -135,7 +135,7 @@ DCS 카테고리를 삭제하면 기존 프롬프트 히스토리에서 `categor
 | # | 심각도 | 내용 | 상태 |
 |---|--------|------|------|
 | 버그 1 | 🔴 Critical | 인물 프롬프트 일일 한도 체크 누락 | ✅ 완료 |
-| 버그 2 | 🟡 Minor | updateImageUrl final_rvis_pic 누락 | ⬜ 미처리 |
+| 버그 2 | 🟡 Minor | updateImageUrl final_rvis_pic 누락 | ✅ 완료 |
 | 불일치 | 🟢 Minor | requirements.md 컬럼명 오기재 | ⬜ 미처리 |
 | 설계 1 | 🟡 Minor | 사용 중인 태그 삭제 방어 없음 | ⬜ 미처리 |
 | 설계 2 | 🟡 Minor | 참조 중인 카테고리 삭제 방어 없음 | ⬜ 미처리 |

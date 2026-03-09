@@ -133,7 +133,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         // 2. 이력에 imageUrl 업데이트
         if (historyId != null) {
-            promptHistoryMapper.updateImageUrl(historyId, imageUrl);
+            promptHistoryMapper.updateImageUrl(historyId, imageUrl, SecurityUtil.getCurrentLoginId());
             log.info("이미지 URL 이력 업데이트 완료 — historyId={}, imageUrl={}", historyId, imageUrl);
         }
 

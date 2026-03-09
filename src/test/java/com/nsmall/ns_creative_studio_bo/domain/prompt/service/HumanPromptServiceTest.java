@@ -33,7 +33,7 @@ import static org.mockito.BDDMockito.given;
  * HumanPromptService 통합 테스트 — 비즈니스 로직 + DB 연동 검증
  *
  * <pre>
- * GeminiService는 외부 API 의존성이므로 @MockBean으로 모킹하여 테스트.
+ * GeminiService, ImageGenerationService는 외부 API 의존성이므로 @MockBean으로 모킹하여 테스트.
  * human_prompt_step / attr / option 시드 데이터는 data.sql에서 로드된다.
  * </pre>
  *
@@ -55,6 +55,9 @@ public class HumanPromptServiceTest {
 
     @MockBean
     private GeminiService geminiService;
+
+    @MockBean
+    private ImageGenerationService imageGenerationService;
 
     private static final String MOCK_PROMPT = "A photorealistic portrait of a young Korean woman, soft natural daylight, blurred background.";
 
@@ -85,7 +88,7 @@ public class HumanPromptServiceTest {
         return Map.of(attrId, List.of(optionId));
     }
 
-    private void PERSON_히스토리_직접_삽입(Long userId) {
+    private PromptHistory PERSON_히스토리_직접_삽입(Long userId) {
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
                 .categoryId(null)
@@ -97,6 +100,7 @@ public class HumanPromptServiceTest {
                 .finalRvisDttm(LocalDateTime.now())
                 .build();
         promptHistoryMapper.insert(history);
+        return history;
     }
 
     // ================================================================
@@ -116,8 +120,8 @@ public class HumanPromptServiceTest {
     }
 
     @Test
-    @DisplayName("[성공] 단계 구조 조회 - 각 단계에 attrs와 options 포함")
-    void 성공_단계_구조_조회_attrs_options_포함() {
+    @DisplayName("[성공] 단계 구조 조회 - 각 단계에 세부항목과 선택지 포함")
+    void 성공_단계_구조_조회_세부항목_선택지_포함() {
         List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
 
         for (HumanPromptStepRespDto step : steps) {
@@ -202,8 +206,8 @@ public class HumanPromptServiceTest {
     @Test
     @Transactional
     @Rollback
-    @DisplayName("[예외] 인물 프롬프트 생성 - PRODUCT 이력도 한도에 합산됨")
-    void 예외_인물_프롬프트_생성_PRODUCT_이력도_한도_합산() {
+    @DisplayName("[예외] 인물 프롬프트 생성 - 상품 프롬프트 이력도 한도에 합산됨")
+    void 예외_인물_프롬프트_생성_상품이력도_한도_합산() {
         UserRespDto user = 유저_생성("human_user_mixed", "USER", "팀C", 2);
 
         // PRODUCT 이력 2건으로 한도 채우기
@@ -258,6 +262,50 @@ public class HumanPromptServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(HumanPromptErrorCode.NO_OPTIONS_SELECTED));
+    }
+
+    // ================================================================
+    // 이미지 생성
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 이미지 생성 - 이미지URL과 최종수정자 이력에 업데이트됨")
+    void 성공_이미지_생성_이미지URL_최종수정자_업데이트() {
+        given(imageGenerationService.generateImage(any())).willReturn("/images/test-uuid.jpg");
+
+        UserRespDto user = 유저_생성("img_gen_user", "USER", "팀E", 5);
+        PromptHistory history = PERSON_히스토리_직접_삽입(user.getId());
+
+        String imageUrl = humanPromptService.generateImage(history.getId(), MOCK_PROMPT);
+
+        assertThat(imageUrl).isEqualTo("/images/test-uuid.jpg");
+
+        PromptHistory updated = promptHistoryMapper.selectById(history.getId()).orElseThrow();
+        assertThat(updated.getImageUrl()).isEqualTo("/images/test-uuid.jpg");
+        assertThat(updated.getFinalRvisPic()).isEqualTo("system"); // 테스트 환경 SecurityUtil 반환값
+        assertThat(updated.getFinalRvisDttm()).isNotNull();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 이미지 생성 - 이력ID 없으면 이력 미업데이트")
+    void 성공_이미지_생성_이력ID_없으면_이력_미업데이트() {
+        given(imageGenerationService.generateImage(any())).willReturn("/images/test-uuid.jpg");
+
+        UserRespDto user = 유저_생성("img_gen_nohistory", "USER", "팀F", 5);
+        PromptHistory history = PERSON_히스토리_직접_삽입(user.getId());
+
+        String imageUrl = humanPromptService.generateImage(null, MOCK_PROMPT);
+
+        assertThat(imageUrl).isEqualTo("/images/test-uuid.jpg");
+
+        // historyId가 null이므로 이력의 imageUrl은 그대로 null
+        PromptHistory unchanged = promptHistoryMapper.selectById(history.getId()).orElseThrow();
+        assertThat(unchanged.getImageUrl()).isNull();
+        assertThat(unchanged.getFinalRvisPic()).isEqualTo("test"); // 최초 삽입 시 값 그대로
     }
 
 }

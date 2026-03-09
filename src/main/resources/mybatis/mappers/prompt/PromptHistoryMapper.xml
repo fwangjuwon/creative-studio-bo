@@ -71,6 +71,7 @@
     <update id="updateImageUrl">
         UPDATE prompt_history
         SET image_url       = #{imageUrl},
+            final_rvis_pic  = #{finalRvisPic},
             final_rvis_dttm = NOW()
         WHERE id = #{id}
     </update>
