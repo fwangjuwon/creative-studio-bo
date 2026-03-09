@@ -124,6 +124,23 @@ src/main/resources/mybatis/mappers/
 
 > ⚠️ `mybatis-config.xml` 및 MyBatis 관련 설정 파일은 **AI가 생성하지 않음** — 직접 작성 예정
 
+### XML 특수문자 처리 — 인라인 CDATA
+
+Mapper XML에서 `<`, `>`, `<>` 등 XML 특수문자가 포함된 SQL 연산자는 **인라인 CDATA**로 감싼다.
+
+```xml
+<!-- ❌ 금지 — > 는 XML에서 허용되지만 혼용 방지를 위해 사용 금지 -->
+SELECT COUNT(*) > 0
+
+<!-- ✅ 사용 — 인라인 CDATA로 연산자만 감싸기 -->
+SELECT COUNT(*) <![CDATA[ > ]]> 0
+WHERE age <![CDATA[ < ]]> 30
+WHERE status <![CDATA[ <> ]]> 'DELETED'
+```
+
+- 전체 SQL을 `<![CDATA[ ... ]]>`로 감싸는 방식은 사용하지 않는다
+- `&lt;` / `&gt;` 엔티티 이스케이프 방식도 사용하지 않는다
+
 ## Entity / DTO 클래스 규칙
 
 ```java
