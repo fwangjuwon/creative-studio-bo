@@ -71,6 +71,7 @@
     <update id="updateImageUrl">
         UPDATE prompt_history
         SET image_url       = #{imageUrl},
+            final_rvis_pic  = #{finalRvisPic},
             final_rvis_dttm = NOW()
         WHERE id = #{id}
     </update>
@@ -80,6 +81,12 @@
         FROM prompt_history
         WHERE user_id = #{userId}
           AND DATE(init_regi_dttm) = CURRENT_DATE
+    </select>
+
+    <select id="existsByCategoryId" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM prompt_history
+        WHERE category_id = #{categoryId}
     </select>
 
 </mapper>

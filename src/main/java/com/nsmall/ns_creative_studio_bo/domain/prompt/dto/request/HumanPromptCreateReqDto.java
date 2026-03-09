@@ -1,6 +1,8 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -20,6 +22,8 @@ import java.util.Map;
  */
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class HumanPromptCreateReqDto {
 
     /**

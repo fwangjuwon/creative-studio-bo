@@ -9,6 +9,7 @@ import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryUpda
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
 import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,7 @@ public class CategoryServiceImpl implements CategoryService {
     );
 
     private final CategoryMapper categoryMapper;
+    private final PromptHistoryMapper promptHistoryMapper;
 
     @Override
     public CategoryRespDto createCategory(CategoryCreateReqDto dto) {
@@ -127,6 +129,11 @@ public class CategoryServiceImpl implements CategoryService {
         if (categoryMapper.existsByParentId(id)) {
             throw new BizException(CategoryErrorCode.CATEGORY_HAS_CHILDREN,
                     "하위 카테고리가 존재하여 삭제할 수 없습니다. id=" + id);
+        }
+
+        if (promptHistoryMapper.existsByCategoryId(id)) {
+            throw new BizException(CategoryErrorCode.CATEGORY_IN_USE,
+                    "프롬프트 히스토리에서 사용 중인 카테고리는 삭제할 수 없습니다. id=" + id);
         }
 
         categoryMapper.deleteById(id);

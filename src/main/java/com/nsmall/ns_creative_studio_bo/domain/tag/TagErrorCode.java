@@ -15,7 +15,8 @@ import lombok.RequiredArgsConstructor;
 public enum TagErrorCode implements ErrorCode {
 
     TAG_NOT_FOUND("T001", "태그를 찾을 수 없습니다.", 400),
-    TAG_GROUP_NOT_FOUND("T002", "태그가 속한 그룹을 찾을 수 없습니다.", 400);
+    TAG_GROUP_NOT_FOUND("T002", "태그가 속한 그룹을 찾을 수 없습니다.", 400),
+    TAG_IN_USE("T003", "사용 중인 태그는 삭제할 수 없습니다.", 400);
 
     private final String code;
     private final String message;

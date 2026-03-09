@@ -6,6 +6,8 @@ import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,6 +19,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +38,9 @@ public class CategoryServiceTest {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private PromptHistoryMapper promptHistoryMapper;
 
     private CategoryCreateReqDto LCS_생성_DTO(String name) {
         return CategoryCreateReqDto.builder()
@@ -330,5 +336,33 @@ public class CategoryServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(CategoryErrorCode.CATEGORY_HAS_CHILDREN));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 카테고리 삭제 - 프롬프트 히스토리에서 사용 중")
+    void 예외_카테고리_삭제_사용_중() {
+        CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("사용중_대분류"));
+        CategoryRespDto mcs = categoryService.createCategory(하위_생성_DTO("사용중_중분류", CategoryType.MCS, lcs.getId()));
+        CategoryRespDto scs = categoryService.createCategory(하위_생성_DTO("사용중_소분류", CategoryType.SCS, mcs.getId()));
+        CategoryRespDto dcs = categoryService.createCategory(하위_생성_DTO("사용중_세분류", CategoryType.DCS, scs.getId()));
+
+        LocalDateTime now = LocalDateTime.now();
+        promptHistoryMapper.insert(PromptHistory.builder()
+                .userId(0L)
+                .categoryId(dcs.getId())
+                .promptType("PRODUCT")
+                .promptText("테스트 프롬프트")
+                .initRegiPic("test_user")
+                .initRegiDttm(now)
+                .finalRvisPic("test_user")
+                .finalRvisDttm(now)
+                .build());
+
+        assertThatThrownBy(() -> categoryService.deleteCategory(dcs.getId()))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(CategoryErrorCode.CATEGORY_IN_USE));
     }
 }

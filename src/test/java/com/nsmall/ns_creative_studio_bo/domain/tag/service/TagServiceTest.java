@@ -1,6 +1,10 @@
 package com.nsmall.ns_creative_studio_bo.domain.tag.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistoryTag;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryTagMapper;
 import com.nsmall.ns_creative_studio_bo.domain.tag.TagErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagGroupCreateReqDto;
@@ -17,6 +21,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +43,12 @@ public class TagServiceTest {
 
     @Autowired
     private TagGroupService tagGroupService;
+
+    @Autowired
+    private PromptHistoryMapper promptHistoryMapper;
+
+    @Autowired
+    private PromptHistoryTagMapper promptHistoryTagMapper;
 
     private TagGroupRespDto 태그그룹_생성(String name) {
         return tagGroupService.createTagGroup(
@@ -229,5 +240,43 @@ public class TagServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(TagErrorCode.TAG_NOT_FOUND));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 삭제 - 프롬프트 히스토리에서 사용 중")
+    void 예외_태그_삭제_사용_중() {
+        TagGroupRespDto group = 태그그룹_생성("사용중태그그룹");
+        TagRespDto tag = tagService.createTag(태그_생성_DTO(group.getId(), "사용중태그"));
+
+        LocalDateTime now = LocalDateTime.now();
+        PromptHistory history = PromptHistory.builder()
+                .userId(0L)
+                .categoryId(null)
+                .promptType("PERSON")
+                .promptText("테스트 프롬프트")
+                .initRegiPic("test_user")
+                .initRegiDttm(now)
+                .finalRvisPic("test_user")
+                .finalRvisDttm(now)
+                .build();
+        promptHistoryMapper.insert(history);
+
+        promptHistoryTagMapper.insertBatch(List.of(
+                PromptHistoryTag.builder()
+                        .promptHistoryId(history.getId())
+                        .tagId(tag.getId())
+                        .initRegiPic("test_user")
+                        .initRegiDttm(now)
+                        .finalRvisPic("test_user")
+                        .finalRvisDttm(now)
+                        .build()
+        ));
+
+        assertThatThrownBy(() -> tagService.deleteTag(tag.getId()))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagErrorCode.TAG_IN_USE));
     }
 }

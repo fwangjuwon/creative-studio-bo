@@ -7,6 +7,7 @@ import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.response.TagRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.entity.Tag;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryTagMapper;
 import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagGroupMapper;
 import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagMapper;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ public class TagServiceImpl implements TagService {
 
     private final TagMapper tagMapper;
     private final TagGroupMapper tagGroupMapper;
+    private final PromptHistoryTagMapper promptHistoryTagMapper;
 
     @Override
     public TagRespDto createTag(TagCreateReqDto dto) {
@@ -95,6 +97,11 @@ public class TagServiceImpl implements TagService {
         tagMapper.selectById(id)
                 .orElseThrow(() -> new BizException(TagErrorCode.TAG_NOT_FOUND,
                         "태그를 찾을 수 없습니다. id=" + id));
+
+        if (promptHistoryTagMapper.existsByTagId(id)) {
+            throw new BizException(TagErrorCode.TAG_IN_USE,
+                    "프롬프트 히스토리에서 사용 중인 태그는 삭제할 수 없습니다. tagId=" + id);
+        }
 
         tagMapper.deleteById(id);
     }
