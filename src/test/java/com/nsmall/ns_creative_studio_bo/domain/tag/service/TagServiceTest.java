@@ -255,6 +255,7 @@ public class TagServiceTest {
                 .userId(0L)
                 .categoryId(null)
                 .promptType("PERSON")
+                .promptStyle("NANO_BANANA")
                 .promptText("테스트 프롬프트")
                 .initRegiPic("test_user")
                 .initRegiDttm(now)

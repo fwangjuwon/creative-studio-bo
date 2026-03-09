@@ -114,6 +114,7 @@ public class PromptServiceTest {
                 .userId(userId)
                 .categoryId(goodsCategoryId)
                 .promptType("PRODUCT")
+                .promptStyle("NANO_BANANA")
                 .promptText("direct insert prompt")
                 .initRegiPic("test")
                 .initRegiDttm(LocalDateTime.now())

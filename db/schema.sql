@@ -99,7 +99,7 @@ CREATE TABLE prompt_history (
     user_id          BIGINT          NOT NULL,          -- 논리 FK → user.id
     category_id      BIGINT,                            -- 논리 FK → category.id (DCS), 인물 프롬프트는 NULL
     prompt_type      VARCHAR(10)     NOT NULL DEFAULT 'PRODUCT',  -- 'PRODUCT' | 'PERSON'
-    prompt_style     VARCHAR(20)     NOT NULL DEFAULT 'NANO_BANANA',  -- 'NANO_BANANA' | 'MID_JOURNEY'
+    prompt_style     VARCHAR(20)     NOT NULL,                        -- 'NANO_BANANA' | 'MID_JOURNEY'
     prompt_text      TEXT            NOT NULL,
     image_url        VARCHAR(500),                      -- NanaBanana 이미지 생성 URL (없으면 NULL)
     purpose          TEXT,                              -- 인물 프롬프트 생성 목적 (상품은 NULL)
