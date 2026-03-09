@@ -140,10 +140,10 @@ public class HumanPromptServiceTest {
         given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("human_user_ok", "USER", "팀A", 5);
-        Map<Long, List<Long>> selections = 최소_선택지_구성();
 
-        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
-        setSelections(dto, selections);
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .build();
 
         PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
 
@@ -166,9 +166,9 @@ public class HumanPromptServiceTest {
         PERSON_히스토리_직접_삽입(user.getId());
         PERSON_히스토리_직접_삽입(user.getId());
 
-        Map<Long, List<Long>> selections = 최소_선택지_구성();
-        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
-        setSelections(dto, selections);
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .build();
 
         PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
 
@@ -189,9 +189,9 @@ public class HumanPromptServiceTest {
         PERSON_히스토리_직접_삽입(user.getId());
         PERSON_히스토리_직접_삽입(user.getId());
 
-        Map<Long, List<Long>> selections = 최소_선택지_구성();
-        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
-        setSelections(dto, selections);
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .build();
 
         assertThatThrownBy(() -> humanPromptService.createPrompt(user.getId(), dto))
                 .isInstanceOf(BizException.class)
@@ -220,9 +220,9 @@ public class HumanPromptServiceTest {
         promptHistoryMapper.insert(productHistory);
         promptHistoryMapper.insert(productHistory);
 
-        Map<Long, List<Long>> selections = 최소_선택지_구성();
-        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
-        setSelections(dto, selections);
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .build();
 
         assertThatThrownBy(() -> humanPromptService.createPrompt(user.getId(), dto))
                 .isInstanceOf(BizException.class)
@@ -233,9 +233,9 @@ public class HumanPromptServiceTest {
     @Test
     @DisplayName("[예외] 인물 프롬프트 생성 - 존재하지 않는 사용자")
     void 예외_인물_프롬프트_생성_사용자_미존재() {
-        Map<Long, List<Long>> selections = 최소_선택지_구성();
-        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
-        setSelections(dto, selections);
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .build();
 
         assertThatThrownBy(() -> humanPromptService.createPrompt(Long.MAX_VALUE, dto))
                 .isInstanceOf(BizException.class)
@@ -250,8 +250,9 @@ public class HumanPromptServiceTest {
     void 예외_인물_프롬프트_생성_선택옵션_없음() {
         UserRespDto user = 유저_생성("human_user_noopt", "USER", "팀D", 5);
 
-        HumanPromptCreateReqDto dto = new HumanPromptCreateReqDto();
-        setSelections(dto, Map.of());
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(Map.of())
+                .build();
 
         assertThatThrownBy(() -> humanPromptService.createPrompt(user.getId(), dto))
                 .isInstanceOf(BizException.class)
@@ -259,21 +260,4 @@ public class HumanPromptServiceTest {
                         .isEqualTo(HumanPromptErrorCode.NO_OPTIONS_SELECTED));
     }
 
-    // ================================================================
-    // 리플렉션 헬퍼 — HumanPromptCreateReqDto의 selections 필드 설정
-    // ================================================================
-
-    /**
-     * HumanPromptCreateReqDto.selections 필드가 @Getter + @NoArgsConstructor만 있어
-     * setter가 없으므로 리플렉션으로 직접 설정한다.
-     */
-    private void setSelections(HumanPromptCreateReqDto dto, Map<Long, List<Long>> selections) {
-        try {
-            var field = HumanPromptCreateReqDto.class.getDeclaredField("selections");
-            field.setAccessible(true);
-            field.set(dto, selections);
-        } catch (Exception e) {
-            throw new RuntimeException("selections 필드 설정 실패", e);
-        }
-    }
 }
