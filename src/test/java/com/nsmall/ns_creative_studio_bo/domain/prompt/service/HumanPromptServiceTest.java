@@ -48,6 +48,9 @@ public class HumanPromptServiceTest {
     private HumanPromptService humanPromptService;
 
     @Autowired
+    private PromptService promptService;
+
+    @Autowired
     private PromptHistoryMapper promptHistoryMapper;
 
     @Autowired
@@ -264,6 +267,102 @@ public class HumanPromptServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(HumanPromptErrorCode.NO_OPTIONS_SELECTED));
+    }
+
+    // ================================================================
+    // 인물 프롬프트 생성 — 신규 필드 검증
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 인물 프롬프트 생성 - optionNames 응답 포함")
+    void 성공_인물_프롬프트_생성_optionNames_응답_포함() {
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("opt_name_user", "USER", "팀A", 5);
+
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .build();
+
+        PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
+
+        assertThat(result.getOptionNames()).isNotEmpty();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 인물 프롬프트 생성 - purpose/additionalNotes 저장 및 응답 포함")
+    void 성공_인물_프롬프트_생성_purpose_additionalNotes_포함() {
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("purpose_user", "USER", "팀A", 5);
+
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .purpose("브랜드 캠페인")
+                .additionalNotes("미소 짓는 표정 강조")
+                .build();
+
+        PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
+
+        assertThat(result.getPurpose()).isEqualTo("브랜드 캠페인");
+        assertThat(result.getAdditionalNotes()).isEqualTo("미소 짓는 표정 강조");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 인물 프롬프트 생성 - promptStyle MID_JOURNEY 명시 저장")
+    void 성공_인물_프롬프트_생성_promptStyle_MID_JOURNEY() {
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("human_style_mj", "USER", "팀A", 5);
+
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .promptStyle("MID_JOURNEY")
+                .build();
+
+        PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
+
+        assertThat(result.getPromptStyle()).isEqualTo("MID_JOURNEY");
+    }
+
+    // ================================================================
+    // 이력 조회 — PERSON 신규 필드 검증
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 이력 조회 - PERSON 이력에 optionNames/purpose/additionalNotes 포함")
+    void 성공_이력_조회_PERSON_신규필드_포함() {
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("hist_person_detail", "USER", "팀G", 10);
+
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .selections(최소_선택지_구성())
+                .purpose("SNS 광고")
+                .additionalNotes("밝은 배경")
+                .promptStyle("MID_JOURNEY")
+                .build();
+
+        humanPromptService.createPrompt(user.getId(), dto);
+
+        List<PromptHistoryRespDto> histories = promptService.getPromptHistories(user.getId());
+        PromptHistoryRespDto found = histories.stream()
+                .filter(h -> "PERSON".equals(h.getPromptType()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(found.getOptionNames()).isNotEmpty();
+        assertThat(found.getPurpose()).isEqualTo("SNS 광고");
+        assertThat(found.getAdditionalNotes()).isEqualTo("밝은 배경");
+        assertThat(found.getPromptStyle()).isEqualTo("MID_JOURNEY");
     }
 
     // ================================================================
