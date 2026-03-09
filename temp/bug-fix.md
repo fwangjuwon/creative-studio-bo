@@ -91,7 +91,7 @@ DB와 코드는 `category_id` / `categoryId`로 일치하므로 **기능적 문�
 ## [설계 미흡 1] TagServiceImpl.deleteTag() — 사용 중인 태그 삭제 방어 없음
 
 - **파일**: `domain/tag/service/TagServiceImpl.java`
-- **상태**: ⬜ 미처리
+- **상태**: ✅ 완료
 
 ### 현상
 코딩 컨벤션: "FK 제약조건은 DB에 없고, 참조 무결성은 Service 레이어에서 보장"
@@ -137,5 +137,5 @@ DCS 카테고리를 삭제하면 기존 프롬프트 히스토리에서 `categor
 | 버그 1 | 🔴 Critical | 인물 프롬프트 일일 한도 체크 누락 | ✅ 완료 |
 | 버그 2 | 🟡 Minor | updateImageUrl final_rvis_pic 누락 | ✅ 완료 |
 | 불일치 | 🟢 Minor | requirements.md 컬럼명 오기재 | ⬜ 미처리 |
-| 설계 1 | 🟡 Minor | 사용 중인 태그 삭제 방어 없음 | ⬜ 미처리 |
+| 설계 1 | 🟡 Minor | 사용 중인 태그 삭제 방어 없음 | ✅ 완료 |
 | 설계 2 | 🟡 Minor | 참조 중인 카테고리 삭제 방어 없음 | ⬜ 미처리 |

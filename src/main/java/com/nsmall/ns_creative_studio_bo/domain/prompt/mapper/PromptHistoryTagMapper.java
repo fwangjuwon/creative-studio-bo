@@ -24,4 +24,9 @@ public interface PromptHistoryTagMapper {
      * 특정 프롬프트 히스토리에 매핑된 태그 ID 목록 조회
      */
     List<Long> selectTagIdsByPromptHistoryId(@Param("promptHistoryId") Long promptHistoryId);
+
+    /**
+     * 해당 태그가 프롬프트 히스토리에서 사용 중인지 여부 조회 (삭제 방어용)
+     */
+    boolean existsByTagId(@Param("tagId") Long tagId);
 }

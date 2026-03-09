@@ -31,4 +31,10 @@
         ORDER BY id ASC
     </select>
 
+    <select id="existsByTagId" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM prompt_history_tag
+        WHERE tag_id = #{tagId}
+    </select>
+
 </mapper>
