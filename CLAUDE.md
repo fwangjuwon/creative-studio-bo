@@ -13,7 +13,7 @@
 Gemini API를 통해 최적화된 **영문 이미지 생성 프롬프트**를 자동 생성한다.
 생성된 프롬프트는 팀 내에서 공유되어 재사용할 수 있다.
 
-> 이 서버는 프롬프트 텍스트만 생성한다. 실제 이미지 생성(nanobanana, Midjourney 등)은 사용자가 직접 수행한다.
+> 상품 프롬프트는 텍스트만 생성하며 이미지 생성은 사용자가 직접 수행한다. 인물 프롬프트는 NanoBanana(`gemini-3-pro-image-preview`)를 통한 이미지 직접 생성도 지원한다.
 
 ---
 
@@ -27,8 +27,8 @@ Gemini API를 통해 최적화된 **영문 이미지 생성 프롬프트**를 �
 | Base Package | `com.nsmall.ns_creative_studio_bo` |
 | DB | PostgreSQL |
 | ORM | MyBatis |
-| 인증 | Spring Security + JWT (Stateless) — Step 4에서 추가 예정 |
-| AI | Gemini API (`gemini-3-flash-preview` 기본, 필요 시 `gemini-3-pro-preview`) |
+| 인증 | Spring Security + JWT (Stateless, 완료) |
+| AI | Gemini API (`gemini-3-flash-preview` 기본) + NanoBanana (`gemini-3-pro-image-preview`, 인물 이미지 생성) |
 | API 문서 | Swagger UI (`springdoc-openapi-starter-webmvc-ui:2.8.14`) |
 
 ---
@@ -58,7 +58,7 @@ com.nsmall.ns_creative_studio_bo
 │   ├── tag
 │   └── prompt
 ├── common
-│   ├── config        # MyBatis, Gemini 설정 (Security는 Step 4에서 추가 예정)
+│   ├── config        # MyBatis, Gemini, Security 설정
 │   ├── exception     # 공통 예외 처리
 │   ├── util
 │   └── CommonResponse.java  # 공통 API 응답 래퍼 (서브패키지 없이 바로)
@@ -137,7 +137,7 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 | 성공 HTTP 상태 | **무조건 200** — CUD/READ 구분 없음, 201/204 사용 금지 |
 | 조회 결과 없음 | 200 + `data: null` — 404 사용 안 함 (내부 API 개발 편의성) |
 | 페이지네이션 | PoC 단계 없음, 추후 PageHelper 적용 예정 |
-| JWT | Step 4에서 추가 예정 (Access Token 1시간, Refresh Token 없음, PoC) |
+| JWT | 완료 (Access Token 1시간, Refresh Token 없음, PoC) |
 | Gemini API Key | `.env` 파일의 `GEMINI_API_KEY` 환경변수 |
 
 ---
@@ -163,8 +163,10 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 | Category | `category` | 상품 카테고리 계층 (LCS~DCS) |
 | TagGroup | `tag_group` | 태그 묶음 (인물, 분위기 등) |
 | Tag | `tag` | 태그 값 (남자, 화사한 등) |
-| PromptHistory | `prompt_history` | 생성된 프롬프트 저장 |
-| PromptHistoryTag | `prompt_history_tag` | 프롬프트-태그 매핑 |
+| PromptHistory | `prompt_history` | 생성된 프롬프트 저장 (상품/인물 공통) |
+| GoodsPromptHistoryTag | `goods_prompt_history_tag` | 상품 프롬프트-태그 매핑 |
+| HumanPromptHistoryOption | `human_prompt_history_option` | 인물 프롬프트-선택옵션 매핑 |
+| HumanPromptStep / Attr / Option | `human_prompt_step` 등 | 인물 프롬프트 5단계 구조 |
 
 ---
 

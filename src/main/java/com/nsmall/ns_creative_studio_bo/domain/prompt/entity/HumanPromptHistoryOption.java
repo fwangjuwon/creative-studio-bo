@@ -8,26 +8,26 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * PromptHistoryTag 엔티티 — {@code prompt_history_tag} 테이블 매핑
+ * HumanPromptHistoryOption 엔티티 — {@code human_prompt_history_option} 테이블 매핑
  *
  * <pre>
- * 프롬프트와 태그의 다대다 매핑 테이블.
+ * 인물 프롬프트 생성 시 사용자가 선택한 옵션 매핑 테이블 (인물 프롬프트 전용).
  * prompt_history_id: 논리 FK → PromptHistory (DB 제약 없음)
- * tag_id: 논리 FK → Tag (DB 제약 없음)
+ * option_id        : 논리 FK → HumanPromptOption (DB 제약 없음)
  * </pre>
  *
  * @author jjhoo8936
- * @since 2026-02-27
+ * @since 2026-03-09
  */
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PromptHistoryTag {
+public class HumanPromptHistoryOption {
 
     private Long id;
     private Long promptHistoryId;
-    private Long tagId;
+    private Long optionId;
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;

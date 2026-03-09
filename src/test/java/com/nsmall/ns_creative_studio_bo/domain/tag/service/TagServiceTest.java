@@ -2,9 +2,9 @@ package com.nsmall.ns_creative_studio_bo.domain.tag.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistoryTag;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.GoodsPromptHistoryTag;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryTagMapper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.GoodsPromptHistoryTagMapper;
 import com.nsmall.ns_creative_studio_bo.domain.tag.TagErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagGroupCreateReqDto;
@@ -48,7 +48,7 @@ public class TagServiceTest {
     private PromptHistoryMapper promptHistoryMapper;
 
     @Autowired
-    private PromptHistoryTagMapper promptHistoryTagMapper;
+    private GoodsPromptHistoryTagMapper goodsPromptHistoryTagMapper;
 
     private TagGroupRespDto 태그그룹_생성(String name) {
         return tagGroupService.createTagGroup(
@@ -255,6 +255,7 @@ public class TagServiceTest {
                 .userId(0L)
                 .categoryId(null)
                 .promptType("PERSON")
+                .promptStyle("NANO_BANANA")
                 .promptText("테스트 프롬프트")
                 .initRegiPic("test_user")
                 .initRegiDttm(now)
@@ -263,14 +264,14 @@ public class TagServiceTest {
                 .build();
         promptHistoryMapper.insert(history);
 
-        promptHistoryTagMapper.insertBatch(List.of(
-                PromptHistoryTag.builder()
+        goodsPromptHistoryTagMapper.insertBatch(List.of(
+                GoodsPromptHistoryTag.builder()
                         .promptHistoryId(history.getId())
                         .tagId(tag.getId())
                         .initRegiPic("test_user")
                         .initRegiDttm(now)
-                        .finalRvisPic("test_user")
                         .finalRvisDttm(now)
+                        .finalRvisPic("test_user")
                         .build()
         ));
 

@@ -114,6 +114,7 @@ public class PromptServiceTest {
                 .userId(userId)
                 .categoryId(goodsCategoryId)
                 .promptType("PRODUCT")
+                .promptStyle("NANO_BANANA")
                 .promptText("direct insert prompt")
                 .initRegiPic("test")
                 .initRegiDttm(LocalDateTime.now())
@@ -282,6 +283,101 @@ public class PromptServiceTest {
     }
 
     // ================================================================
+    // 상품 프롬프트 생성 — 신규 필드 검증
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 상품 프롬프트 생성 - promptStyle MID_JOURNEY 명시 저장")
+    void 성공_상품_프롬프트_생성_promptStyle_MID_JOURNEY() {
+        given(geminiService.generateGoodsPrompt(any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("style_mj_user", "USER", "팀A", 5);
+        CategoryRespDto dcs = DCS_카테고리_생성("스타일MJ");
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(dcs.getId())
+                .tagIds(List.of())
+                .promptStyle("MID_JOURNEY")
+                .build();
+
+        PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
+
+        assertThat(result.getPromptStyle()).isEqualTo("MID_JOURNEY");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 상품 프롬프트 생성 - promptStyle 미입력 시 NANO_BANANA 기본값 적용")
+    void 성공_상품_프롬프트_생성_promptStyle_기본값_NANO_BANANA() {
+        given(geminiService.generateGoodsPrompt(any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("style_default_user", "USER", "팀A", 5);
+        CategoryRespDto dcs = DCS_카테고리_생성("스타일기본값");
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(dcs.getId())
+                .tagIds(List.of())
+                .build();
+
+        PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
+
+        assertThat(result.getPromptStyle()).isEqualTo("NANO_BANANA");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 상품 프롬프트 생성 - categoryPath 전체 경로 응답 포함")
+    void 성공_상품_프롬프트_생성_categoryPath_응답_포함() {
+        given(geminiService.generateGoodsPrompt(any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("path_resp_user", "USER", "팀A", 5);
+
+        CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("식품").categoryType(CategoryType.LCS).sortOrder(1).build());
+        CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("건강식품").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
+        CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("약재").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
+        CategoryRespDto dcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("인삼").categoryType(CategoryType.DCS).parentId(scs.getId()).sortOrder(1).build());
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(dcs.getId())
+                .tagIds(List.of())
+                .build();
+
+        PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
+
+        assertThat(result.getCategoryPath()).isEqualTo("식품 > 건강식품 > 약재 > 인삼");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 상품 프롬프트 생성 - tagNames 응답 포함")
+    void 성공_상품_프롬프트_생성_tagNames_응답_포함() {
+        given(geminiService.generateGoodsPrompt(any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("tagname_resp_user", "USER", "팀A", 5);
+        CategoryRespDto dcs = DCS_카테고리_생성("태그명응답");
+        TagRespDto tag1 = 태그_생성("분위기_태그명", "화사한");
+        TagRespDto tag2 = 태그_생성("인물_태그명", "여자");
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(dcs.getId())
+                .tagIds(List.of(tag1.getId(), tag2.getId()))
+                .build();
+
+        PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
+
+        assertThat(result.getTagNames()).containsExactlyInAnyOrder("화사한", "여자");
+    }
+
+    // ================================================================
     // 히스토리 조회 — 권한별 범위
     // ================================================================
 
@@ -367,5 +463,48 @@ public class PromptServiceTest {
         List<PromptHistoryRespDto> result = promptService.getPromptHistories(userNoTeam.getId());
 
         assertThat(result).isEmpty();
+    }
+
+    // ================================================================
+    // 이력 조회 — PRODUCT 신규 필드 검증
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 이력 조회 - PRODUCT 이력에 categoryPath/tagNames/promptStyle 포함")
+    void 성공_이력_조회_PRODUCT_신규필드_포함() {
+        given(geminiService.generateGoodsPrompt(any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("hist_detail_user", "USER", "팀Detail", 10);
+
+        CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("의류").categoryType(CategoryType.LCS).sortOrder(1).build());
+        CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("상의").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
+        CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("티셔츠").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
+        CategoryRespDto dcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("반팔").categoryType(CategoryType.DCS).parentId(scs.getId()).sortOrder(1).build());
+
+        TagRespDto tag = 태그_생성("배경_이력상세", "야외");
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(dcs.getId())
+                .tagIds(List.of(tag.getId()))
+                .promptStyle("MID_JOURNEY")
+                .build();
+
+        promptService.createGoodsPrompt(user.getId(), dto);
+
+        List<PromptHistoryRespDto> histories = promptService.getPromptHistories(user.getId());
+        PromptHistoryRespDto found = histories.stream()
+                .filter(h -> "PRODUCT".equals(h.getPromptType()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(found.getCategoryPath()).isEqualTo("의류 > 상의 > 티셔츠 > 반팔");
+        assertThat(found.getTagNames()).containsExactly("야외");
+        assertThat(found.getPromptStyle()).isEqualTo("MID_JOURNEY");
     }
 }

@@ -28,8 +28,9 @@
 | `category` | `Category` | 상품 카테고리 (4단계 계층: LCS→MCS→SCS→DCS) |
 | `tag_group` | `TagGroup` | 태그 묶음 (인물, 분위기 등) |
 | `tag` | `Tag` | 태그 값 (남자, 화사한 등) |
-| `prompt_history` | `PromptHistory` | 생성된 프롬프트 저장 |
-| `prompt_history_tag` | `PromptHistoryTag` | 프롬프트-태그 다대다 매핑 |
+| `prompt_history` | `PromptHistory` | 생성된 프롬프트 저장 (상품/인물 공통) |
+| `goods_prompt_history_tag` | `GoodsPromptHistoryTag` | 상품 프롬프트-태그 다대다 매핑 (상품 전용) |
+| `human_prompt_history_option` | `HumanPromptHistoryOption` | 인물 프롬프트-선택옵션 매핑 (인물 전용) |
 
 ---
 
@@ -117,14 +118,19 @@ LCS: 식품 (parent_id = NULL)
 
 ### `prompt_history`
 
-생성된 프롬프트 저장. 사용자가 선택한 카테고리와 태그를 기반으로 Gemini가 생성한 영문 프롬프트를 보관.
+생성된 프롬프트 저장. 상품/인물 프롬프트 공통 테이블. `prompt_type`으로 구분.
 
 | 컬럼명 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 프롬프트 히스토리 고유 ID |
 | `user_id` | BIGINT | NOT NULL | 생성자 ID (논리 FK → `user.id`) |
-| `goods_category_id` | BIGINT | NOT NULL | 선택한 상품 DCS 카테고리 ID (논리 FK → `category.id`) |
+| `category_id` | BIGINT | nullable | 선택한 상품 DCS 카테고리 ID (논리 FK → `category.id`), 인물은 NULL |
+| `prompt_type` | VARCHAR(10) | NOT NULL DEFAULT 'PRODUCT' | `'PRODUCT'` / `'PERSON'` |
+| `prompt_style` | VARCHAR(20) | NOT NULL | `'NANO_BANANA'` / `'MID_JOURNEY'` (기본값은 Service에서 적용) |
 | `prompt_text` | TEXT | NOT NULL | Gemini가 생성한 영문 프롬프트 |
+| `image_url` | VARCHAR(500) | nullable | NanaBanana 이미지 생성 URL |
+| `purpose` | TEXT | nullable | 인물 프롬프트 생성 목적 (상품은 NULL) |
+| `additional_notes` | TEXT | nullable | 인물 프롬프트 추가 지시사항 (상품은 NULL) |
 | `init_regi_pic` | VARCHAR | | 등록자 |
 | `init_regi_dttm` | TIMESTAMP | | 등록일시 (일일 사용량 집계 기준) |
 | `final_rvis_pic` | VARCHAR | | 최종수정자 |
@@ -134,15 +140,31 @@ LCS: 식품 (parent_id = NULL)
 
 ---
 
-### `prompt_history_tag`
+### `goods_prompt_history_tag`
 
-프롬프트와 태그의 다대다 매핑 테이블.
+상품 프롬프트와 태그의 다대다 매핑 테이블. **상품 프롬프트 전용.**
 
 | 컬럼명 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 매핑 고유 ID |
 | `prompt_history_id` | BIGINT | NOT NULL | 프롬프트 ID (논리 FK → `prompt_history.id`) |
 | `tag_id` | BIGINT | NOT NULL | 태그 ID (논리 FK → `tag.id`) |
+| `init_regi_pic` | VARCHAR | | 등록자 |
+| `init_regi_dttm` | TIMESTAMP | | 등록일시 |
+| `final_rvis_pic` | VARCHAR | | 최종수정자 |
+| `final_rvis_dttm` | TIMESTAMP | | 최종수정일시 |
+
+---
+
+### `human_prompt_history_option`
+
+인물 프롬프트 생성 시 사용자가 선택한 옵션 매핑 테이블. **인물 프롬프트 전용.**
+
+| 컬럼명 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 매핑 고유 ID |
+| `prompt_history_id` | BIGINT | NOT NULL | 프롬프트 ID (논리 FK → `prompt_history.id`) |
+| `option_id` | BIGINT | NOT NULL | 선택한 옵션 ID (논리 FK → `human_prompt_option.id`) |
 | `init_regi_pic` | VARCHAR | | 등록자 |
 | `init_regi_dttm` | TIMESTAMP | | 등록일시 |
 | `final_rvis_pic` | VARCHAR | | 최종수정자 |
@@ -191,21 +213,60 @@ erDiagram
     PROMPT_HISTORY {
         bigint id PK
         bigint user_id
-        bigint goods_category_id
+        bigint category_id
+        varchar prompt_type
+        varchar prompt_style
         text prompt_text
+        varchar image_url
+        text purpose
+        text additional_notes
         timestamp init_regi_dttm
     }
 
-    PROMPT_HISTORY_TAG {
+    GOODS_PROMPT_HISTORY_TAG {
         bigint id PK
         bigint prompt_history_id
         bigint tag_id
     }
 
+    HUMAN_PROMPT_HISTORY_OPTION {
+        bigint id PK
+        bigint prompt_history_id
+        bigint option_id
+    }
+
+    HUMAN_PROMPT_STEP {
+        bigint id PK
+        int step_number
+        varchar step_code
+        varchar name
+    }
+
+    HUMAN_PROMPT_ATTR {
+        bigint id PK
+        bigint step_id
+        varchar name
+        boolean is_multi_select
+        boolean is_required
+        int sort_order
+    }
+
+    HUMAN_PROMPT_OPTION {
+        bigint id PK
+        bigint attr_id
+        varchar name
+        varchar prompt_value
+        int sort_order
+    }
+
     USER ||--o{ PROMPT_HISTORY : "생성"
-    CATEGORY ||--o{ PROMPT_HISTORY : "선택됨 (DCS)"
+    CATEGORY ||--o{ PROMPT_HISTORY : "선택됨 (DCS, 상품만)"
     CATEGORY ||--o{ CATEGORY : "parent_id (self-ref)"
     TAG_GROUP ||--o{ TAG : "포함"
-    PROMPT_HISTORY ||--o{ PROMPT_HISTORY_TAG : "포함"
-    TAG ||--o{ PROMPT_HISTORY_TAG : "참조됨"
+    PROMPT_HISTORY ||--o{ GOODS_PROMPT_HISTORY_TAG : "상품 태그 매핑"
+    TAG ||--o{ GOODS_PROMPT_HISTORY_TAG : "참조됨"
+    PROMPT_HISTORY ||--o{ HUMAN_PROMPT_HISTORY_OPTION : "인물 옵션 매핑"
+    HUMAN_PROMPT_OPTION ||--o{ HUMAN_PROMPT_HISTORY_OPTION : "참조됨"
+    HUMAN_PROMPT_STEP ||--o{ HUMAN_PROMPT_ATTR : "포함"
+    HUMAN_PROMPT_ATTR ||--o{ HUMAN_PROMPT_OPTION : "포함"
 ```

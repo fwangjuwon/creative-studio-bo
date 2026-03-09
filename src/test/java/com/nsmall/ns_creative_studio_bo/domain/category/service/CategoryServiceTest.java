@@ -353,6 +353,7 @@ public class CategoryServiceTest {
                 .userId(0L)
                 .categoryId(dcs.getId())
                 .promptType("PRODUCT")
+                .promptStyle("NANO_BANANA")
                 .promptText("테스트 프롬프트")
                 .initRegiPic("test_user")
                 .initRegiDttm(now)
