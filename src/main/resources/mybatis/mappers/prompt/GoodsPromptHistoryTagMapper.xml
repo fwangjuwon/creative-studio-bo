@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryTagMapper">
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.GoodsPromptHistoryTagMapper">
 
     <insert id="insertBatch">
-        INSERT INTO prompt_history_tag (
+        INSERT INTO goods_prompt_history_tag (
             prompt_history_id,
             tag_id,
             init_regi_pic,
@@ -26,14 +26,22 @@
 
     <select id="selectTagIdsByPromptHistoryId" resultType="Long">
         SELECT tag_id
-        FROM prompt_history_tag
+        FROM goods_prompt_history_tag
         WHERE prompt_history_id = #{promptHistoryId}
         ORDER BY id ASC
     </select>
 
+    <select id="selectTagNamesByPromptHistoryId" resultType="String">
+        SELECT t.name
+        FROM goods_prompt_history_tag ght
+        JOIN tag t ON ght.tag_id = t.id
+        WHERE ght.prompt_history_id = #{promptHistoryId}
+        ORDER BY ght.id ASC
+    </select>
+
     <select id="existsByTagId" resultType="boolean">
         SELECT COUNT(*) <![CDATA[ > ]]> 0
-        FROM prompt_history_tag
+        FROM goods_prompt_history_tag
         WHERE tag_id = #{tagId}
     </select>
 

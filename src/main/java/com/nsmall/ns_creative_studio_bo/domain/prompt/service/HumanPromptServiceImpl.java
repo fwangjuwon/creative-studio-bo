@@ -7,8 +7,10 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.HumanPromptHistoryOption;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.HumanPromptOption;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
@@ -36,7 +38,8 @@ import java.util.Map;
  *   4. stepNumber 기준 Map 구성
  *   5. GeminiService.generateHumanPrompt() 호출
  *   6. PromptHistory 저장 (promptType='PERSON', categoryId=null)
- *   7. 생성된 이력 DTO 반환
+ *   7. HumanPromptHistoryOption 저장 (선택 옵션 매핑)
+ *   8. 생성된 이력 DTO 반환
  * </pre>
  *
  * @author jjhoo8936
@@ -49,6 +52,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
     private final HumanPromptStepMapper humanPromptStepMapper;
     private final HumanPromptOptionMapper humanPromptOptionMapper;
+    private final HumanPromptHistoryOptionMapper humanPromptHistoryOptionMapper;
     private final PromptHistoryMapper promptHistoryMapper;
     private final UserMapper userMapper;
     private final GeminiService geminiService;
@@ -102,7 +106,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
                 ? dto.getPromptStyle() : "NANO_BANANA";
         String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes(), style);
 
-        // 6. PromptHistory 저장 (PERSON 타입, categoryId=null, imageUrl=null)
+        // 6. PromptHistory 저장 (PERSON 타입, categoryId=null)
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
@@ -110,8 +114,11 @@ public class HumanPromptServiceImpl implements HumanPromptService {
                 .userId(userId)
                 .categoryId(null)
                 .promptType("PERSON")
+                .promptStyle(style)
                 .promptText(promptText)
                 .imageUrl(null)
+                .purpose(dto.getPurpose())
+                .additionalNotes(dto.getAdditionalNotes())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -120,9 +127,25 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         promptHistoryMapper.insert(history);
 
-        log.info("인물 프롬프트 이력 저장 완료 — userId={}, historyId={}", userId, history.getId());
+        // 7. HumanPromptHistoryOption 저장 (선택 옵션 매핑)
+        List<HumanPromptHistoryOption> historyOptions = allOptionIds.stream()
+                .map(optionId -> HumanPromptHistoryOption.builder()
+                        .promptHistoryId(history.getId())
+                        .optionId(optionId)
+                        .initRegiPic(requesterId)
+                        .initRegiDttm(now)
+                        .finalRvisPic(requesterId)
+                        .finalRvisDttm(now)
+                        .build())
+                .toList();
+        humanPromptHistoryOptionMapper.insertBatch(historyOptions);
 
-        return PromptHistoryRespDto.from(history, List.of());
+        log.info("인물 프롬프트 이력 저장 완료 — userId={}, historyId={}, optionCount={}",
+                userId, history.getId(), historyOptions.size());
+
+        // 8. 응답 반환
+        List<String> savedOptionNames = humanPromptHistoryOptionMapper.selectOptionNamesByHistoryId(history.getId());
+        return PromptHistoryRespDto.fromHuman(history, savedOptionNames);
     }
 
     @Override

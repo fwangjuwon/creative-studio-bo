@@ -73,7 +73,7 @@ CREATE TABLE tag_group (
 -- TABLE: tag
 -- 설명: 태그 값 (남자, 여자, 화사한 등)
 -- 논리 FK: tag.tag_group_id → tag_group.id
---          prompt_history_tag.tag_id → tag.id
+--          goods_prompt_history_tag.tag_id → tag.id
 -- -----------------------------------------------------------------------------
 CREATE TABLE tag (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -92,29 +92,32 @@ CREATE TABLE tag (
 -- 설명: Gemini가 생성한 영문 프롬프트 저장
 --       init_regi_dttm 기준으로 일일 사용량 집계 (DATE(init_regi_dttm) = 오늘)
 -- 논리 FK: prompt_history.user_id → user.id
---          prompt_history.goods_category_id → category.id (DCS만 저장)
+--          prompt_history.category_id → category.id (DCS만 저장, 상품 프롬프트만)
 -- -----------------------------------------------------------------------------
 CREATE TABLE prompt_history (
-    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_id         BIGINT          NOT NULL,           -- 논리 FK → user.id
-    category_id     BIGINT,                            -- 논리 FK → category.id (DCS), 인물 프롬프트는 NULL
-    prompt_type     VARCHAR(10)     NOT NULL DEFAULT 'PRODUCT',  -- 'PRODUCT' | 'PERSON'
-    prompt_text     TEXT            NOT NULL,
-    image_url       VARCHAR(500),                      -- NanaBanana 이미지 생성 URL (없으면 NULL)
-    init_regi_pic   VARCHAR(50),
-    init_regi_dttm  TIMESTAMP,
-    final_rvis_pic  VARCHAR(50),
-    final_rvis_dttm TIMESTAMP
+    id               BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id          BIGINT          NOT NULL,          -- 논리 FK → user.id
+    category_id      BIGINT,                            -- 논리 FK → category.id (DCS), 인물 프롬프트는 NULL
+    prompt_type      VARCHAR(10)     NOT NULL DEFAULT 'PRODUCT',  -- 'PRODUCT' | 'PERSON'
+    prompt_style     VARCHAR(20)     NOT NULL DEFAULT 'NANO_BANANA',  -- 'NANO_BANANA' | 'MID_JOURNEY'
+    prompt_text      TEXT            NOT NULL,
+    image_url        VARCHAR(500),                      -- NanaBanana 이미지 생성 URL (없으면 NULL)
+    purpose          TEXT,                              -- 인물 프롬프트 생성 목적 (상품은 NULL)
+    additional_notes TEXT,                              -- 인물 프롬프트 추가 지시사항 (상품은 NULL)
+    init_regi_pic    VARCHAR(50),
+    init_regi_dttm   TIMESTAMP,
+    final_rvis_pic   VARCHAR(50),
+    final_rvis_dttm  TIMESTAMP
 );
 
 
 -- -----------------------------------------------------------------------------
--- TABLE: prompt_history_tag
--- 설명: 프롬프트와 태그의 다대다 매핑
--- 논리 FK: prompt_history_tag.prompt_history_id → prompt_history.id
---          prompt_history_tag.tag_id → tag.id
+-- TABLE: goods_prompt_history_tag
+-- 설명: 상품 프롬프트와 태그의 다대다 매핑 (상품 프롬프트 전용)
+-- 논리 FK: goods_prompt_history_tag.prompt_history_id → prompt_history.id
+--          goods_prompt_history_tag.tag_id → tag.id
 -- -----------------------------------------------------------------------------
-CREATE TABLE prompt_history_tag (
+CREATE TABLE goods_prompt_history_tag (
     id                  BIGINT      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     prompt_history_id   BIGINT      NOT NULL,           -- 논리 FK → prompt_history.id
     tag_id              BIGINT      NOT NULL,           -- 논리 FK → tag.id
@@ -144,9 +147,9 @@ CREATE INDEX idx_category_parent_id
 CREATE INDEX idx_tag_tag_group_id
     ON tag (tag_group_id);
 
--- 프롬프트-태그 매핑 조회 최적화
-CREATE INDEX idx_prompt_history_tag_history_id
-    ON prompt_history_tag (prompt_history_id);
+-- 상품 프롬프트-태그 매핑 조회 최적화
+CREATE INDEX idx_goods_prompt_history_tag_history_id
+    ON goods_prompt_history_tag (prompt_history_id);
 
 
 -- =============================================================================
@@ -214,6 +217,23 @@ CREATE TABLE human_prompt_option (
 
 
 -- -----------------------------------------------------------------------------
+-- TABLE: human_prompt_history_option
+-- 설명: 인물 프롬프트 생성 시 선택한 옵션 매핑 (인물 프롬프트 전용)
+-- 논리 FK: human_prompt_history_option.prompt_history_id → prompt_history.id
+--          human_prompt_history_option.option_id → human_prompt_option.id
+-- -----------------------------------------------------------------------------
+CREATE TABLE human_prompt_history_option (
+    id                  BIGINT      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    prompt_history_id   BIGINT      NOT NULL,           -- 논리 FK → prompt_history.id
+    option_id           BIGINT      NOT NULL,           -- 논리 FK → human_prompt_option.id
+    init_regi_pic       VARCHAR(50),
+    init_regi_dttm      TIMESTAMP,
+    final_rvis_pic      VARCHAR(50),
+    final_rvis_dttm     TIMESTAMP
+);
+
+
+-- -----------------------------------------------------------------------------
 -- INDEX (human_prompt)
 -- -----------------------------------------------------------------------------
 
@@ -224,3 +244,7 @@ CREATE INDEX idx_human_prompt_attr_step_id
 -- 속성 → 옵션 조회 최적화
 CREATE INDEX idx_human_prompt_option_attr_id
     ON human_prompt_option (attr_id);
+
+-- 인물 프롬프트-옵션 매핑 조회 최적화
+CREATE INDEX idx_human_prompt_history_option_history_id
+    ON human_prompt_history_option (prompt_history_id);

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryOptionMapper">
+
+    <insert id="insertBatch">
+        INSERT INTO human_prompt_history_option (
+            prompt_history_id,
+            option_id,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+                #{item.promptHistoryId},
+                #{item.optionId},
+                #{item.initRegiPic},
+                #{item.initRegiDttm},
+                #{item.finalRvisPic},
+                #{item.finalRvisDttm}
+            )
+        </foreach>
+    </insert>
+
+    <!--
+        human_prompt_option.name: 한국어 표시명 (UI 노출용)
+        step → attr → option 순으로 정렬하여 단계 순서대로 반환
+    -->
+    <select id="selectOptionNamesByHistoryId" resultType="String">
+        SELECT hpo.name
+        FROM human_prompt_history_option hpho
+        JOIN human_prompt_option hpo ON hpho.option_id = hpo.id
+        JOIN human_prompt_attr hpa ON hpo.attr_id = hpa.id
+        JOIN human_prompt_step hps ON hpa.step_id = hps.id
+        WHERE hpho.prompt_history_id = #{promptHistoryId}
+        ORDER BY hps.step_number ASC, hpa.sort_order ASC, hpo.sort_order ASC
+    </select>
+
+</mapper>

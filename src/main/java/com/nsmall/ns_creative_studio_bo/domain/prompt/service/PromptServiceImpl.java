@@ -9,9 +9,10 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistoryTag;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.GoodsPromptHistoryTag;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryTagMapper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.GoodsPromptHistoryTagMapper;
 import com.nsmall.ns_creative_studio_bo.domain.tag.entity.Tag;
 import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
@@ -32,7 +33,7 @@ import java.util.List;
  *   1. 사용자 존재 확인 + 일일 한도 체크
  *   2. 카테고리 존재 확인 + 태그 존재 확인
  *   3. Gemini API 호출 → 영문 프롬프트 생성
- *   4. PromptHistory + PromptHistoryTag 저장
+ *   4. PromptHistory + GoodsPromptHistoryTag 저장
  *   5. 응답 반환
  * </pre>
  *
@@ -45,7 +46,8 @@ import java.util.List;
 public class PromptServiceImpl implements PromptService {
 
     private final PromptHistoryMapper promptHistoryMapper;
-    private final PromptHistoryTagMapper promptHistoryTagMapper;
+    private final GoodsPromptHistoryTagMapper goodsPromptHistoryTagMapper;
+    private final HumanPromptHistoryOptionMapper humanPromptHistoryOptionMapper;
     private final UserMapper userMapper;
     private final CategoryMapper categoryMapper;
     private final TagMapper tagMapper;
@@ -94,11 +96,14 @@ public class PromptServiceImpl implements PromptService {
         // 5. PromptHistory 저장
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
+        String promptStyle = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
+                ? dto.getPromptStyle() : "NANO_BANANA";
 
         PromptHistory history = PromptHistory.builder()
                 .userId(currentUserId)
                 .categoryId(dto.getGoodsCategoryId())
                 .promptType("PRODUCT")
+                .promptStyle(promptStyle)
                 .promptText(promptText)
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
@@ -108,10 +113,10 @@ public class PromptServiceImpl implements PromptService {
 
         promptHistoryMapper.insert(history);
 
-        // 6. PromptHistoryTag 저장 (태그가 있는 경우만)
+        // 6. GoodsPromptHistoryTag 저장 (태그가 있는 경우만)
         if (!dto.getTagIds().isEmpty()) {
-            List<PromptHistoryTag> historyTags = dto.getTagIds().stream()
-                    .map(tagId -> PromptHistoryTag.builder()
+            List<GoodsPromptHistoryTag> historyTags = dto.getTagIds().stream()
+                    .map(tagId -> GoodsPromptHistoryTag.builder()
                             .promptHistoryId(history.getId())
                             .tagId(tagId)
                             .initRegiPic(requesterId)
@@ -121,12 +126,14 @@ public class PromptServiceImpl implements PromptService {
                             .build())
                     .toList();
 
-            promptHistoryTagMapper.insertBatch(historyTags);
+            goodsPromptHistoryTagMapper.insertBatch(historyTags);
         }
 
         // 7. 응답 반환
-        List<Long> savedTagIds = promptHistoryTagMapper.selectTagIdsByPromptHistoryId(history.getId());
-        return PromptHistoryRespDto.from(history, savedTagIds);
+        String savedCategoryPath = String.join(" > ", categoryPath);
+        List<Long> savedTagIds = goodsPromptHistoryTagMapper.selectTagIdsByPromptHistoryId(history.getId());
+        List<String> savedTagNames = goodsPromptHistoryTagMapper.selectTagNamesByPromptHistoryId(history.getId());
+        return PromptHistoryRespDto.fromGoods(history, savedCategoryPath, savedTagIds, savedTagNames);
     }
 
     @Override
@@ -150,8 +157,17 @@ public class PromptServiceImpl implements PromptService {
 
         return histories.stream()
                 .map(history -> {
-                    List<Long> tagIds = promptHistoryTagMapper.selectTagIdsByPromptHistoryId(history.getId());
-                    return PromptHistoryRespDto.from(history, tagIds);
+                    if ("PRODUCT".equals(history.getPromptType())) {
+                        String categoryPath = history.getCategoryId() != null
+                                ? String.join(" > ", categoryMapper.selectCategoryPath(history.getCategoryId()))
+                                : null;
+                        List<Long> tagIds = goodsPromptHistoryTagMapper.selectTagIdsByPromptHistoryId(history.getId());
+                        List<String> tagNames = goodsPromptHistoryTagMapper.selectTagNamesByPromptHistoryId(history.getId());
+                        return PromptHistoryRespDto.fromGoods(history, categoryPath, tagIds, tagNames);
+                    } else {
+                        List<String> optionNames = humanPromptHistoryOptionMapper.selectOptionNamesByHistoryId(history.getId());
+                        return PromptHistoryRespDto.fromHuman(history, optionNames);
+                    }
                 })
                 .toList();
     }
