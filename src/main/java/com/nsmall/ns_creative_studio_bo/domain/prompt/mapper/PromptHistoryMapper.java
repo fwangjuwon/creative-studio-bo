@@ -39,4 +39,9 @@ public interface PromptHistoryMapper {
      * 이미지 URL 업데이트 — 이미지 생성 완료 후 호출
      */
     void updateImageUrl(@Param("id") Long id, @Param("imageUrl") String imageUrl, @Param("finalRvisPic") String finalRvisPic);
+
+    /**
+     * 해당 카테고리가 프롬프트 히스토리에서 사용 중인지 여부 조회 (삭제 방어용)
+     */
+    boolean existsByCategoryId(@Param("categoryId") Long categoryId);
 }

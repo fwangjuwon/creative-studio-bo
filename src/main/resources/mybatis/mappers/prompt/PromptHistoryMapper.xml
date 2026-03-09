@@ -83,4 +83,10 @@
           AND DATE(init_regi_dttm) = CURRENT_DATE
     </select>
 
+    <select id="existsByCategoryId" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM prompt_history
+        WHERE category_id = #{categoryId}
+    </select>
+
 </mapper>

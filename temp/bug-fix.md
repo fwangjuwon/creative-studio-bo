@@ -114,7 +114,7 @@ DB와 코드는 `category_id` / `categoryId`로 일치하므로 **기능적 문�
 ## [설계 미흡 2] CategoryServiceImpl.deleteCategory() — PromptHistory 참조 체크 없음
 
 - **파일**: `domain/category/service/CategoryServiceImpl.java`
-- **상태**: ⬜ 미처리
+- **상태**: ✅ 완료
 
 ### 현상
 `deleteCategory()`는 하위 카테고리 존재 체크는 수행하지만,
@@ -138,4 +138,4 @@ DCS 카테고리를 삭제하면 기존 프롬프트 히스토리에서 `categor
 | 버그 2 | 🟡 Minor | updateImageUrl final_rvis_pic 누락 | ✅ 완료 |
 | 불일치 | 🟢 Minor | requirements.md 컬럼명 오기재 | ⬜ 미처리 |
 | 설계 1 | 🟡 Minor | 사용 중인 태그 삭제 방어 없음 | ✅ 완료 |
-| 설계 2 | 🟡 Minor | 참조 중인 카테고리 삭제 방어 없음 | ⬜ 미처리 |
+| 설계 2 | 🟡 Minor | 참조 중인 카테고리 삭제 방어 없음 | ✅ 완료 |
