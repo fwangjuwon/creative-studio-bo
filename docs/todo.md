@@ -1,11 +1,119 @@
 # TODO
 
-> 상태: ✅ Refactor 완료
-> 최종 업데이트: 2026-03-03 (Refactor — Goods 네이밍 명시)
+> 상태: ✅ feat/history-detailize 완료
+> 최종 업데이트: 2026-03-09 (feat/history-detailize — 이력 조회 상세화)
 
 ---
 
 ## 진행 중
+
+없음
+
+---
+
+## 완료
+
+### feat/history-detailize. 이력 조회 상세화
+
+> 이력 조회(`GET /api/prompts`) 응답에 프롬프트 생성 시 입력했던 모든 파라미터를 포함하도록 상세화.
+> 상품: 카테고리 전체 경로명, 태그명 목록, 프롬프트 스타일 추가.
+> 인물: 선택 옵션명 목록, 생성 목적, 추가 지시사항, 프롬프트 스타일 추가.
+
+#### DB 스키마
+- [x] `prompt_history_tag` → `goods_prompt_history_tag` 테이블명 변경
+- [x] `prompt_history` 테이블에 `prompt_style VARCHAR(20) NOT NULL`, `purpose TEXT`, `additional_notes TEXT` 컬럼 추가
+  - ℹ️ `prompt_style` 기본값 책임은 Java Service 레이어로 부여 (DB DEFAULT 없음)
+- [x] `human_prompt_history_option` 신규 테이블 + 인덱스 생성
+- [x] `db/schema.sql` 반영, `docs/erd.md` 반영
+
+#### Entity / DTO
+- [x] `PromptHistoryTag` → `GoodsPromptHistoryTag` 클래스명 변경
+- [x] `PromptHistory` entity — `promptStyle`, `purpose`, `additionalNotes` 필드 추가
+- [x] `HumanPromptHistoryOption` entity 신규 생성
+- [x] `PromptHistoryRespDto` — `categoryPath`, `tagNames`, `promptStyle`, `purpose`, `additionalNotes`, `optionNames` 필드 추가
+  - `from()` → `fromGoods(history, categoryPath, tagIds, tagNames)` / `fromHuman(history, optionNames)` factory 메서드 분리
+- [x] `GoodsPromptCreateReqDto` — `promptStyle` 필드 추가 (미입력 시 서비스에서 `NANO_BANANA` 기본값 적용)
+
+#### Mapper
+- [x] `PromptHistoryTagMapper` → `GoodsPromptHistoryTagMapper` 이름 변경 (Java + XML)
+  - XML 테이블명 `prompt_history_tag` → `goods_prompt_history_tag`
+  - `selectTagNamesByPromptHistoryId` 추가 (Tag JOIN)
+- [x] `PromptHistoryMapper.xml` — INSERT / SELECT에 `prompt_style`, `purpose`, `additional_notes` 컬럼 추가
+- [x] `HumanPromptHistoryOptionMapper` 신규 생성 (`insertBatch`, `selectOptionNamesByHistoryId`)
+
+#### Service
+- [x] `PromptServiceImpl.createGoodsPrompt` — `promptStyle` 저장, 응답에 `categoryPath` + `tagNames` 포함
+- [x] `HumanPromptServiceImpl.createPrompt` — `promptStyle`, `purpose`, `additionalNotes` 저장, `human_prompt_history_option` 배치 INSERT, 응답에 `optionNames` 포함
+- [x] `PromptServiceImpl.getPromptHistories` — PRODUCT/PERSON 분기하여 각 신규 필드 JOIN 조회
+- [x] `TagServiceImpl` — `GoodsPromptHistoryTagMapper` 참조로 업데이트
+
+#### 테스트
+- [x] `PromptServiceTest` — 상품 신규 필드 검증 4개 (promptStyle MID_JOURNEY / 기본값 / categoryPath / tagNames), PRODUCT 이력 조회 신규 필드 검증
+- [x] `HumanPromptServiceTest` — 인물 신규 필드 검증 3개 (optionNames / purpose+additionalNotes / promptStyle MID_JOURNEY), PERSON 이력 조회 신규 필드 검증
+- [x] ASIS 테스트 `히스토리_직접_삽입` 헬퍼 4곳에 `.promptStyle("NANO_BANANA")` 추가 (NOT NULL 제약 대응)
+
+---
+
+### 버그 수정 (`fix` 브랜치)
+
+- [x] `TagServiceImpl.deleteTag()` — `goods_prompt_history_tag`에서 참조 중인 태그 삭제 방어 누락 → `TAG_IN_USE` 예외 추가
+- [x] `CategoryServiceImpl.deleteCategory()` — `prompt_history`에서 참조 중인 카테고리 삭제 방어 누락 → `CATEGORY_IN_USE` 예외 추가
+- [x] `HumanPromptServiceImpl.createPrompt()` — 인물 프롬프트 생성 시 일일 한도 체크 누락 → 수정
+- [x] `PromptHistoryMapper.xml updateImageUrl` — `final_rvis_pic` 컬럼 누락 → 수정
+- [x] `HumanPromptCreateReqDto` — `@Builder` 어노테이션 누락 → 추가
+- [x] `TagServiceTest` — `예외_태그_삭제_사용_중` 테스트 추가
+- [x] `CategoryServiceTest` — `예외_카테고리_삭제_사용_중` 테스트 추가
+- [x] `UserMapper.xml` — `UserSearchReqDto` 변수 바인딩을 위한 `@Setter` 추가 (PR #33, iamjy)
+
+---
+
+### feat/prompt-image-person. 인물 이미지 프롬프트 + NanaBanana 연동
+
+> 상품 이미지 프롬프트(Tab 1) 외에, 인물 사진 이미지를 위한 별도 프롬프트 생성 플로우 추가.
+> NanaBanana(`gemini-3-pro-image-preview`) 직접 연동으로 이미지 생성 및 URL 반환까지 지원.
+
+#### DB 테이블 + 시드 데이터
+- [x] `human_prompt_step` — 5단계 구조 (A~E)
+- [x] `human_prompt_attr` — 단계별 세부항목
+- [x] `human_prompt_option` — 세부항목별 선택지 (`prompt_value` 포함)
+- [x] `db/schema.sql` 반영, `docs/erd.md` 반영
+- [x] `db/data.sql` — 5단계 시드 데이터 추가
+
+#### Entity / Mapper
+- [x] `HumanPromptStep`, `HumanPromptAttr`, `HumanPromptOption` entity
+- [x] `HumanPromptStepMapper` + XML — `selectAllWithAttrsAndOptions` (5단계 계층 구조 1회 쿼리 조회)
+- [x] `HumanPromptOptionMapper` + XML — `selectByIds`
+
+#### Service
+- [x] `HumanPromptService` + `HumanPromptServiceImpl`
+  - `getSteps()` — 5단계 구조 반환
+  - `createPrompt()` — 선택 옵션 기반 Gemini 호출, 이력 저장 (`@Transactional`)
+  - `generateImage()` — NanaBanana API 호출, `imageUrl` 이력 업데이트
+- [x] `ImageGenerationService` + `NanoBananaServiceImpl`
+  - `gemini-3-pro-image-preview` 모델 호출, 생성 이미지 서버 저장 후 URL 반환
+- [x] `GeminiService.generateHumanPrompt()` 추가
+  - `stepOptionValues`, `purpose`, `additionalNotes`, `promptStyle` 인자 수신
+  - NANO_BANANA / MID_JOURNEY 스타일별 시스템 프롬프트 분기
+- [x] `HumanPromptErrorCode` (H001 옵션미선택)
+- [x] `ImageGenerationErrorCode`
+
+#### Controller
+- [x] `HumanPromptController` (`/api/human-prompts`)
+  - `GET /steps` — 단계 구조 조회 (USER 이상)
+  - `POST /` — 인물 프롬프트 생성 (USER 이상, `@AuthenticationPrincipal`)
+  - `POST /generate-image` — NanaBanana 이미지 생성 (USER 이상)
+
+#### 기타
+- [x] `build.gradle` — `bootRun` 시 `.env` 환경변수 자동 주입 설정 추가
+
+#### 테스트
+- [x] `HumanPromptServiceTest` 작성 (`@MockBean GeminiService`, `@MockBean ImageGenerationService`)
+  - 단계 구조 조회 (5단계 반환 / 세부항목·선택지 포함)
+  - 인물 프롬프트 생성 — 정상 / 일일 한도 미만 / 한도 초과 / PRODUCT 이력 합산 / 사용자 미존재 / 선택 옵션 없음
+  - 이미지 생성 — imageUrl 이력 업데이트 / historyId null 시 미업데이트
+- [x] `PromptServiceTests` Suite — `HumanPromptServiceTest` 포함
+
+---
 
 ### Refactor. Goods 네이밍 명시 (`refactor/goods-naming`)
 
@@ -79,8 +187,6 @@
 - [x] `AllServiceTests` — `PromptServiceTests` 추가
 
 ---
-
-## 완료
 
 ### Step 3-C. TagGroup / Tag CRUD
 - [x] `TagGroup`, `Tag` entity

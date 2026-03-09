@@ -126,7 +126,7 @@ LCS: 식품 (parent_id = NULL)
 | `user_id` | BIGINT | NOT NULL | 생성자 ID (논리 FK → `user.id`) |
 | `category_id` | BIGINT | nullable | 선택한 상품 DCS 카테고리 ID (논리 FK → `category.id`), 인물은 NULL |
 | `prompt_type` | VARCHAR(10) | NOT NULL DEFAULT 'PRODUCT' | `'PRODUCT'` / `'PERSON'` |
-| `prompt_style` | VARCHAR(20) | NOT NULL DEFAULT 'NANO_BANANA' | `'NANO_BANANA'` / `'MID_JOURNEY'` |
+| `prompt_style` | VARCHAR(20) | NOT NULL | `'NANO_BANANA'` / `'MID_JOURNEY'` (기본값은 Service에서 적용) |
 | `prompt_text` | TEXT | NOT NULL | Gemini가 생성한 영문 프롬프트 |
 | `image_url` | VARCHAR(500) | nullable | NanaBanana 이미지 생성 URL |
 | `purpose` | TEXT | nullable | 인물 프롬프트 생성 목적 (상품은 NULL) |

@@ -72,13 +72,11 @@
 
 ---
 
-### 🔲 STEP 6. 테스트 코드
+### ✅ STEP 6. 테스트 코드
 
-> Docker 재빌드 완료 후 진행
-
-- [ ] 6-1. 상품 프롬프트 생성 테스트 — `promptStyle` 저장, `categoryPath`/`tagNames` 응답 검증
-- [ ] 6-2. 인물 프롬프트 생성 테스트 — 옵션 매핑 저장, `purpose`/`additionalNotes`/`optionNames` 응답 검증
-- [ ] 6-3. 이력 조회 테스트 — 상품/인물 각각 전체 필드 포함 여부 검증
+- [x] 6-1. 상품 프롬프트 생성 테스트 — `promptStyle` 저장, `categoryPath`/`tagNames` 응답 검증
+- [x] 6-2. 인물 프롬프트 생성 테스트 — 옵션 매핑 저장, `purpose`/`additionalNotes`/`optionNames` 응답 검증
+- [x] 6-3. 이력 조회 테스트 — 상품/인물 각각 전체 필드 포함 여부 검증
 
 ---
 
