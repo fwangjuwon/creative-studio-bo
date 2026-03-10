@@ -128,7 +128,7 @@ LCS: 식품 (parent_id = NULL)
 | `prompt_type` | VARCHAR(10) | NOT NULL DEFAULT 'PRODUCT' | `'PRODUCT'` / `'PERSON'` |
 | `prompt_style` | VARCHAR(20) | NOT NULL | `'NANO_BANANA'` / `'MID_JOURNEY'` (기본값은 Service에서 적용) |
 | `prompt_text` | TEXT | NOT NULL | Gemini가 생성한 영문 프롬프트 |
-| `image_url` | VARCHAR(500) | nullable | NanaBanana 이미지 생성 URL |
+| `image_url` | VARCHAR(500) | nullable | NanoBanana 이미지 생성 URL |
 | `purpose` | TEXT | nullable | 인물 프롬프트 생성 목적 (상품은 NULL) |
 | `additional_notes` | TEXT | nullable | 인물 프롬프트 추가 지시사항 (상품은 NULL) |
 | `init_regi_pic` | VARCHAR | | 등록자 |

@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * NanaBanana 이미지 생성 서비스 구현체
+ * NanoBanana 이미지 생성 서비스 구현체
  *
  * <pre>
  * Gemini 이미지 생성 모델(gemini-3-pro-image-preview)을 사용하여 이미지를 생성한다.
@@ -49,7 +49,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
 
     @Override
     public String generateImage(String prompt) {
-        log.debug("NanaBanana 이미지 생성 호출 — model: {}", geminiProperties.getImageModel());
+        log.debug("NanoBanana 이미지 생성 호출 — model: {}", geminiProperties.getImageModel());
 
         // 1. Gemini 이미지 생성 API 호출
         NbRequest requestBody = new NbRequest(
@@ -71,25 +71,25 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         if (response == null
                 || response.candidates() == null
                 || response.candidates().isEmpty()) {
-            log.error("NanaBanana 응답이 비어 있습니다 — candidates 없음");
+            log.error("NanoBanana 응답이 비어 있습니다 — candidates 없음");
             throw new BizException(ImageGenerationErrorCode.EMPTY_IMAGE_RESPONSE);
         }
 
         NbContent content = response.candidates().get(0).content();
         if (content == null || content.parts() == null || content.parts().isEmpty()) {
-            log.error("NanaBanana 응답 content가 비어 있습니다");
+            log.error("NanoBanana 응답 content가 비어 있습니다");
             throw new BizException(ImageGenerationErrorCode.EMPTY_IMAGE_RESPONSE);
         }
 
         NbInlineData inlineData = content.parts().get(0).inlineData();
         if (inlineData == null || inlineData.data() == null || inlineData.data().isBlank()) {
-            log.error("NanaBanana 응답에 inlineData가 없습니다");
+            log.error("NanoBanana 응답에 inlineData가 없습니다");
             throw new BizException(ImageGenerationErrorCode.EMPTY_IMAGE_RESPONSE);
         }
 
         // 3. base64 디코딩 후 파일 저장
         String imageUrl = saveImage(inlineData.data(), inlineData.mimeType());
-        log.debug("NanaBanana 이미지 저장 완료 — url: {}", imageUrl);
+        log.debug("NanoBanana 이미지 저장 완료 — url: {}", imageUrl);
 
         return imageUrl;
     }
@@ -110,7 +110,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
 
             return "/images/" + filename;
         } catch (IOException e) {
-            log.error("NanaBanana 이미지 저장 실패", e);
+            log.error("NanoBanana 이미지 저장 실패", e);
             throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
         }
     }
