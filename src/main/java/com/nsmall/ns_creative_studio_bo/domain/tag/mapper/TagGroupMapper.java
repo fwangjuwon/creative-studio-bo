@@ -20,7 +20,7 @@ public interface TagGroupMapper {
 
     Optional<TagGroup> selectById(@Param("id") Long id);
 
-    List<TagGroup> selectAll();
+    List<TagGroup> selectList();
 
     void update(TagGroup tagGroup);
 

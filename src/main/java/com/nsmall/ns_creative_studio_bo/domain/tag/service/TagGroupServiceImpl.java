@@ -58,7 +58,7 @@ public class TagGroupServiceImpl implements TagGroupService {
 
     @Override
     public List<TagGroupRespDto> getTagGroups() {
-        return tagGroupMapper.selectAll().stream()
+        return tagGroupMapper.selectList().stream()
                 .map(TagGroupRespDto::from)
                 .toList();
     }
