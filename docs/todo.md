@@ -67,10 +67,10 @@
 
 ---
 
-### feat/prompt-image-person. 인물 이미지 프롬프트 + NanaBanana 연동
+### feat/prompt-image-person. 인물 이미지 프롬프트 + NanoBanana 연동
 
 > 상품 이미지 프롬프트(Tab 1) 외에, 인물 사진 이미지를 위한 별도 프롬프트 생성 플로우 추가.
-> NanaBanana(`gemini-3-pro-image-preview`) 직접 연동으로 이미지 생성 및 URL 반환까지 지원.
+> NanoBanana(`gemini-3-pro-image-preview`) 직접 연동으로 이미지 생성 및 URL 반환까지 지원.
 
 #### DB 테이블 + 시드 데이터
 - [x] `human_prompt_step` — 5단계 구조 (A~E)
@@ -88,7 +88,7 @@
 - [x] `HumanPromptService` + `HumanPromptServiceImpl`
   - `getSteps()` — 5단계 구조 반환
   - `createPrompt()` — 선택 옵션 기반 Gemini 호출, 이력 저장 (`@Transactional`)
-  - `generateImage()` — NanaBanana API 호출, `imageUrl` 이력 업데이트
+  - `generateImage()` — NanoBanana API 호출, `imageUrl` 이력 업데이트
 - [x] `ImageGenerationService` + `NanoBananaServiceImpl`
   - `gemini-3-pro-image-preview` 모델 호출, 생성 이미지 서버 저장 후 URL 반환
 - [x] `GeminiService.generateHumanPrompt()` 추가
@@ -101,7 +101,7 @@
 - [x] `HumanPromptController` (`/api/human-prompts`)
   - `GET /steps` — 단계 구조 조회 (USER 이상)
   - `POST /` — 인물 프롬프트 생성 (USER 이상, `@AuthenticationPrincipal`)
-  - `POST /generate-image` — NanaBanana 이미지 생성 (USER 이상)
+  - `POST /generate-image` — NanoBanana 이미지 생성 (USER 이상)
 
 #### 기타
 - [x] `build.gradle` — `bootRun` 시 `.env` 환경변수 자동 주입 설정 추가

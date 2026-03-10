@@ -52,6 +52,7 @@ public class PromptServiceImpl implements PromptService {
     private final CategoryMapper categoryMapper;
     private final TagMapper tagMapper;
     private final GeminiService geminiService;
+    private final ImageGenerationService imageGenerationService;
 
     @Override
     @Transactional
@@ -170,5 +171,20 @@ public class PromptServiceImpl implements PromptService {
                     }
                 })
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public String generateGoodsImage(Long historyId, String promptText) {
+        // 1. 이미지 생성
+        String imageUrl = imageGenerationService.generateImage(promptText);
+
+        // 2. 이력에 imageUrl 업데이트
+        if (historyId != null) {
+            promptHistoryMapper.updateImageUrl(historyId, imageUrl, SecurityUtil.getCurrentLoginId());
+            log.info("상품 이미지 URL 이력 업데이트 완료 — historyId={}, imageUrl={}", historyId, imageUrl);
+        }
+
+        return imageUrl;
     }
 }

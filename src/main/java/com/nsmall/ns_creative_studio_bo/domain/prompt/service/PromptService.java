@@ -36,4 +36,13 @@ public interface PromptService {
      * @return 프롬프트 히스토리 응답 DTO 목록
      */
     List<PromptHistoryRespDto> getPromptHistories(Long requestUserId);
+
+    /**
+     * NanoBanana 이미지를 생성하고, 기존 상품 프롬프트 이력에 imageUrl을 업데이트한다.
+     *
+     * @param historyId  업데이트할 prompt_history ID (null이면 이력 업데이트 생략)
+     * @param promptText 이미지 생성에 사용할 영문 프롬프트
+     * @return 생성된 이미지 접근 URL (/images/{uuid}.jpg)
+     */
+    String generateGoodsImage(Long historyId, String promptText);
 }

@@ -37,7 +37,7 @@ public interface HumanPromptService {
     PromptHistoryRespDto createPrompt(Long userId, HumanPromptCreateReqDto dto);
 
     /**
-     * NanaBanana 이미지를 생성하고, 기존 이력에 imageUrl을 업데이트한다.
+     * NanoBanana 이미지를 생성하고, 기존 이력에 imageUrl을 업데이트한다.
      *
      * @param historyId  업데이트할 prompt_history ID
      * @param promptText 이미지 생성에 사용할 영문 프롬프트
