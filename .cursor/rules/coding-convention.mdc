@@ -141,6 +141,49 @@ WHERE status <![CDATA[ <> ]]> 'DELETED'
 - 전체 SQL을 `<![CDATA[ ... ]]>`로 감싸는 방식은 사용하지 않는다
 - `&lt;` / `&gt;` 엔티티 이스케이프 방식도 사용하지 않는다
 
+### @Param 규칙
+
+Mapper 인터페이스 파라미터에 `@Param` 어노테이션을 적용하는 기준은 다음과 같다.
+
+#### ✅ `@Param` 필수 — primitive / wrapper 단일 파라미터
+
+`Long id`, `String loginId` 등 단순 값 타입은 `@Param`이 없어도 현재는 동작하지만,
+파라미터를 하나 추가하는 순간 XML의 `#{변수명}` 매핑이 **런타임에 조용히 깨진다** (컴파일 타임에 미탐지).
+안전성과 일관성을 위해 **반드시 명시**한다.
+
+```java
+// ✅ 단일 primitive/wrapper — @Param 필수
+Optional<User>    selectById(@Param("id") Long id);
+Optional<User>    selectByLoginId(@Param("loginId") String loginId);
+List<Category>    selectList(@Param("parentId") Long parentId);
+void              deleteById(@Param("id") Long id);
+
+// ✅ 다중 파라미터 — @Param 당연히 필수
+int  countTodayByUserId(@Param("userId") Long userId);
+void updateImageUrl(@Param("id") Long id, @Param("imageUrl") String imageUrl, @Param("finalRvisPic") String finalRvisPic);
+```
+
+#### ✅ `@Param` 불필요 — Entity / DTO 단일 객체
+
+단일 객체 파라미터에 `@Param`을 붙이면 XML에서 `#{user.id}`, `#{dto.name}` 처럼
+접두사를 붙여야 해서 오히려 복잡해진다. 현재 방식 유지.
+
+```java
+// ✅ Entity/DTO 단일 객체 — @Param 불필요 (XML에서 필드명 직접 참조)
+void insert(User user);
+void update(Category category);
+List<User> selectList(UserSearchReqDto dto);
+```
+
+#### ❌ 금지 패턴
+
+```java
+// ❌ primitive/wrapper에 @Param 누락
+Optional<User> selectById(Long id);
+void           deleteById(Long id);
+List<Category> selectList(Long parentId);
+```
+
 ## Entity / DTO 클래스 규칙
 
 ```java
