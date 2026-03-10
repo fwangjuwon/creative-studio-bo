@@ -18,7 +18,7 @@ public interface PromptHistoryMapper {
 
     void insert(PromptHistory promptHistory);
 
-    Optional<PromptHistory> selectById(Long id);
+    Optional<PromptHistory> selectById(@Param("id") Long id);
 
     /**
      * 프롬프트 히스토리 목록 조회
