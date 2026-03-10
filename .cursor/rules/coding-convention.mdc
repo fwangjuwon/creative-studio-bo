@@ -141,6 +141,33 @@ WHERE status <![CDATA[ <> ]]> 'DELETED'
 - 전체 SQL을 `<![CDATA[ ... ]]>`로 감싸는 방식은 사용하지 않는다
 - `&lt;` / `&gt;` 엔티티 이스케이프 방식도 사용하지 않는다
 
+### Mapper 메서드 네이밍 — 목록 조회
+
+목록 조회 메서드는 파라미터 유무와 무관하게 **`selectList`로 통일**한다.
+
+```java
+// ✅ 파라미터 없는 전체 조회도 selectList 사용
+List<TagGroup> selectList();
+
+// ✅ 파라미터 있는 필터 조회도 동일
+List<Category> selectList(@Param("parentId") Long parentId);
+
+// ❌ 금지 — selectAll 사용 금지
+List<TagGroup> selectAll();
+```
+
+**이유**: `selectAll`은 나중에 필터 조건이 추가되면 이름이 misleading해짐.
+`selectList`는 중립적이고, `selectList()` / `selectList(조건)` 오버로딩에도 자연스럽다.
+
+**예외**: 조회 대상을 명확히 설명하는 **복합 이름**은 허용한다.
+
+```java
+// ✅ 예외 허용 — 3테이블 조인 범위를 이름으로 명시
+List<HumanPromptStepRespDto> selectAllWithAttrsAndOptions();
+```
+
+---
+
 ### @Param 규칙
 
 Mapper 인터페이스 파라미터에 `@Param` 어노테이션을 적용하는 기준은 다음과 같다.

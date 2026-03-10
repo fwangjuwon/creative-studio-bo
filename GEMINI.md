@@ -245,6 +245,28 @@ WHERE age <![CDATA[ < ]]> 30
 SELECT COUNT(*) &gt; 0
 ```
 
+### MyBatis Mapper 메서드 네이밍 — 목록 조회
+
+목록 조회 메서드는 파라미터 유무와 무관하게 **`selectList`로 통일**한다.
+
+```java
+// ✅ 파라미터 없는 전체 조회도 selectList
+List<TagGroup> selectList();
+
+// ✅ 파라미터 있는 필터 조회도 동일
+List<Category> selectList(@Param("parentId") Long parentId);
+
+// ❌ 금지
+List<TagGroup> selectAll();
+```
+
+예외: 조회 대상을 명확히 설명하는 복합 이름은 허용한다.
+
+```java
+// ✅ 예외 — 3테이블 조인 범위를 이름으로 명시
+List<HumanPromptStepRespDto> selectAllWithAttrsAndOptions();
+```
+
 ### MyBatis @Param 규칙
 
 `@Param` 적용 기준:
