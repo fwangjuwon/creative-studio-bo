@@ -245,6 +245,53 @@ WHERE age <![CDATA[ < ]]> 30
 SELECT COUNT(*) &gt; 0
 ```
 
+### MyBatis Mapper 메서드 네이밍 — 목록 조회
+
+목록 조회 메서드는 파라미터 유무와 무관하게 **`selectList`로 통일**한다.
+
+```java
+// ✅ 파라미터 없는 전체 조회도 selectList
+List<TagGroup> selectList();
+
+// ✅ 파라미터 있는 필터 조회도 동일
+List<Category> selectList(@Param("parentId") Long parentId);
+
+// ❌ 금지
+List<TagGroup> selectAll();
+```
+
+예외: 조회 대상을 명확히 설명하는 복합 이름은 허용한다.
+
+```java
+// ✅ 예외 — 3테이블 조인 범위를 이름으로 명시
+List<HumanPromptStepRespDto> selectAllWithAttrsAndOptions();
+```
+
+### MyBatis @Param 규칙
+
+`@Param` 적용 기준:
+
+- **primitive / wrapper 단일 파라미터** (`Long id`, `String loginId` 등) → `@Param` **필수**
+  - `@Param` 없어도 현재는 동작하지만, 파라미터 추가 시 XML `#{변수명}` 매핑이 런타임에 조용히 깨짐 (컴파일 타임 미탐지)
+- **Entity / DTO 단일 객체** (`User user`, `UserSearchReqDto dto`) → `@Param` **불필요**
+  - 붙이면 XML에서 `#{user.id}`, `#{dto.name}` 형태로 바꿔야 해서 오히려 복잡해짐
+
+```java
+// ✅ primitive/wrapper — @Param 필수
+Optional<User>  selectById(@Param("id") Long id);
+List<Category>  selectList(@Param("parentId") Long parentId);
+void            deleteById(@Param("id") Long id);
+
+// ✅ Entity/DTO 단일 객체 — @Param 불필요
+void insert(User user);
+void update(Category category);
+List<User> selectList(UserSearchReqDto dto);
+
+// ❌ primitive에 @Param 누락
+Optional<User>  selectById(Long id);
+void            deleteById(Long id);
+```
+
 ### 예외 처리 구조
 
 - `ErrorCode` 인터페이스 → 도메인별 enum으로 구현 (예: `UserErrorCode`)

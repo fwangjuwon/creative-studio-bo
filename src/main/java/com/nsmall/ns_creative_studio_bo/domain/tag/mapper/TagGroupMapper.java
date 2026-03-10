@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.tag.mapper;
 
 import com.nsmall.ns_creative_studio_bo.domain.tag.entity.TagGroup;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,11 +18,11 @@ public interface TagGroupMapper {
 
     void insert(TagGroup tagGroup);
 
-    Optional<TagGroup> selectById(Long id);
+    Optional<TagGroup> selectById(@Param("id") Long id);
 
-    List<TagGroup> selectAll();
+    List<TagGroup> selectList();
 
     void update(TagGroup tagGroup);
 
-    void deleteById(Long id);
+    void deleteById(@Param("id") Long id);
 }

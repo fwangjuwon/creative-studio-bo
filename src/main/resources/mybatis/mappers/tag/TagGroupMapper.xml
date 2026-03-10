@@ -37,7 +37,7 @@
         WHERE id = #{id}
     </select>
 
-    <select id="selectAll" resultType="TagGroup">
+    <select id="selectList" resultType="TagGroup">
         SELECT
             id,
             name,

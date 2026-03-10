@@ -3,6 +3,7 @@ package com.nsmall.ns_creative_studio_bo.domain.user.mapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,13 +19,13 @@ public interface UserMapper {
 
     void insert(User user);
 
-    Optional<User> selectById(Long id);
+    Optional<User> selectById(@Param("id") Long id);
 
-    Optional<User> selectByLoginId(String loginId);
+    Optional<User> selectByLoginId(@Param("loginId") String loginId);
 
     List<User> selectList(UserSearchReqDto dto);
 
     void update(User user);
 
-    void deleteById(Long id);
+    void deleteById(@Param("id") Long id);
 }

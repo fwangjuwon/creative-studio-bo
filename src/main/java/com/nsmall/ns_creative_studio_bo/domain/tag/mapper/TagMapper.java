@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.tag.mapper;
 
 import com.nsmall.ns_creative_studio_bo.domain.tag.entity.Tag;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -17,7 +18,7 @@ public interface TagMapper {
 
     void insert(Tag tag);
 
-    Optional<Tag> selectById(Long id);
+    Optional<Tag> selectById(@Param("id") Long id);
 
     /**
      * TagGroup별 태그 목록 조회
@@ -27,11 +28,11 @@ public interface TagMapper {
      * tagGroupId == null → 전체 태그 목록
      * </pre>
      */
-    List<Tag> selectList(Long tagGroupId);
+    List<Tag> selectList(@Param("tagGroupId") Long tagGroupId);
 
-    boolean existsByTagGroupId(Long tagGroupId);
+    boolean existsByTagGroupId(@Param("tagGroupId") Long tagGroupId);
 
     void update(Tag tag);
 
-    void deleteById(Long id);
+    void deleteById(@Param("id") Long id);
 }
