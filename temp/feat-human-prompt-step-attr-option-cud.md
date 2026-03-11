@@ -167,14 +167,14 @@ DELETE /api/human-prompts/steps/{id}     deleteStep()   MANAGER 이상
 
 ## Loop 2 — Attr
 
-### [ ] 2-1. ErrorCode 추가 (Attr)
+### [x] 2-1. ErrorCode 추가 (Attr)
 
 ```java
 ATTR_NOT_FOUND("HP012", "존재하지 않는 세부항목입니다.", 400),
 ATTR_HAS_OPTIONS("HP013", "하위 선택지가 존재하여 삭제할 수 없습니다.", 400),
 ```
 
-### [ ] 2-2. HumanPromptAttrMapper 완성
+### [x] 2-2. HumanPromptAttrMapper 완성
 
 **파일:** `domain/prompt/mapper/HumanPromptAttrMapper.java`
 
@@ -188,7 +188,7 @@ Loop 1에서 추가한 `existsByStepId` 유지, 아래 메서드 추가:
 
 **XML:** `mybatis/mappers/prompt/HumanPromptAttrMapper.xml` 기존 파일에 SQL 추가
 
-### [ ] 2-3. HumanPromptOptionMapper에 `existsByAttrId` 추가
+### [x] 2-3. HumanPromptOptionMapper에 `existsByAttrId` 추가
 
 **파일:** `domain/prompt/mapper/HumanPromptOptionMapper.java`
 
@@ -200,7 +200,7 @@ Loop 1에서 추가한 `existsByStepId` 유지, 아래 메서드 추가:
 
 **XML:** `mybatis/mappers/prompt/HumanPromptOptionMapper.xml` 기존 파일에 SQL 추가
 
-### [ ] 2-4. Attr DTO 신규 생성
+### [x] 2-4. Attr DTO 신규 생성
 
 **request**
 - `HumanPromptAttrCreateReqDto` — `stepId(필수)`, `name(필수)`, `isMultiSelect(필수)`, `isRequired(필수)`, `sortOrder`
@@ -209,7 +209,7 @@ Loop 1에서 추가한 `existsByStepId` 유지, 아래 메서드 추가:
 **response**
 - `HumanPromptAttrRespDto` — `id`, `stepId`, `name`, `isMultiSelect`, `isRequired`, `sortOrder` + `static from(HumanPromptAttr)` 메서드
 
-### [ ] 2-5. HumanPromptAttrService / Impl 신규 생성
+### [x] 2-5. HumanPromptAttrService / Impl 신규 생성
 
 **파일:** `domain/prompt/service/HumanPromptAttrService.java` (인터페이스)
 **파일:** `domain/prompt/service/HumanPromptAttrServiceImpl.java` (구현체)
@@ -225,7 +225,7 @@ void deleteAttr(Long id);
 - 삭제 시 존재 여부 확인 → 없으면 `ATTR_NOT_FOUND`
 - 삭제 시 하위 Option 존재 여부 확인 → 있으면 `ATTR_HAS_OPTIONS`
 
-### [ ] 2-6. HumanPromptAttrController 신규 생성
+### [x] 2-6. HumanPromptAttrController 신규 생성
 
 ```
 POST   /api/human-prompts/attrs          createAttr()   MANAGER 이상
@@ -233,7 +233,7 @@ PUT    /api/human-prompts/attrs/{id}     updateAttr()   MANAGER 이상
 DELETE /api/human-prompts/attrs/{id}     deleteAttr()   MANAGER 이상
 ```
 
-### [ ] 2-7. HumanPromptAttrServiceTest 작성
+### [x] 2-7. HumanPromptAttrServiceTest 작성
 
 > CUD 테스트는 `@Transactional` + `@Rollback` 필수.
 

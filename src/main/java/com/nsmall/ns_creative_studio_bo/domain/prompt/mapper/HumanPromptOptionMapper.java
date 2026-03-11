@@ -20,6 +20,8 @@ import java.util.List;
 @Mapper
 public interface HumanPromptOptionMapper {
 
+    boolean existsByAttrId(@Param("attrId") Long attrId);
+
     /**
      * 선택된 option ID 목록으로 option 정보 + step_number를 조회한다.
      *

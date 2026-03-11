@@ -3,10 +3,57 @@
 
 <mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptAttrMapper">
 
+    <select id="selectById" resultType="HumanPromptAttr">
+        SELECT id, step_id, name, is_multi_select, is_required, sort_order,
+               init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm
+        FROM human_prompt_attr
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="HumanPromptAttr">
+        SELECT id, step_id, name, is_multi_select, is_required, sort_order,
+               init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm
+        FROM human_prompt_attr
+        <where>
+            <if test="stepId != null">
+                step_id = #{stepId}
+            </if>
+        </where>
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
     <select id="existsByStepId" resultType="boolean">
         SELECT COUNT(*) <![CDATA[ > ]]> 0
         FROM human_prompt_attr
         WHERE step_id = #{stepId}
     </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO human_prompt_attr (
+            step_id, name, is_multi_select, is_required, sort_order,
+            init_regi_pic, init_regi_dttm,
+            final_rvis_pic, final_rvis_dttm
+        ) VALUES (
+            #{stepId}, #{name}, #{isMultiSelect}, #{isRequired}, #{sortOrder},
+            #{initRegiPic}, #{initRegiDttm},
+            #{finalRvisPic}, #{finalRvisDttm}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE human_prompt_attr
+        SET name            = #{name},
+            is_multi_select = #{isMultiSelect},
+            is_required     = #{isRequired},
+            sort_order      = #{sortOrder},
+            final_rvis_pic  = #{finalRvisPic},
+            final_rvis_dttm = #{finalRvisDttm}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM human_prompt_attr
+        WHERE id = #{id}
+    </delete>
 
 </mapper>

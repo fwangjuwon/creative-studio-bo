@@ -3,6 +3,12 @@
 
 <mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper">
 
+    <select id="existsByAttrId" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM human_prompt_option
+        WHERE attr_id = #{attrId}
+    </select>
+
     <!--
         selectByIds: 선택된 option ID 목록으로 option 정보 + step_number 조회.
         JOIN을 통해 step_number를 포함하여, 서비스에서 Map<stepNumber, List<promptValue>> 구성에 사용.
