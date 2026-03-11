@@ -62,8 +62,8 @@ public class PromptController {
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/goods/generate-image")
     public CommonResponse<ImageGenerateRespDto> generateGoodsImage(@RequestBody @Valid ImageGenerateReqDto dto) {
-        String imageUrl = promptService.generateGoodsImage(dto.getHistoryId(), dto.getPromptText());
-        return CommonResponse.success(ImageGenerateRespDto.builder().imageUrl(imageUrl).build());
+        List<String> imageUrls = promptService.generateGoodsImage(dto.getHistoryId(), dto.getPromptText());
+        return CommonResponse.success(ImageGenerateRespDto.builder().imageUrls(imageUrls).build());
     }
 
     @Operation(

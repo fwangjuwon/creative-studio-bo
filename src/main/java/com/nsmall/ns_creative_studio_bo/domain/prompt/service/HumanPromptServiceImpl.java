@@ -1,5 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
@@ -57,6 +59,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
     private final UserMapper userMapper;
     private final GeminiService geminiService;
     private final ImageGenerationService imageGenerationService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<HumanPromptStepRespDto> getSteps() {
@@ -150,16 +153,22 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
     @Override
     @Transactional
-    public String generateImage(Long historyId, String promptText) {
-        // 1. 이미지 생성
-        String imageUrl = imageGenerationService.generateImage(promptText);
+    public List<String> generateImage(Long historyId, String promptText) {
+        // 1. 이미지 3개 병렬 생성
+        List<String> imageUrls = imageGenerationService.generateImages(promptText, 3);
 
-        // 2. 이력에 imageUrl 업데이트
+        // 2. 이력에 JSON 배열로 저장 (image_url 컬럼에 "[url1,url2,url3]" 형태)
         if (historyId != null) {
-            promptHistoryMapper.updateImageUrl(historyId, imageUrl, SecurityUtil.getCurrentLoginId());
-            log.info("이미지 URL 이력 업데이트 완료 — historyId={}, imageUrl={}", historyId, imageUrl);
+            try {
+                String imageUrlsJson = objectMapper.writeValueAsString(imageUrls);
+                promptHistoryMapper.updateImageUrl(historyId, imageUrlsJson, SecurityUtil.getCurrentLoginId());
+                log.info("이미지 URL 이력 업데이트 완료 — historyId={}, urls={}", historyId, imageUrlsJson);
+            } catch (JsonProcessingException e) {
+                log.warn("이미지 URL JSON 직렬화 실패 — 첫 번째 URL만 저장. historyId={}", historyId, e);
+                promptHistoryMapper.updateImageUrl(historyId, imageUrls.get(0), SecurityUtil.getCurrentLoginId());
+            }
         }
 
-        return imageUrl;
+        return imageUrls;
     }
 }

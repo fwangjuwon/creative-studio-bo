@@ -37,11 +37,11 @@ public interface HumanPromptService {
     PromptHistoryRespDto createPrompt(Long userId, HumanPromptCreateReqDto dto);
 
     /**
-     * NanoBanana 이미지를 생성하고, 기존 이력에 imageUrl을 업데이트한다.
+     * NanoBanana 이미지를 3개 병렬 생성하고, 첫 번째 URL을 이력에 업데이트한다.
      *
      * @param historyId  업데이트할 prompt_history ID
      * @param promptText 이미지 생성에 사용할 영문 프롬프트
-     * @return 생성된 이미지 접근 URL (/images/{uuid}.jpg)
+     * @return 생성된 이미지 접근 URL 목록 (/images/{uuid}.jpg × 3)
      */
-    String generateImage(Long historyId, String promptText);
+    List<String> generateImage(Long historyId, String promptText);
 }

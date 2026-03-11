@@ -1,5 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,6 +22,9 @@ import java.util.List;
  *
  * PERSON : purpose, additionalNotes, optionNames 사용
  *          categoryId, categoryPath, tagIds, tagNames 는 null
+ *
+ * imageUrl  : DB에 저장된 원본값 (단일 URL 또는 JSON 배열 문자열)
+ * imageUrls : imageUrl을 파싱한 이미지 URL 목록 (항상 List 형태)
  * </pre>
  *
  * @author jjhoo8936
@@ -31,6 +36,8 @@ import java.util.List;
 @Builder
 public class PromptHistoryRespDto {
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     private Long id;
     private Long userId;
 
@@ -38,7 +45,8 @@ public class PromptHistoryRespDto {
     private String promptType;       // 'PRODUCT' | 'PERSON'
     private String promptStyle;      // 'NANO_BANANA' | 'MID_JOURNEY'
     private String promptText;
-    private String imageUrl;
+    private String imageUrl;         // DB 원본값 (단일 URL 또는 JSON 배열 문자열)
+    private List<String> imageUrls;  // 파싱된 이미지 URL 목록
 
     // 상품 프롬프트 전용
     private Long categoryId;
@@ -57,6 +65,29 @@ public class PromptHistoryRespDto {
     private LocalDateTime finalRvisDttm;
 
     /**
+     * image_url 컬럼값(단일 URL 또는 JSON 배열 문자열)을 List로 파싱한다.
+     *
+     * <pre>
+     * - null / blank        → 빈 List
+     * - "[...]" (JSON 배열) → Jackson 파싱
+     * - 일반 URL 문자열     → 단일 원소 List
+     * </pre>
+     */
+    private static List<String> parseImageUrls(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return List.of();
+        }
+        if (raw.startsWith("[")) {
+            try {
+                return OBJECT_MAPPER.readValue(raw, new TypeReference<List<String>>() {});
+            } catch (Exception e) {
+                return List.of(raw);
+            }
+        }
+        return List.of(raw);
+    }
+
+    /**
      * 상품 프롬프트 이력 응답 생성.
      *
      * @param categoryPath "식품 > 건강식품 > 약재 > 인삼" 형태의 카테고리 전체 경로
@@ -73,6 +104,7 @@ public class PromptHistoryRespDto {
                 .promptStyle(history.getPromptStyle())
                 .promptText(history.getPromptText())
                 .imageUrl(history.getImageUrl())
+                .imageUrls(parseImageUrls(history.getImageUrl()))
                 .categoryId(history.getCategoryId())
                 .categoryPath(categoryPath)
                 .tagIds(tagIds)
@@ -96,6 +128,7 @@ public class PromptHistoryRespDto {
                 .promptStyle(history.getPromptStyle())
                 .promptText(history.getPromptText())
                 .imageUrl(history.getImageUrl())
+                .imageUrls(parseImageUrls(history.getImageUrl()))
                 .purpose(history.getPurpose())
                 .additionalNotes(history.getAdditionalNotes())
                 .optionNames(optionNames)
