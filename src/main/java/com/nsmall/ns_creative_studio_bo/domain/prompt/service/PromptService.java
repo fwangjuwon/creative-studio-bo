@@ -38,11 +38,11 @@ public interface PromptService {
     List<PromptHistoryRespDto> getPromptHistories(Long requestUserId);
 
     /**
-     * NanoBanana 이미지를 생성하고, 기존 상품 프롬프트 이력에 imageUrl을 업데이트한다.
+     * NanoBanana 이미지를 3개 병렬 생성하고, 첫 번째 URL을 이력에 업데이트한다.
      *
      * @param historyId  업데이트할 prompt_history ID (null이면 이력 업데이트 생략)
      * @param promptText 이미지 생성에 사용할 영문 프롬프트
-     * @return 생성된 이미지 접근 URL (/images/{uuid}.jpg)
+     * @return 생성된 이미지 접근 URL 목록 (/images/{uuid}.jpg × 3)
      */
-    String generateGoodsImage(Long historyId, String promptText);
+    List<String> generateGoodsImage(Long historyId, String promptText);
 }

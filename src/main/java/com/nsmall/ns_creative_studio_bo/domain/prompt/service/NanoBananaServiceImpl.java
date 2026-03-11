@@ -18,6 +18,8 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 /**
  * NanoBanana 이미지 생성 서비스 구현체
@@ -92,6 +94,23 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         log.debug("NanoBanana 이미지 저장 완료 — url: {}", imageUrl);
 
         return imageUrl;
+    }
+
+    @Override
+    public List<String> generateImages(String prompt, int count) {
+        log.debug("NanoBanana 이미지 {}개 병렬 생성 시작", count);
+
+        // count개 CompletableFuture 생성 후 병렬 실행
+        List<CompletableFuture<String>> futures = IntStream.range(0, count)
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> generateImage(prompt)))
+                .toList();
+
+        List<String> imageUrls = futures.stream()
+                .map(CompletableFuture::join)
+                .toList();
+
+        log.info("NanoBanana 이미지 {}개 병렬 생성 완료 — urls: {}", count, imageUrls);
+        return imageUrls;
     }
 
     /**
