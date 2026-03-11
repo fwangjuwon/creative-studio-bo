@@ -21,7 +21,10 @@ public enum HumanPromptErrorCode implements ErrorCode {
     STEP_HAS_ATTRS("HP011", "하위 세부항목이 존재하여 삭제할 수 없습니다.", 400),
 
     ATTR_NOT_FOUND("HP012", "존재하지 않는 세부항목입니다.", 400),
-    ATTR_HAS_OPTIONS("HP013", "하위 선택지가 존재하여 삭제할 수 없습니다.", 400);
+    ATTR_HAS_OPTIONS("HP013", "하위 선택지가 존재하여 삭제할 수 없습니다.", 400),
+
+    OPTION_NOT_FOUND("HP014", "존재하지 않는 선택지입니다.", 400),
+    OPTION_IN_USE("HP015", "프롬프트 이력에서 사용 중인 선택지는 삭제할 수 없습니다.", 400);
 
     private final String code;
     private final String message;

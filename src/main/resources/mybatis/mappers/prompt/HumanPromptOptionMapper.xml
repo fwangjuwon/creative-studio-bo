@@ -3,11 +3,57 @@
 
 <mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper">
 
+    <select id="selectById" resultType="HumanPromptOption">
+        SELECT id, attr_id, name, prompt_value, sort_order,
+               init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm
+        FROM human_prompt_option
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectList" resultType="HumanPromptOption">
+        SELECT id, attr_id, name, prompt_value, sort_order,
+               init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm
+        FROM human_prompt_option
+        <where>
+            <if test="attrId != null">
+                attr_id = #{attrId}
+            </if>
+        </where>
+        ORDER BY sort_order ASC, id ASC
+    </select>
+
     <select id="existsByAttrId" resultType="boolean">
         SELECT COUNT(*) <![CDATA[ > ]]> 0
         FROM human_prompt_option
         WHERE attr_id = #{attrId}
     </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO human_prompt_option (
+            attr_id, name, prompt_value, sort_order,
+            init_regi_pic, init_regi_dttm,
+            final_rvis_pic, final_rvis_dttm
+        ) VALUES (
+            #{attrId}, #{name}, #{promptValue}, #{sortOrder},
+            #{initRegiPic}, #{initRegiDttm},
+            #{finalRvisPic}, #{finalRvisDttm}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE human_prompt_option
+        SET name            = #{name},
+            prompt_value    = #{promptValue},
+            sort_order      = #{sortOrder},
+            final_rvis_pic  = #{finalRvisPic},
+            final_rvis_dttm = #{finalRvisDttm}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM human_prompt_option
+        WHERE id = #{id}
+    </delete>
 
     <!--
         selectByIds: 선택된 option ID 목록으로 option 정보 + step_number 조회.

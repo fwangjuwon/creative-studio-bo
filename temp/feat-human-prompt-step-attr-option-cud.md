@@ -249,14 +249,14 @@ DELETE /api/human-prompts/attrs/{id}     deleteAttr()   MANAGER 이상
 
 ## Loop 3 — Option
 
-### [ ] 3-1. ErrorCode 추가 (Option)
+### [x] 3-1. ErrorCode 추가 (Option)
 
 ```java
 OPTION_NOT_FOUND("HP014", "존재하지 않는 선택지입니다.", 400),
 OPTION_IN_USE("HP015", "프롬프트 이력에서 사용 중인 선택지는 삭제할 수 없습니다.", 400),
 ```
 
-### [ ] 3-2. HumanPromptOptionMapper 완성
+### [x] 3-2. HumanPromptOptionMapper 완성
 
 **파일:** `domain/prompt/mapper/HumanPromptOptionMapper.java`
 
@@ -270,7 +270,7 @@ Loop 2에서 추가한 `existsByAttrId` 유지, 아래 메서드 추가:
 
 **XML:** `mybatis/mappers/prompt/HumanPromptOptionMapper.xml` 기존 파일에 SQL 추가
 
-### [ ] 3-3. HumanPromptHistoryOptionMapper에 `existsByOptionId` 추가
+### [x] 3-3. HumanPromptHistoryOptionMapper에 `existsByOptionId` 추가
 
 **파일:** `domain/prompt/mapper/HumanPromptHistoryOptionMapper.java`
 
@@ -282,7 +282,7 @@ Loop 2에서 추가한 `existsByAttrId` 유지, 아래 메서드 추가:
 
 **XML:** `mybatis/mappers/prompt/HumanPromptHistoryOptionMapper.xml` 기존 파일에 SQL 추가
 
-### [ ] 3-4. Option DTO 신규 생성
+### [x] 3-4. Option DTO 신규 생성
 
 **request**
 - `HumanPromptOptionCreateReqDto` — `attrId(필수)`, `name(필수)`, `promptValue(필수)`, `sortOrder`
@@ -291,7 +291,7 @@ Loop 2에서 추가한 `existsByAttrId` 유지, 아래 메서드 추가:
 **response**
 - `HumanPromptOptionRespDto` — `id`, `attrId`, `name`, `promptValue`, `sortOrder` + `static from(HumanPromptOption)` 메서드
 
-### [ ] 3-5. HumanPromptOptionService / Impl 신규 생성
+### [x] 3-5. HumanPromptOptionService / Impl 신규 생성
 
 **파일:** `domain/prompt/service/HumanPromptOptionService.java` (인터페이스)
 **파일:** `domain/prompt/service/HumanPromptOptionServiceImpl.java` (구현체)
@@ -307,7 +307,7 @@ void deleteOption(Long id);
 - 삭제 시 존재 여부 확인 → 없으면 `OPTION_NOT_FOUND`
 - 삭제 시 히스토리 참조 여부 확인 → 있으면 `OPTION_IN_USE`
 
-### [ ] 3-6. HumanPromptOptionController 신규 생성
+### [x] 3-6. HumanPromptOptionController 신규 생성
 
 ```
 POST   /api/human-prompts/options        createOption()   MANAGER 이상
@@ -315,7 +315,7 @@ PUT    /api/human-prompts/options/{id}   updateOption()   MANAGER 이상
 DELETE /api/human-prompts/options/{id}   deleteOption()   MANAGER 이상
 ```
 
-### [ ] 3-7. HumanPromptOptionServiceTest 작성
+### [x] 3-7. HumanPromptOptionServiceTest 작성
 
 > CUD 테스트는 `@Transactional` + `@Rollback` 필수.
 
@@ -331,7 +331,7 @@ DELETE /api/human-prompts/options/{id}   deleteOption()   MANAGER 이상
 
 ## 마무리
 
-### [ ] F-1. PromptServiceTests Suite 업데이트
+### [x] F-1. PromptServiceTests Suite 업데이트
 
 `PromptServiceTests.java`에 신규 테스트 클래스 3개 추가:
 
