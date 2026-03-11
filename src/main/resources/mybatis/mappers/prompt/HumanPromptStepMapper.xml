@@ -65,6 +65,12 @@
         WHERE id = #{id}
     </delete>
 
+    <select id="selectRequiredAttrIds" resultType="Long">
+        SELECT id
+        FROM human_prompt_attr
+        WHERE is_required = true
+    </select>
+
     <select id="selectAllWithAttrsAndOptions" resultMap="StepResultMap">
         SELECT
             s.id              AS step_id,

@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 public enum HumanPromptErrorCode implements ErrorCode {
 
     NO_OPTIONS_SELECTED("HP001", "선택된 옵션이 없습니다.", 400),
+    REQUIRED_OPTION_MISSING("HP003", "필수 항목이 선택되지 않았습니다.", 400),
     GEMINI_EMPTY_RESPONSE("HP002", "Gemini API로부터 유효한 응답을 받지 못했습니다.", 500),
 
     STEP_NOT_FOUND("HP010", "존재하지 않는 단계입니다.", 400),

@@ -19,6 +19,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.IntStream;
 
 /**
@@ -105,12 +106,20 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
                 .mapToObj(i -> CompletableFuture.supplyAsync(() -> generateImage(prompt)))
                 .toList();
 
-        List<String> imageUrls = futures.stream()
-                .map(CompletableFuture::join)
-                .toList();
-
-        log.info("NanoBanana 이미지 {}개 병렬 생성 완료 — urls: {}", count, imageUrls);
-        return imageUrls;
+        try {
+            List<String> imageUrls = futures.stream()
+                    .map(CompletableFuture::join)
+                    .toList();
+            log.info("NanoBanana 이미지 {}개 병렬 생성 완료 — urls: {}", count, imageUrls);
+            return imageUrls;
+        } catch (CompletionException e) {
+            // CompletableFuture 내부에서 발생한 BizException을 unwrap하여 재throw
+            // → GlobalExceptionHandler의 BizException 핸들러가 올바르게 처리
+            if (e.getCause() instanceof BizException bizEx) {
+                throw bizEx;
+            }
+            throw e;
+        }
     }
 
     /**
