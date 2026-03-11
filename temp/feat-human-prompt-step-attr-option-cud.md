@@ -67,7 +67,7 @@ cascade 삭제 불허. 하위 데이터 또는 히스토리 참조가 있으면 
 
 ## 작업 목록
 
-### [ ] 선행. 엔티티 수정 — `@NoArgsConstructor` / `@AllArgsConstructor` 추가
+### [x] 선행. 엔티티 수정 — `@NoArgsConstructor` / `@AllArgsConstructor` 추가
 
 **대상:** `HumanPromptStep`, `HumanPromptAttr`
 
@@ -89,14 +89,14 @@ public class HumanPromptStep { ... }
 
 ## Loop 1 — Step
 
-### [ ] 1-1. ErrorCode 추가 (Step)
+### [x] 1-1. ErrorCode 추가 (Step)
 
 ```java
 STEP_NOT_FOUND("HP010", "존재하지 않는 단계입니다.", 400),
 STEP_HAS_ATTRS("HP011", "하위 세부항목이 존재하여 삭제할 수 없습니다.", 400),
 ```
 
-### [ ] 1-2. HumanPromptStepMapper 기존 확장
+### [x] 1-2. HumanPromptStepMapper 기존 확장
 
 **파일:** `domain/prompt/mapper/HumanPromptStepMapper.java`
 
@@ -109,7 +109,7 @@ STEP_HAS_ATTRS("HP011", "하위 세부항목이 존재하여 삭제할 수 없�
 
 **XML:** `mybatis/mappers/prompt/HumanPromptStepMapper.xml` 기존 파일에 SQL 추가
 
-### [ ] 1-3. HumanPromptAttrMapper에 `existsByStepId` 추가
+### [x] 1-3. HumanPromptAttrMapper에 `existsByStepId` 추가
 
 **파일:** `domain/prompt/mapper/HumanPromptAttrMapper.java`
 
@@ -120,7 +120,7 @@ STEP_HAS_ATTRS("HP011", "하위 세부항목이 존재하여 삭제할 수 없�
 
 **XML:** `mybatis/mappers/prompt/HumanPromptAttrMapper.xml` (신규 생성, 이번 루프 SQL만 포함)
 
-### [ ] 1-4. Step DTO 신규 생성
+### [x] 1-4. Step DTO 신규 생성
 
 **request**
 - `HumanPromptStepCreateReqDto` — `stepNumber(필수)`, `stepCode(필수)`, `name(필수)`
@@ -129,7 +129,7 @@ STEP_HAS_ATTRS("HP011", "하위 세부항목이 존재하여 삭제할 수 없�
 **response**
 - `HumanPromptStepSimpleRespDto` — `id`, `stepNumber`, `stepCode`, `name` + `static from(HumanPromptStep)` 메서드
 
-### [ ] 1-5. HumanPromptStepService / Impl 신규 생성
+### [x] 1-5. HumanPromptStepService / Impl 신규 생성
 
 **파일:** `domain/prompt/service/HumanPromptStepService.java` (인터페이스)
 **파일:** `domain/prompt/service/HumanPromptStepServiceImpl.java` (구현체)
@@ -144,7 +144,7 @@ void deleteStep(Long id);
 - 삭제 시 존재 여부 확인 → 없으면 `STEP_NOT_FOUND`
 - 삭제 시 하위 Attr 존재 여부 확인 → 있으면 `STEP_HAS_ATTRS`
 
-### [ ] 1-6. HumanPromptController 기존 확장 (Step CUD)
+### [x] 1-6. HumanPromptController 기존 확장 (Step CUD)
 
 ```
 POST   /api/human-prompts/steps          createStep()   MANAGER 이상
@@ -152,7 +152,7 @@ PUT    /api/human-prompts/steps/{id}     updateStep()   MANAGER 이상
 DELETE /api/human-prompts/steps/{id}     deleteStep()   MANAGER 이상
 ```
 
-### [ ] 1-7. HumanPromptStepServiceTest 작성
+### [x] 1-7. HumanPromptStepServiceTest 작성
 
 > CUD 테스트는 `@Transactional` + `@Rollback` 필수.
 

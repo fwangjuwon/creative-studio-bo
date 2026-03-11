@@ -1,7 +1,9 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
@@ -17,6 +19,8 @@ import java.time.LocalDateTime;
  * @since 2026-03-03
  */
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class HumanPromptStep {
 

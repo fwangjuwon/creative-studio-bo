@@ -1,0 +1,125 @@
+package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
+
+import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptStepCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptStepUpdateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepSimpleRespDto;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+/**
+ * HumanPromptStepService 통합 테스트 — 비즈니스 로직 + DB 연동 검증
+ *
+ * <pre>
+ * "[예외] Step 삭제 - 하위 Attr 존재 시 거부" 케이스는 HumanPromptAttrService(Loop 2)
+ * 구현 완료 후 HumanPromptAttrServiceTest에서 함께 검증한다.
+ * </pre>
+ *
+ * @author jjhoo8936
+ * @since 2026-03-11
+ */
+@SpringBootTest
+@ActiveProfiles("local")
+public class HumanPromptStepServiceTest {
+
+    @Autowired
+    private HumanPromptStepService humanPromptStepService;
+
+    private HumanPromptStepCreateReqDto 단계_생성_DTO(int stepNumber, String stepCode, String name) {
+        return HumanPromptStepCreateReqDto.builder()
+                .stepNumber(stepNumber)
+                .stepCode(stepCode)
+                .name(name)
+                .build();
+    }
+
+    // ================================================================
+    // Step 생성
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] Step 생성")
+    void 성공_Step_생성() {
+        HumanPromptStepSimpleRespDto result =
+                humanPromptStepService.createStep(단계_생성_DTO(6, "F", "테스트 단계"));
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getStepNumber()).isEqualTo(6);
+        assertThat(result.getStepCode()).isEqualTo("F");
+        assertThat(result.getName()).isEqualTo("테스트 단계");
+    }
+
+    // ================================================================
+    // Step 수정
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] Step 수정 - stepNumber / name 변경")
+    void 성공_Step_수정_stepNumber_name_변경() {
+        HumanPromptStepSimpleRespDto created =
+                humanPromptStepService.createStep(단계_생성_DTO(7, "G", "수정전 단계"));
+
+        HumanPromptStepUpdateReqDto updateDto = HumanPromptStepUpdateReqDto.builder()
+                .stepNumber(99)
+                .name("수정후 단계")
+                .build();
+
+        HumanPromptStepSimpleRespDto updated =
+                humanPromptStepService.updateStep(created.getId(), updateDto);
+
+        assertThat(updated.getStepNumber()).isEqualTo(99);
+        assertThat(updated.getName()).isEqualTo("수정후 단계");
+        assertThat(updated.getStepCode()).isEqualTo("G");
+    }
+
+    @Test
+    @DisplayName("[예외] Step 수정 - 미존재")
+    void 예외_Step_수정_미존재() {
+        HumanPromptStepUpdateReqDto updateDto = HumanPromptStepUpdateReqDto.builder()
+                .name("수정요청")
+                .build();
+
+        assertThatThrownBy(() -> humanPromptStepService.updateStep(Long.MAX_VALUE, updateDto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(HumanPromptErrorCode.STEP_NOT_FOUND));
+    }
+
+    // ================================================================
+    // Step 삭제
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] Step 삭제 - 하위 Attr 없을 때")
+    void 성공_Step_삭제_하위Attr_없음() {
+        HumanPromptStepSimpleRespDto created =
+                humanPromptStepService.createStep(단계_생성_DTO(8, "H", "삭제가능 단계"));
+
+        humanPromptStepService.deleteStep(created.getId());
+    }
+
+    @Test
+    @DisplayName("[예외] Step 삭제 - 미존재")
+    void 예외_Step_삭제_미존재() {
+        assertThatThrownBy(() -> humanPromptStepService.deleteStep(Long.MAX_VALUE))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(HumanPromptErrorCode.STEP_NOT_FOUND));
+    }
+}

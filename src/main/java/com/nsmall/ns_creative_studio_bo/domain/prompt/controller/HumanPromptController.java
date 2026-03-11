@@ -3,11 +3,15 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
 import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptStepCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptStepUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.ImageGenerateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepSimpleRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.ImageGenerateRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptService;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptStepService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -33,6 +37,7 @@ import java.util.List;
 public class HumanPromptController {
 
     private final HumanPromptService humanPromptService;
+    private final HumanPromptStepService humanPromptStepService;
 
     @Operation(
             summary = "인간 이미지 단계 구조 조회",
@@ -61,6 +66,46 @@ public class HumanPromptController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestBody @Valid HumanPromptCreateReqDto dto) {
         return CommonResponse.success(humanPromptService.createPrompt(userDetails.getId(), dto));
+    }
+
+    @Operation(summary = "인간 이미지 단계 생성", description = "MANAGER 이상",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200", description = "단계 생성 성공")
+    @ApiResponse(responseCode = "400", description = "유효하지 않은 입력값")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
+    @PreAuthorize("hasRole('MANAGER')")
+    @PostMapping("/steps")
+    public CommonResponse<HumanPromptStepSimpleRespDto> createStep(
+            @RequestBody @Valid HumanPromptStepCreateReqDto dto) {
+        return CommonResponse.success(humanPromptStepService.createStep(dto));
+    }
+
+    @Operation(summary = "인간 이미지 단계 수정", description = "MANAGER 이상 — stepNumber, name 수정 가능. stepCode 수정 불가.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200", description = "수정 성공")
+    @ApiResponse(responseCode = "400", description = "존재하지 않는 단계")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
+    @PreAuthorize("hasRole('MANAGER')")
+    @PutMapping("/steps/{id}")
+    public CommonResponse<HumanPromptStepSimpleRespDto> updateStep(
+            @PathVariable Long id,
+            @RequestBody HumanPromptStepUpdateReqDto dto) {
+        return CommonResponse.success(humanPromptStepService.updateStep(id, dto));
+    }
+
+    @Operation(summary = "인간 이미지 단계 삭제", description = "MANAGER 이상 — 하위 세부항목(Attr)이 존재하면 삭제 거부.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200", description = "삭제 성공")
+    @ApiResponse(responseCode = "400", description = "존재하지 않는 단계 / 하위 세부항목 존재")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
+    @PreAuthorize("hasRole('MANAGER')")
+    @DeleteMapping("/steps/{id}")
+    public CommonResponse<Void> deleteStep(@PathVariable Long id) {
+        humanPromptStepService.deleteStep(id);
+        return CommonResponse.success();
     }
 
     @Operation(
