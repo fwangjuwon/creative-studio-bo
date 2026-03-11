@@ -3,6 +3,12 @@
 
 <mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryOptionMapper">
 
+    <select id="existsByOptionId" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM human_prompt_history_option
+        WHERE option_id = #{optionId}
+    </select>
+
     <insert id="insertBatch">
         INSERT INTO human_prompt_history_option (
             prompt_history_id,

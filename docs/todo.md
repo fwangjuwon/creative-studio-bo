@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ feat/history-detailize 완료
-> 최종 업데이트: 2026-03-09 (feat/history-detailize — 이력 조회 상세화)
+> 상태: ✅ feat/human-prompt-step-attr-option-cud 완료
+> 최종 업데이트: 2026-03-11 (feat/human-prompt-step-attr-option-cud — 인물 프롬프트 Step/Attr/Option CUD 구현)
 
 ---
 
@@ -12,6 +12,62 @@
 ---
 
 ## 완료
+
+### feat/human-prompt-step-attr-option-cud. 인물 프롬프트 Step / Attr / Option CUD 구현
+
+> 인물 이미지 프롬프트 생성 시 선택지로 사용하는 5단계 구조(Step → Attr → Option)에 대해
+> CUD(생성·수정·삭제) API를 구현. 기존 TagGroup/Tag CUD 패턴과 동일한 삭제 정책 적용.
+
+#### 삭제 정책 (사용 중 거부)
+- Step 삭제 시 하위 Attr 존재하면 거부 (`STEP_HAS_ATTRS`)
+- Attr 삭제 시 하위 Option 존재하면 거부 (`ATTR_HAS_OPTIONS`)
+- Option 삭제 시 `human_prompt_history_option` 참조 중이면 거부 (`OPTION_IN_USE`)
+
+#### ErrorCode
+- [x] `HumanPromptErrorCode` — `STEP_NOT_FOUND`, `STEP_HAS_ATTRS`, `ATTR_NOT_FOUND`, `ATTR_HAS_OPTIONS`, `OPTION_NOT_FOUND`, `OPTION_IN_USE` 추가
+
+#### Mapper 확장
+- [x] `HumanPromptStepMapper` — `selectById`, `insert`, `update`, `deleteById` 추가
+- [x] `HumanPromptAttrMapper` — `selectById`, `selectList`, `existsByStepId`, `insert`, `update`, `deleteById` 추가
+- [x] `HumanPromptOptionMapper` — `selectById`, `selectList`, `existsByAttrId`, `insert`, `update`, `deleteById` 추가
+- [x] `HumanPromptHistoryOptionMapper` — `existsByOptionId` 추가
+
+#### DTO
+- [x] `HumanPromptStepCreateReqDto`, `HumanPromptStepUpdateReqDto`, `HumanPromptStepSimpleRespDto`
+- [x] `HumanPromptAttrCreateReqDto`, `HumanPromptAttrUpdateReqDto`, `HumanPromptAttrSimpleRespDto`
+- [x] `HumanPromptOptionCreateReqDto`, `HumanPromptOptionUpdateReqDto`, `HumanPromptOptionSimpleRespDto`
+
+#### Service
+- [x] `HumanPromptStepService` / `HumanPromptStepServiceImpl`
+- [x] `HumanPromptAttrService` / `HumanPromptAttrServiceImpl`
+- [x] `HumanPromptOptionService` / `HumanPromptOptionServiceImpl`
+
+#### Controller
+- [x] `HumanPromptController` — Step CUD 엔드포인트 3개 추가
+  - `POST /api/human-prompts/steps` — Step 생성 (MANAGER 이상)
+  - `PUT /api/human-prompts/steps/{id}` — Step 수정 (MANAGER 이상)
+  - `DELETE /api/human-prompts/steps/{id}` — Step 삭제 (MANAGER 이상)
+- [x] `HumanPromptAttrController` 신규 생성 (`/api/human-prompts/attrs`)
+  - `POST /api/human-prompts/attrs` — Attr 생성 (MANAGER 이상)
+  - `PUT /api/human-prompts/attrs/{id}` — Attr 수정 (MANAGER 이상)
+  - `DELETE /api/human-prompts/attrs/{id}` — Attr 삭제 (MANAGER 이상)
+- [x] `HumanPromptOptionController` 신규 생성 (`/api/human-prompts/options`)
+  - `POST /api/human-prompts/options` — Option 생성 (MANAGER 이상)
+  - `PUT /api/human-prompts/options/{id}` — Option 수정 (MANAGER 이상)
+  - `DELETE /api/human-prompts/options/{id}` — Option 삭제 (MANAGER 이상)
+
+#### 수정 가능 필드
+- Step: `stepNumber`, `name` (stepCode는 비즈니스 식별자이므로 수정 불가)
+- Attr: `name`, `isMultiSelect`, `isRequired`, `sortOrder`
+- Option: `name`, `promptValue`, `sortOrder`
+
+#### 테스트
+- [x] `HumanPromptStepServiceTest` — Step CUD 5케이스
+- [x] `HumanPromptAttrServiceTest` — Attr CUD 7케이스 (Step 삭제 하위Attr 거부 포함)
+- [x] `HumanPromptOptionServiceTest` — Option CUD 8케이스 (Attr 삭제 하위Option 거부 포함)
+- [x] `PromptServiceTests` Suite — 3개 신규 테스트 클래스 추가
+
+---
 
 ### feat/history-detailize. 이력 조회 상세화
 

@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 인간 이미지 프롬프트 선택지 MyBatis Mapper
@@ -19,6 +20,18 @@ import java.util.List;
  */
 @Mapper
 public interface HumanPromptOptionMapper {
+
+    Optional<HumanPromptOption> selectById(@Param("id") Long id);
+
+    List<HumanPromptOption> selectList(@Param("attrId") Long attrId);
+
+    boolean existsByAttrId(@Param("attrId") Long attrId);
+
+    void insert(HumanPromptOption option);
+
+    void update(HumanPromptOption option);
+
+    void deleteById(@Param("id") Long id);
 
     /**
      * 선택된 option ID 목록으로 option 정보 + step_number를 조회한다.

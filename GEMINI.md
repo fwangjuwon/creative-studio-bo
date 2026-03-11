@@ -91,7 +91,7 @@ ADMIN > MANAGER > USER
 | Role | 주요 권한 |
 |------|---------|
 | `ADMIN` | 모든 기능 풀 접근, 유저 생성/관리, daily_limit 설정 |
-| `MANAGER` | USER 권한 + 카테고리·태그 CUD |
+| `MANAGER` | USER 권한 + 카테고리·태그·인물프롬프트(Step/Attr/Option) CUD |
 | `USER` | 프롬프트 생성(하루 N회), 같은 팀 프롬프트 조회 |
 
 - 회원가입 없음. ADMIN이 API를 통해 직접 계정 생성
@@ -166,7 +166,9 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 | PromptHistory | `prompt_history` | 생성된 프롬프트 저장 (상품/인물 공통) |
 | GoodsPromptHistoryTag | `goods_prompt_history_tag` | 상품 프롬프트-태그 매핑 |
 | HumanPromptHistoryOption | `human_prompt_history_option` | 인물 프롬프트-선택옵션 매핑 |
-| HumanPromptStep / Attr / Option | `human_prompt_step` 등 | 인물 프롬프트 5단계 구조 |
+| HumanPromptStep | `human_prompt_step` | 인물 프롬프트 5단계 구조 (A~E) |
+| HumanPromptAttr | `human_prompt_attr` | 단계별 세부항목 (연령대, 성별 등) |
+| HumanPromptOption | `human_prompt_option` | 세부항목별 선택지 (prompt_value 포함) |
 
 ---
 

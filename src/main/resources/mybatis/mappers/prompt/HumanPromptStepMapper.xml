@@ -32,6 +32,39 @@
         </collection>
     </resultMap>
 
+    <select id="selectById" resultType="HumanPromptStep">
+        SELECT id, step_number, step_code, name,
+               init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm
+        FROM human_prompt_step
+        WHERE id = #{id}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO human_prompt_step (
+            step_number, step_code, name,
+            init_regi_pic, init_regi_dttm,
+            final_rvis_pic, final_rvis_dttm
+        ) VALUES (
+            #{stepNumber}, #{stepCode}, #{name},
+            #{initRegiPic}, #{initRegiDttm},
+            #{finalRvisPic}, #{finalRvisDttm}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE human_prompt_step
+        SET step_number    = #{stepNumber},
+            name           = #{name},
+            final_rvis_pic  = #{finalRvisPic},
+            final_rvis_dttm = #{finalRvisDttm}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM human_prompt_step
+        WHERE id = #{id}
+    </delete>
+
     <select id="selectAllWithAttrsAndOptions" resultMap="StepResultMap">
         SELECT
             s.id              AS step_id,

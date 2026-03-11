@@ -1,9 +1,12 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.mapper;
 
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.HumanPromptStep;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 인간 이미지 프롬프트 단계 MyBatis Mapper
@@ -26,4 +29,12 @@ public interface HumanPromptStepMapper {
      * @return 단계 응답 DTO 목록 (attrs, options 중첩 포함)
      */
     List<HumanPromptStepRespDto> selectAllWithAttrsAndOptions();
+
+    Optional<HumanPromptStep> selectById(@Param("id") Long id);
+
+    void insert(HumanPromptStep step);
+
+    void update(HumanPromptStep step);
+
+    void deleteById(@Param("id") Long id);
 }

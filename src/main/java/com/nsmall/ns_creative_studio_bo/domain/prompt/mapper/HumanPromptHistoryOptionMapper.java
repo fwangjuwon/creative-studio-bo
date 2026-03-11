@@ -15,6 +15,8 @@ import java.util.List;
 @Mapper
 public interface HumanPromptHistoryOptionMapper {
 
+    boolean existsByOptionId(@Param("optionId") Long optionId);
+
     /**
      * 여러 인물 프롬프트-옵션 매핑 레코드를 한 번에 삽입 (batch insert)
      */
