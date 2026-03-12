@@ -191,7 +191,7 @@ public class PromptServiceImpl implements PromptService {
                 String mimeType = referenceImage.getContentType();
                 imageUrls = java.util.stream.IntStream.range(0, 3)
                         .mapToObj(i -> java.util.concurrent.CompletableFuture.supplyAsync(
-                                () -> imageGenerationService.generateImage(promptText, imageBytes, mimeType)))
+                                () -> imageGenerationService.generateImageMime(promptText, imageBytes, mimeType)))
                         .toList()
                         .stream()
                         .map(java.util.concurrent.CompletableFuture::join)

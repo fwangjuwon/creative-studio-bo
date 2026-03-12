@@ -16,14 +16,6 @@ import java.util.List;
 public interface ImageGenerationService {
 
     /**
-     * 영문 프롬프트로 이미지를 1개 생성하고 서버에 저장 후 접근 URL을 반환한다.
-     *
-     * @param prompt 이미지 생성에 사용할 영문 프롬프트 텍스트
-     * @return 생성된 이미지 접근 URL (예: /images/{uuid}.jpg)
-     */
-    String generateImage(String prompt);
-
-    /**
      * 영문 프롬프트와 참조 이미지(byte[])로 이미지를 생성하고 서버에 저장 후 접근 URL을 반환한다.
      *
      * @param prompt     영문 이미지 생성 프롬프트
@@ -31,7 +23,7 @@ public interface ImageGenerationService {
      * @param mimeType   참조 이미지 MIME 타입 (예: image/jpeg)
      * @return 생성된 이미지 접근 URL (예: /images/{uuid}.jpg)
      */
-    String generateImage(String prompt, byte[] imageBytes, String mimeType);
+    String generateImageMime(String prompt, byte[] imageBytes, String mimeType);
 
     /**
      * 영문 프롬프트로 이미지를 count개 병렬 생성하고 접근 URL 목록을 반환한다.

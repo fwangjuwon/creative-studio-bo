@@ -49,8 +49,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     @Value("${image.storage-path:./generated-images}")
     private String storagePath;
 
-    @Override
-    public String generateImage(String prompt) {
+    private String generateImage(String prompt) {
         log.debug("NanoBanana 이미지 생성 호출 — model: {}", geminiProperties.getImageModel());
 
         NbRequest requestBody = new NbRequest(
@@ -62,7 +61,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     }
 
     @Override
-    public String generateImage(String prompt, byte[] imageBytes, String mimeType) {
+    public String generateImageMime(String prompt, byte[] imageBytes, String mimeType) {
         log.debug("NanaBanana 이미지 생성 호출 (참조 이미지 포함) — model: {}", geminiProperties.getImageModel());
 
         String base64Image = Base64.getEncoder().encodeToString(imageBytes);
