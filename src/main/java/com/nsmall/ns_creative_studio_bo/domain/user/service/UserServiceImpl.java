@@ -118,4 +118,9 @@ public class UserServiceImpl implements UserService {
         int todayUsedCount = promptHistoryMapper.countTodayByUserId(userId);
         return UserUsageRespDto.of(user, todayUsedCount);
     }
+
+    @Override
+    public List<UserUsageRespDto> getUserUsageList() {
+        return userMapper.selectListWithTodayUsage();
+    }
 }

@@ -374,4 +374,89 @@ public class UserServiceTest {
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(UserErrorCode.USER_NOT_FOUND));
     }
+
+    // ============================================================
+    // 사용량 목록 조회 (관리자용 전체 회원)
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 사용량 목록 조회 - 생성한 회원 포함 여부 확인")
+    void 성공_사용량_목록_조회_회원_포함_여부() {
+        UserRespDto user1 = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "list_u1"));
+        UserRespDto user2 = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "list_u2"));
+        UserRespDto user3 = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "list_u3"));
+
+        List<UserUsageRespDto> result = userService.getUserUsageList();
+
+        List<Long> userIds = result.stream().map(UserUsageRespDto::getUserId).toList();
+        assertThat(userIds).contains(user1.getId(), user2.getId(), user3.getId());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 사용량 목록 조회 - 오늘 이력 없는 유저 todayUsedCount = 0")
+    void 성공_사용량_목록_조회_이력없는_유저_0() {
+        UserRespDto user = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "list_zero"));
+
+        List<UserUsageRespDto> result = userService.getUserUsageList();
+
+        UserUsageRespDto found = result.stream()
+                .filter(u -> u.getUserId().equals(user.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(found.getTodayUsedCount()).isEqualTo(0);
+        assertThat(found.getRemainingCount()).isEqualTo(found.getDailyLimit());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 사용량 목록 조회 - 오늘 N회 사용한 유저 카운트 정확성")
+    void 성공_사용량_목록_조회_N회_카운트_정확성() {
+        UserRespDto user = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "list_n"));
+        히스토리_직접_삽입(user.getId());
+        히스토리_직접_삽입(user.getId());
+        히스토리_직접_삽입(user.getId());
+
+        List<UserUsageRespDto> result = userService.getUserUsageList();
+
+        UserUsageRespDto found = result.stream()
+                .filter(u -> u.getUserId().equals(user.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(found.getTodayUsedCount()).isEqualTo(3);
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 사용량 목록 조회 - 한도 초과 시 remainingCount = 0")
+    void 성공_사용량_목록_조회_한도_초과_remaining_0() {
+        UserRespDto user = userService.createUser(UserCreateReqDto.builder()
+                .loginId(TEST_ID_PREFIX + "list_over")
+                .password("testPassword123!")
+                .name("한도초과_목록유저")
+                .role("USER")
+                .teamName("팀A")
+                .dailyLimit(2)
+                .build());
+        히스토리_직접_삽입(user.getId());
+        히스토리_직접_삽입(user.getId());
+        히스토리_직접_삽입(user.getId());
+
+        List<UserUsageRespDto> result = userService.getUserUsageList();
+
+        UserUsageRespDto found = result.stream()
+                .filter(u -> u.getUserId().equals(user.getId()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(found.getTodayUsedCount()).isEqualTo(3);
+        assertThat(found.getRemainingCount()).isEqualTo(0);
+    }
 }

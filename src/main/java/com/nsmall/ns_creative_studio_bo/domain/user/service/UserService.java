@@ -34,4 +34,10 @@ public interface UserService {
      * 사용자 일일 사용량 조회 — 본인 및 ADMIN의 특정 유저 조회 모두 이 메서드 사용
      */
     UserUsageRespDto getUserUsage(Long userId);
+
+    /**
+     * 전체 회원의 금일 사용량 목록 조회 — ADMIN 전용
+     * DB JOIN 단일 쿼리로 처리 (N+1 없음)
+     */
+    List<UserUsageRespDto> getUserUsageList();
 }

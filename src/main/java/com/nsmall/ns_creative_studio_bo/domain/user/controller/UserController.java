@@ -110,4 +110,15 @@ public class UserController {
     public CommonResponse<UserUsageRespDto> getUserUsage(@PathVariable Long id) {
         return CommonResponse.success(userService.getUserUsage(id));
     }
+
+    @Operation(summary = "전체 회원 사용량 목록 조회",
+            description = "ADMIN 전용 — 전체 회원의 금일 사용 횟수 및 남은 횟수를 단일 쿼리로 반환",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/usage")
+    public CommonResponse<List<UserUsageRespDto>> getUserUsageList() {
+        return CommonResponse.success(userService.getUserUsageList());
+    }
 }

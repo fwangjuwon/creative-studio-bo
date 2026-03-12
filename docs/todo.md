@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ feat/user-usage 완료
-> 최종 업데이트: 2026-03-12 (feat/user-usage — 사용자 일일 사용량 조회 API 구현)
+> 상태: ✅ feat/admin-user-usage-list 완료
+> 최종 업데이트: 2026-03-12 (feat/admin-user-usage-list — 관리자용 전체 회원 사용량 목록 조회 API 구현)
 
 ---
 
@@ -12,6 +12,32 @@
 ---
 
 ## 완료
+
+### feat/admin-user-usage-list. 관리자용 전체 회원 사용량 목록 조회 API 구현
+
+> 관리자 화면의 사용자 목록에서 전체 회원의 금일 사용량을 단일 API 호출로 조회.
+> DB LEFT JOIN + GROUP BY 단일 쿼리로 처리 (N+1 없음).
+> `UserUsageRespDto` 재사용 — 별도 DTO 생성 없음.
+
+#### Mapper
+- [x] `UserMapper.java` — `selectListWithTodayUsage()` 추가
+- [x] `UserMapper.xml` — `"user" LEFT JOIN prompt_history` + `GREATEST(0, ...)` 단일 쿼리 추가
+  - `u.id AS user_id` alias → `mapUnderscoreToCamelCase` 자동 매핑
+  - 날짜 범위 조건 — 기존 `countTodayByUserId`와 동일한 인덱스 활용
+
+#### Service
+- [x] `UserService` — `getUserUsageList()` 시그니처 추가
+- [x] `UserServiceImpl` — 구현 추가 (단순 위임)
+
+#### Controller
+- [x] `UserController` — `GET /api/users/usage` 엔드포인트 추가 (ADMIN 전용)
+  - 정적 경로(`/usage`) 우선 매칭 → 기존 `/{id}/usage`와 충돌 없음
+
+#### 테스트
+- [x] `UserServiceTest` — `getUserUsageList` 케이스 4개 추가
+  - 생성 회원 포함 여부 / 이력 없는 유저 todayUsedCount=0 / N회 카운트 정확성 / 한도 초과 시 remainingCount=0
+
+---
 
 ### feat/user-usage. 사용자 일일 사용량 조회 API 구현
 
