@@ -1,11 +1,14 @@
 package com.nsmall.ns_creative_studio_bo.domain.user.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserUsageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +22,7 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,7 +48,24 @@ public class UserServiceTest {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    @Autowired
+    private PromptHistoryMapper promptHistoryMapper;
+
     private static final String TEST_ID_PREFIX = "test_svc_";
+
+    private void 히스토리_직접_삽입(Long userId) {
+        PromptHistory history = PromptHistory.builder()
+                .userId(userId)
+                .promptType("PRODUCT")
+                .promptStyle("NANO_BANANA")
+                .promptText("test prompt")
+                .initRegiPic("test")
+                .initRegiDttm(LocalDateTime.now())
+                .finalRvisPic("test")
+                .finalRvisDttm(LocalDateTime.now())
+                .build();
+        promptHistoryMapper.insert(history);
+    }
 
     private UserCreateReqDto 기본_생성_DTO(String loginId) {
         return UserCreateReqDto.builder()
@@ -284,6 +305,71 @@ public class UserServiceTest {
     @DisplayName("[예외] 회원 삭제 - 미존재 회원")
     void 예외_회원_삭제_미존재() {
         assertThatThrownBy(() -> userService.deleteUser(Long.MAX_VALUE))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(UserErrorCode.USER_NOT_FOUND));
+    }
+
+    // ============================================================
+    // 사용량 조회
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 사용량 조회 - 오늘 사용 없음")
+    void 성공_사용량_조회_오늘_사용_없음() {
+        UserRespDto user = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "usage_zero"));
+
+        UserUsageRespDto result = userService.getUserUsage(user.getId());
+
+        assertThat(result.getUserId()).isEqualTo(user.getId());
+        assertThat(result.getTodayUsedCount()).isEqualTo(0);
+        assertThat(result.getRemainingCount()).isEqualTo(result.getDailyLimit());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 사용량 조회 - N회 사용 후")
+    void 성공_사용량_조회_N회_사용_후() {
+        UserRespDto user = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "usage_n"));
+        히스토리_직접_삽입(user.getId());
+        히스토리_직접_삽입(user.getId());
+
+        UserUsageRespDto result = userService.getUserUsage(user.getId());
+
+        assertThat(result.getTodayUsedCount()).isEqualTo(2);
+        assertThat(result.getRemainingCount()).isEqualTo(result.getDailyLimit() - 2);
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 사용량 조회 - 한도 초과 시 remainingCount = 0")
+    void 성공_사용량_조회_한도_초과_시_remaining_0() {
+        UserRespDto user = userService.createUser(UserCreateReqDto.builder()
+                .loginId(TEST_ID_PREFIX + "usage_over")
+                .password("testPassword123!")
+                .name("한도초과유저")
+                .role("USER")
+                .teamName("팀A")
+                .dailyLimit(2)
+                .build());
+        히스토리_직접_삽입(user.getId());
+        히스토리_직접_삽입(user.getId());
+        히스토리_직접_삽입(user.getId());
+
+        UserUsageRespDto result = userService.getUserUsage(user.getId());
+
+        assertThat(result.getTodayUsedCount()).isEqualTo(3);
+        assertThat(result.getRemainingCount()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("[예외] 사용량 조회 - 미존재 유저")
+    void 예외_사용량_조회_미존재_유저() {
+        assertThatThrownBy(() -> userService.getUserUsage(Long.MAX_VALUE))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(UserErrorCode.USER_NOT_FOUND));

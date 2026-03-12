@@ -1,10 +1,12 @@
 package com.nsmall.ns_creative_studio_bo.domain.user.controller;
 
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
+import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserUsageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -13,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -85,5 +88,26 @@ public class UserController {
     public CommonResponse<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
         return CommonResponse.success();
+    }
+
+    @Operation(summary = "내 사용량 조회",
+            description = "오늘 사용 횟수 및 남은 횟수 확인. USER / MANAGER / ADMIN 모든 인증 사용자 허용.",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @GetMapping("/me/usage")
+    public CommonResponse<UserUsageRespDto> getMyUsage(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+        return CommonResponse.success(userService.getUserUsage(userDetails.getId()));
+    }
+
+    @Operation(summary = "특정 회원 사용량 조회", description = "ADMIN 전용",
+            security = @SecurityRequirement(name = "bearerAuth"))
+    @ApiResponse(responseCode = "200", description = "조회 성공")
+    @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/{id}/usage")
+    public CommonResponse<UserUsageRespDto> getUserUsage(@PathVariable Long id) {
+        return CommonResponse.success(userService.getUserUsage(id));
     }
 }
