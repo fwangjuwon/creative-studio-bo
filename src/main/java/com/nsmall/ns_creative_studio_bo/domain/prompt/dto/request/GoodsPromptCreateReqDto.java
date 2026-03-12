@@ -38,4 +38,7 @@ public class GoodsPromptCreateReqDto {
 
     /** 프롬프트 스타일 (선택, 미입력 시 NANO_BANANA 기본값 적용) */
     private String promptStyle;
+
+    private String purpose;          // 생성 목적 (선택)
+    private String additionalNotes;  // 추가 지시 사항 (선택)
 }

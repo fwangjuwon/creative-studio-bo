@@ -23,6 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -95,7 +96,8 @@ public class PromptServiceImpl implements PromptService {
                 .toList();
 
         // 4. Gemini API 호출
-        String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames);
+        String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames,
+                dto.getPurpose(), dto.getAdditionalNotes());
 
         // 5. PromptHistory 저장
         LocalDateTime now = LocalDateTime.now();
@@ -109,6 +111,8 @@ public class PromptServiceImpl implements PromptService {
                 .promptType("PRODUCT")
                 .promptStyle(promptStyle)
                 .promptText(promptText)
+                .purpose(dto.getPurpose())
+                .additionalNotes(dto.getAdditionalNotes())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -178,9 +182,27 @@ public class PromptServiceImpl implements PromptService {
 
     @Override
     @Transactional
-    public List<String> generateGoodsImage(Long historyId, String promptText) {
-        // 1. 이미지 3개 병렬 생성
-        List<String> imageUrls = imageGenerationService.generateImages(promptText, 3);
+    public List<String> generateGoodsImage(Long historyId, String promptText, MultipartFile referenceImage) {
+        // 1. 이미지 3개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        List<String> imageUrls;
+        if (referenceImage != null && !referenceImage.isEmpty()) {
+            try {
+                byte[] imageBytes = referenceImage.getBytes();
+                String mimeType = referenceImage.getContentType();
+                imageUrls = java.util.stream.IntStream.range(0, 3)
+                        .mapToObj(i -> java.util.concurrent.CompletableFuture.supplyAsync(
+                                () -> imageGenerationService.generateImage(promptText, imageBytes, mimeType)))
+                        .toList()
+                        .stream()
+                        .map(java.util.concurrent.CompletableFuture::join)
+                        .toList();
+            } catch (java.io.IOException e) {
+                log.error("참조 이미지 읽기 실패", e);
+                throw new BizException(com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
+            }
+        } else {
+            imageUrls = imageGenerationService.generateImages(promptText, 3);
+        }
 
         // 2. 이력에 JSON 배열로 저장 (image_url 컬럼에 "[url1,url2,url3]" 형태)
         if (historyId != null) {

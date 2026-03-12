@@ -53,12 +53,35 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     public String generateImage(String prompt) {
         log.debug("NanoBanana 이미지 생성 호출 — model: {}", geminiProperties.getImageModel());
 
-        // 1. Gemini 이미지 생성 API 호출
         NbRequest requestBody = new NbRequest(
                 List.of(new NbContent("user", List.of(new NbPart(prompt)))),
                 new NbGenerationConfig(List.of("IMAGE"))
         );
 
+        return callAndSave(requestBody);
+    }
+
+    @Override
+    public String generateImage(String prompt, byte[] imageBytes, String mimeType) {
+        log.debug("NanaBanana 이미지 생성 호출 (참조 이미지 포함) — model: {}", geminiProperties.getImageModel());
+
+        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
+        NbRequest requestBody = new NbRequest(
+                List.of(new NbContent("user", List.of(
+                        new NbPart(prompt),
+                        new NbPart(null, new NbInlineData(mimeType, base64Image))
+                ))),
+                new NbGenerationConfig(List.of("IMAGE"))
+        );
+
+        return callAndSave(requestBody);
+    }
+
+    /**
+     * Gemini 이미지 생성 API를 호출하고 응답에서 이미지를 추출·저장한 뒤 URL을 반환한다.
+     */
+    private String callAndSave(NbRequest requestBody) {
         String uri = String.format("/models/%s:generateContent?key=%s",
                 geminiProperties.getImageModel(), geminiProperties.getApiKey());
 
@@ -69,7 +92,6 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
                 .retrieve()
                 .body(NbResponse.class);
 
-        // 2. inlineData 추출
         if (response == null
                 || response.candidates() == null
                 || response.candidates().isEmpty()) {
@@ -89,7 +111,6 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             throw new BizException(ImageGenerationErrorCode.EMPTY_IMAGE_RESPONSE);
         }
 
-        // 3. base64 디코딩 후 파일 저장
         String imageUrl = saveImage(inlineData.data(), inlineData.mimeType());
         log.debug("NanoBanana 이미지 저장 완료 — url: {}", imageUrl);
 

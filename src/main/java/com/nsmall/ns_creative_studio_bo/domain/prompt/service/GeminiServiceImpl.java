@@ -229,8 +229,9 @@ public class GeminiServiceImpl implements GeminiService {
     }
 
     @Override
-    public String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames) {
-        String userMessage = buildGoodsUserMessage(goodsCategoryName, tagNames);
+    public String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames,
+                                      String purpose, String additionalNotes) {
+        String userMessage = buildGoodsUserMessage(goodsCategoryName, tagNames, purpose, additionalNotes);
         GeminiRequest requestBody = buildRequest(userMessage);
 
         String uri = String.format("/models/%s:generateContent?key=%s",
@@ -249,11 +250,18 @@ public class GeminiServiceImpl implements GeminiService {
         return extractText(response);
     }
 
-    private String buildGoodsUserMessage(String goodsCategoryName, List<String> tagNames) {
+    private String buildGoodsUserMessage(String goodsCategoryName, List<String> tagNames,
+                                         String purpose, String additionalNotes) {
         StringBuilder sb = new StringBuilder();
         sb.append("Product Category: ").append(goodsCategoryName);
         if (tagNames != null && !tagNames.isEmpty()) {
             sb.append("\nStyle & Mood Tags: ").append(String.join(", ", tagNames));
+        }
+        if (purpose != null && !purpose.isBlank()) {
+            sb.append("\nPurpose: ").append(purpose);
+        }
+        if (additionalNotes != null && !additionalNotes.isBlank()) {
+            sb.append("\nAdditional notes: ").append(additionalNotes);
         }
         sb.append("\nUse case: High-end commercial e-commerce product photography");
         return sb.toString();
