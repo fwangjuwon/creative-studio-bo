@@ -12,6 +12,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistory
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.HumanPromptHistoryOption;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.HumanPromptOption;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptAttrMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper;
@@ -54,6 +55,7 @@ import java.util.Map;
 public class HumanPromptServiceImpl implements HumanPromptService {
 
     private final HumanPromptStepMapper humanPromptStepMapper;
+    private final HumanPromptAttrMapper humanPromptAttrMapper;
     private final HumanPromptOptionMapper humanPromptOptionMapper;
     private final HumanPromptHistoryOptionMapper humanPromptHistoryOptionMapper;
     private final PromptHistoryMapper promptHistoryMapper;
@@ -93,7 +95,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
         }
 
         // 3. 필수 attr 선택 여부 검증
-        List<Long> requiredAttrIds = humanPromptStepMapper.selectRequiredAttrIds();
+        List<Long> requiredAttrIds = humanPromptAttrMapper.selectRequiredAttrIds();
         boolean hasAllRequired = requiredAttrIds.stream()
                 .allMatch(attrId -> {
                     List<Long> selected = dto.getSelections().get(attrId);

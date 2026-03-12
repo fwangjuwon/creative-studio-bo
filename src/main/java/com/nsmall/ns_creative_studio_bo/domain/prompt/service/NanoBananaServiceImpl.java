@@ -50,8 +50,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     @Value("${image.storage-path:./generated-images}")
     private String storagePath;
 
-    @Override
-    public String generateImage(String prompt) {
+    private String generateImage(String prompt) {
         log.debug("NanoBanana 이미지 생성 호출 — model: {}", geminiProperties.getImageModel());
 
         // 1. Gemini 이미지 생성 API 호출
