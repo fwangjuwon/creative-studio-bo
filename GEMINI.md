@@ -294,6 +294,29 @@ Optional<User>  selectById(Long id);
 void            deleteById(Long id);
 ```
 
+### Java FQN 사용 금지
+
+Java 코드 생성 시 메서드 바디나 필드 선언 내에 **FQN(전체 패키지 경로)을 직접 사용하지 않는다.**
+반드시 파일 상단 import 블록에 선언하고 짧은 클래스명만 사용한다.
+
+```java
+// ❌ 금지 — 메서드 바디 내 FQN 직접 사용
+java.util.stream.IntStream.range(0, 3)
+java.util.concurrent.CompletableFuture.supplyAsync(task)
+} catch (java.io.IOException e) {
+throw new BizException(com.example.project.domain.SomeErrorCode.SOME_ERROR);
+
+// ✅ 사용 — import 후 짧은 이름 사용
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
+
+IntStream.range(0, 3)
+CompletableFuture.supplyAsync(task)
+} catch (IOException e) {
+throw new BizException(SomeErrorCode.SOME_ERROR);
+```
+
 ### 예외 처리 구조
 
 - `ErrorCode` 인터페이스 → 도메인별 enum으로 구현 (예: `UserErrorCode`)
