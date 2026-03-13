@@ -136,7 +136,7 @@ LCS: 식품 (parent_id = NULL)
 | `final_rvis_pic` | VARCHAR | | 최종수정자 |
 | `final_rvis_dttm` | TIMESTAMP | | 최종수정일시 |
 
-> `init_regi_dttm` 기준으로 `DATE(init_regi_dttm) = 오늘` 조건의 COUNT로 일일 사용량을 체크한다.
+> `init_regi_dttm` 기준으로 범위 조건(`>= CURRENT_DATE AND < CURRENT_DATE + 1day`)의 COUNT로 일일 사용량을 체크한다. `(user_id, init_regi_dttm)` 복합 인덱스(`idx_prompt_history_user_date`) 활용.
 
 ---
 

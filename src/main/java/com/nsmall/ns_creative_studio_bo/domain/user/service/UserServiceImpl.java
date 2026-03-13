@@ -2,11 +2,13 @@ package com.nsmall.ns_creative_studio_bo.domain.user.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserUsageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,7 @@ public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final PromptHistoryMapper promptHistoryMapper;
 
     @Override
     public UserRespDto createUser(UserCreateReqDto dto) {
@@ -106,5 +109,18 @@ public class UserServiceImpl implements UserService {
                 .orElseThrow(() -> new BizException(UserErrorCode.USER_NOT_FOUND, "회원을 찾을 수 없습니다. id=" + id));
 
         userMapper.deleteById(id);
+    }
+
+    @Override
+    public UserUsageRespDto getUserUsage(Long userId) {
+        User user = userMapper.selectById(userId)
+                .orElseThrow(() -> new BizException(UserErrorCode.USER_NOT_FOUND, "회원을 찾을 수 없습니다. id=" + userId));
+        int todayUsedCount = promptHistoryMapper.countTodayByUserId(userId);
+        return UserUsageRespDto.of(user, todayUsedCount);
+    }
+
+    @Override
+    public List<UserUsageRespDto> getUserUsageList() {
+        return userMapper.selectListWithTodayUsage();
     }
 }

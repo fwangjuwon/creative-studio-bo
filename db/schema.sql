@@ -90,7 +90,7 @@ CREATE TABLE tag (
 -- -----------------------------------------------------------------------------
 -- TABLE: prompt_history
 -- 설명: Gemini가 생성한 영문 프롬프트 저장
---       init_regi_dttm 기준으로 일일 사용량 집계 (DATE(init_regi_dttm) = 오늘)
+--       init_regi_dttm 기준으로 일일 사용량 집계 (범위 조건: >= CURRENT_DATE, < 다음날)
 -- 논리 FK: prompt_history.user_id → user.id
 --          prompt_history.category_id → category.id (DCS만 저장, 상품 프롬프트만)
 -- -----------------------------------------------------------------------------
@@ -132,8 +132,8 @@ CREATE TABLE goods_prompt_history_tag (
 -- INDEX
 -- -----------------------------------------------------------------------------
 
--- 일일 사용량 집계 쿼리 최적화
--- WHERE user_id = ? AND DATE(init_regi_dttm) = 오늘
+-- 일일 사용량 집계 쿼리 최적화 (사용량 조회 API + 일일 한도 체크 공용)
+-- WHERE user_id = ? AND init_regi_dttm >= CURRENT_DATE AND init_regi_dttm < CURRENT_DATE + 1day
 CREATE INDEX idx_prompt_history_user_date
     ON prompt_history (user_id, init_regi_dttm);
 

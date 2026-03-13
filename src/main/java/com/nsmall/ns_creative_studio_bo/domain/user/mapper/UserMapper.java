@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.user.mapper;
 
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserUsageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -28,4 +29,6 @@ public interface UserMapper {
     void update(User user);
 
     void deleteById(@Param("id") Long id);
+
+    List<UserUsageRespDto> selectListWithTodayUsage();
 }
