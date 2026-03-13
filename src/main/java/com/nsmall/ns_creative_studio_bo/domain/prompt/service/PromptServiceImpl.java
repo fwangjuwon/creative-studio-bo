@@ -198,9 +198,18 @@ public class PromptServiceImpl implements PromptService {
                 if (mimeType == null) {
                     throw new BizException(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE);
                 }
+                // 참조 이미지의 형태·비율·질감·색감을 보존하도록 지시문 앞에 추가
+                // 조명·구도는 promptText에 위임하여 이미지 다양성을 확보
+                String referenceGuidePrompt = "Use the provided reference image as the primary visual guide. "
+                        + "Strictly preserve all of the following from the reference: "
+                        + "(1) exact product shape, silhouette, and overall form without any distortion; "
+                        + "(2) original proportions and scale of the product; "
+                        + "(3) surface texture, material finish, and fine structural details; "
+                        + "(4) color palette and tonal values of the product itself. "
+                        + promptText;
                 imageUrls = IntStream.range(0, IMAGE_GENERATE_COUNT)
                         .mapToObj(i -> CompletableFuture.supplyAsync(
-                                () -> imageGenerationService.generateImageMime(promptText, imageBytes, mimeType)))
+                                () -> imageGenerationService.generateImageMime(referenceGuidePrompt, imageBytes, mimeType)))
                         .toList()
                         .stream()
                         .map(CompletableFuture::join)
