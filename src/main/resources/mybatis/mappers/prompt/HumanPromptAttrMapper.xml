@@ -3,6 +3,12 @@
 
 <mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptAttrMapper">
 
+    <select id="selectRequiredAttrIds" resultType="Long">
+        SELECT id
+        FROM human_prompt_attr
+        WHERE is_required = true
+    </select>
+
     <select id="selectById" resultType="HumanPromptAttr">
         SELECT id, step_id, name, is_multi_select, is_required, sort_order,
                init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm

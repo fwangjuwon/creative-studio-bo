@@ -12,6 +12,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistory
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.HumanPromptHistoryOption;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.HumanPromptOption;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptAttrMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper;
@@ -36,12 +37,13 @@ import java.util.Map;
  * 프롬프트 생성 흐름:
  *   1. 사용자 조회 + 일일 한도 체크
  *   2. 선택된 모든 optionId를 플랫 목록으로 수집
- *   3. selectByIds(ids) 로 option 정보 + step_number 조회
- *   4. stepNumber 기준 Map 구성
- *   5. GeminiService.generateHumanPrompt() 호출
- *   6. PromptHistory 저장 (promptType='PERSON', categoryId=null)
- *   7. HumanPromptHistoryOption 저장 (선택 옵션 매핑)
- *   8. 생성된 이력 DTO 반환
+ *   3. 필수(is_required) attr 선택 여부 검증
+ *   4. selectByIds(ids) 로 option 정보 + step_number 조회
+ *   5. stepNumber 기준 Map 구성
+ *   6. GeminiService.generateHumanPrompt() 호출
+ *   7. PromptHistory 저장 (promptType='PERSON', categoryId=null)
+ *   8. HumanPromptHistoryOption 저장 (선택 옵션 매핑)
+ *   9. 생성된 이력 DTO 반환
  * </pre>
  *
  * @author jjhoo8936
@@ -53,6 +55,7 @@ import java.util.Map;
 public class HumanPromptServiceImpl implements HumanPromptService {
 
     private final HumanPromptStepMapper humanPromptStepMapper;
+    private final HumanPromptAttrMapper humanPromptAttrMapper;
     private final HumanPromptOptionMapper humanPromptOptionMapper;
     private final HumanPromptHistoryOptionMapper humanPromptHistoryOptionMapper;
     private final PromptHistoryMapper promptHistoryMapper;
@@ -91,10 +94,22 @@ public class HumanPromptServiceImpl implements HumanPromptService {
             throw new BizException(HumanPromptErrorCode.NO_OPTIONS_SELECTED);
         }
 
-        // 3. option 정보 + step_number 조회
+        // 3. 필수 attr 선택 여부 검증
+        List<Long> requiredAttrIds = humanPromptAttrMapper.selectRequiredAttrIds();
+        boolean hasAllRequired = requiredAttrIds.stream()
+                .allMatch(attrId -> {
+                    List<Long> selected = dto.getSelections().get(attrId);
+                    return selected != null && !selected.isEmpty();
+                });
+        if (!hasAllRequired) {
+            log.warn("필수 항목 미선택 — userId={}, selections={}", userId, dto.getSelections());
+            throw new BizException(HumanPromptErrorCode.REQUIRED_OPTION_MISSING);
+        }
+
+        // 4. option 정보 + step_number 조회
         List<HumanPromptOption> options = humanPromptOptionMapper.selectByIds(allOptionIds);
 
-        // 4. stepNumber 기준 Map<stepNumber, List<promptValue>> 구성
+        // 5. stepNumber 기준 Map<stepNumber, List<promptValue>> 구성
         Map<Integer, List<String>> stepOptionValues = new HashMap<>();
         for (HumanPromptOption option : options) {
             stepOptionValues
@@ -104,12 +119,12 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         log.debug("인간 이미지 프롬프트 생성 — stepOptionValues: {}", stepOptionValues);
 
-        // 5. Gemini 호출 (promptStyle 기본값: NANO_BANANA)
+        // 6. Gemini 호출 (promptStyle 기본값: NANO_BANANA)
         String style = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
                 ? dto.getPromptStyle() : "NANO_BANANA";
         String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes(), style);
 
-        // 6. PromptHistory 저장 (PERSON 타입, categoryId=null)
+        // 7. PromptHistory 저장 (PERSON 타입, categoryId=null)
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
@@ -130,7 +145,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         promptHistoryMapper.insert(history);
 
-        // 7. HumanPromptHistoryOption 저장 (선택 옵션 매핑)
+        // 8. HumanPromptHistoryOption 저장 (선택 옵션 매핑)
         List<HumanPromptHistoryOption> historyOptions = allOptionIds.stream()
                 .map(optionId -> HumanPromptHistoryOption.builder()
                         .promptHistoryId(history.getId())
@@ -146,7 +161,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
         log.info("인물 프롬프트 이력 저장 완료 — userId={}, historyId={}, optionCount={}",
                 userId, history.getId(), historyOptions.size());
 
-        // 8. 응답 반환
+        // 9. 응답 반환
         List<String> savedOptionNames = humanPromptHistoryOptionMapper.selectOptionNamesByHistoryId(history.getId());
         return PromptHistoryRespDto.fromHuman(history, savedOptionNames);
     }
