@@ -3,7 +3,6 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
 import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.ImageGenerateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.ImageGenerateRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.PromptService;
@@ -12,10 +11,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -26,6 +29,7 @@ import java.util.List;
  * @since 2026-02-27
  */
 @Tag(name = "Prompt", description = "프롬프트 생성 및 히스토리 조회 API")
+@Validated
 @RestController
 @RequestMapping("/api/prompts")
 @RequiredArgsConstructor
@@ -54,15 +58,19 @@ public class PromptController {
             summary = "상품 이미지 생성 (NanoBanana)",
             description = "영문 프롬프트 텍스트를 NanoBanana(gemini-3-pro-image-preview)에 전달하여 이미지를 생성하고 " +
                           "서버에 저장 후 접근 URL을 반환한다. historyId를 전달하면 이력의 imageUrl도 업데이트된다.",
+
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "이미지 생성 성공")
-    @ApiResponse(responseCode = "400", description = "promptText 누락")
+    @ApiResponse(responseCode = "400", description = "promptText 누락 또는 빈 문자열")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PreAuthorize("hasRole('USER')")
-    @PostMapping("/goods/generate-image")
-    public CommonResponse<ImageGenerateRespDto> generateGoodsImage(@RequestBody @Valid ImageGenerateReqDto dto) {
-        List<String> imageUrls = promptService.generateGoodsImage(dto.getHistoryId(), dto.getPromptText());
+    @PostMapping(value = "/goods/generate-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public CommonResponse<ImageGenerateRespDto> generateGoodsImage(
+            @RequestParam(required = false) Long historyId,
+            @NotBlank @RequestParam String promptText,
+            @RequestParam(required = false) MultipartFile referenceImage) {
+        List<String> imageUrls = promptService.generateGoodsImage(historyId, promptText, referenceImage);
         return CommonResponse.success(ImageGenerateRespDto.builder().imageUrls(imageUrls).build());
     }
 

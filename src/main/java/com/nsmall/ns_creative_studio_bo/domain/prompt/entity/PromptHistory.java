@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
  * category_id : 논리 FK → Category DCS (상품 프롬프트만, 인물은 null)
  * prompt_type : 'PRODUCT' | 'PERSON'
  * prompt_style: 'NANO_BANANA' | 'MID_JOURNEY'
- * purpose, additional_notes: 인물 프롬프트 전용 (상품은 null)
+ * purpose, additional_notes: 생성 목적 (선택, 상품·인물 공통)
  * init_regi_dttm 기준으로 일일 사용량을 집계한다.
  * </pre>
  *
@@ -35,10 +35,10 @@ public class PromptHistory {
     private String promptType;       // 'PRODUCT' | 'PERSON'
     private String promptStyle;      // 'NANO_BANANA' | 'MID_JOURNEY'
     private String promptText;
-    private String imageUrl;         // NanoBanana 이미지 URL (없으면 null)
-    private String purpose;          // 인물 프롬프트 생성 목적 (상품은 null)
-    private String additionalNotes;  // 인물 프롬프트 추가 지시사항 (상품은 null)
 
+    private String imageUrl;         // NanoBanana 이미지 URL (없으면 null)
+    private String purpose;          // 생성 목적 (선택, 상품·인물 공통)
+    private String additionalNotes;  // 추가 지시 사항 (선택, 상품·인물 공통)
     private String initRegiPic;
     private LocalDateTime initRegiDttm;
     private String finalRvisPic;
