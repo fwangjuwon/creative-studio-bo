@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ feat/admin-user-usage-list 완료
-> 최종 업데이트: 2026-03-12 (feat/admin-user-usage-list — 관리자용 전체 회원 사용량 목록 조회 API 구현)
+> 상태: ✅ refactor/prompt-history-remove-team-filter 완료
+> 최종 업데이트: 2026-03-13 (refactor/prompt-history-remove-team-filter — 프롬프트 이력 조회 팀 필터 제거, 전체 조회로 단순화)
 
 ---
 
@@ -12,6 +12,38 @@
 ---
 
 ## 완료
+
+### refactor/prompt-history-remove-team-filter. 프롬프트 이력 조회 팀 필터 제거
+
+> Role 기반 팀 필터를 제거하여 모든 Role이 전체 이력을 조회하도록 단순화.
+> USER → 같은 팀만 / MANAGER·ADMIN → 전체 의 분기 로직을 완전히 제거.
+
+#### Mapper
+- [x] `PromptHistoryMapper.java` — `selectList(@Param("teamName") String teamName)` → `selectList()` 파라미터 제거
+- [x] `PromptHistoryMapper.xml` — `selectList` SQL에서 `JOIN "user"` + `WHERE u.team_name` 조건절 제거, 단순 전체 조회로 변경
+
+#### Service
+- [x] `PromptService` — `getPromptHistories(Long requestUserId)` → `getPromptHistories()` 시그니처 변경, JavaDoc 수정
+- [x] `PromptServiceImpl` — `getPromptHistories` 내 Role 분기·User 조회·teamName 처리·`log.warn` 전체 제거
+
+#### Controller
+- [x] `PromptController` — `@Operation` description 수정, `@AuthenticationPrincipal` 파라미터 제거, 서비스 호출 변경
+
+#### 테스트
+- [x] `PromptServiceTest` — 권한별 범위 테스트 5개 삭제
+  - `성공_히스토리_조회_USER_같은팀만`, `성공_히스토리_조회_MANAGER_전체`, `성공_히스토리_조회_ADMIN_전체`
+  - `예외_히스토리_조회_사용자_미존재`, `성공_히스토리_조회_USER_팀_미배정_빈목록`
+- [x] `PromptServiceTest` — `성공_히스토리_조회_전체_권한별_동일결과` 추가
+  - ADMIN / MANAGER / USER 세 Role에서 `getPromptHistories()` 호출 시 결과가 동일함을 증명
+  - 세 Role의 히스토리가 모두 결과에 포함되는지 검증
+- [x] `HumanPromptServiceTest` — `getPromptHistories(user.getId())` → `getPromptHistories()` 호출 수정 (누락 반영)
+
+#### 문서
+- [x] `docs/requirements.md` — 조회 권한 테이블: USER 조회 범위 "전체"로 수정
+- [x] `CLAUDE.md`, `GEMINI.md` — USER 권한 설명 수정
+- [x] `.cursor/rules/project-context.mdc` — 프롬프트 조회 권한 테이블 수정
+
+---
 
 ### feat/admin-user-usage-list. 관리자용 전체 회원 사용량 목록 조회 API 구현
 

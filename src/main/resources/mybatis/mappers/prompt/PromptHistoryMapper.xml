@@ -52,32 +52,23 @@
         WHERE id = #{id}
     </select>
 
-    <!--
-        teamName != null → 해당 팀 유저들의 히스토리만 조회 (USER 권한)
-        teamName == null → 전체 조회 (MANAGER / ADMIN 권한)
-        "user"는 PostgreSQL 예약어이므로 큰따옴표로 감싸서 사용
-    -->
     <select id="selectList" resultType="PromptHistory">
         SELECT
-            ph.id,
-            ph.user_id,
-            ph.category_id,
-            ph.prompt_type,
-            ph.prompt_style,
-            ph.prompt_text,
-            ph.image_url,
-            ph.purpose,
-            ph.additional_notes,
-            ph.init_regi_pic,
-            ph.init_regi_dttm,
-            ph.final_rvis_pic,
-            ph.final_rvis_dttm
-        FROM prompt_history ph
-        <if test="teamName != null">
-            JOIN "user" u ON ph.user_id = u.id
-            WHERE u.team_name = #{teamName}
-        </if>
-        ORDER BY ph.init_regi_dttm DESC
+            id,
+            user_id,
+            category_id,
+            prompt_type,
+            prompt_style,
+            prompt_text,
+            image_url,
+            purpose,
+            additional_notes,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM prompt_history
+        ORDER BY init_regi_dttm DESC
     </select>
 
     <update id="updateImageUrl">

@@ -20,15 +20,7 @@ public interface PromptHistoryMapper {
 
     Optional<PromptHistory> selectById(@Param("id") Long id);
 
-    /**
-     * 프롬프트 히스토리 목록 조회
-     *
-     * <pre>
-     * teamName != null → 해당 팀 소속 유저들의 히스토리만 조회 (USER 권한)
-     * teamName == null → 전체 히스토리 조회 (MANAGER / ADMIN 권한)
-     * </pre>
-     */
-    List<PromptHistory> selectList(@Param("teamName") String teamName);
+    List<PromptHistory> selectList();
 
     /**
      * 오늘 날짜 기준 해당 유저의 프롬프트 생성 횟수 조회 (일일 한도 체크용)

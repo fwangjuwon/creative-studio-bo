@@ -361,7 +361,7 @@ public class HumanPromptServiceTest {
 
         humanPromptService.createPrompt(user.getId(), dto);
 
-        List<PromptHistoryRespDto> histories = promptService.getPromptHistories(user.getId());
+        List<PromptHistoryRespDto> histories = promptService.getPromptHistories();
         PromptHistoryRespDto found = histories.stream()
                 .filter(h -> "PERSON".equals(h.getPromptType()))
                 .findFirst()

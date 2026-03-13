@@ -76,16 +76,14 @@ public class PromptController {
 
     @Operation(
             summary = "프롬프트 히스토리 조회",
-            description = "요청 사용자의 권한에 따라 히스토리 범위가 다르다. " +
-                          "USER → 같은 팀 히스토리만, MANAGER/ADMIN → 전체.",
+            description = "Role 구분 없이 전체 히스토리를 조회한다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PreAuthorize("hasRole('USER')")
     @GetMapping
-    public CommonResponse<List<PromptHistoryRespDto>> getPromptHistories(
-            @AuthenticationPrincipal CustomUserDetails userDetails) {
-        return CommonResponse.success(promptService.getPromptHistories(userDetails.getId()));
+    public CommonResponse<List<PromptHistoryRespDto>> getPromptHistories() {
+        return CommonResponse.success(promptService.getPromptHistories());
     }
 }
