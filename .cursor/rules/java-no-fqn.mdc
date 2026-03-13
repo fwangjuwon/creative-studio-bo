@@ -1,0 +1,44 @@
+---
+description: Java 코드에서 FQN(전체 패키지 경로) 대신 import 문 사용 강제
+globs: **/*.java
+alwaysApply: false
+---
+
+# Java FQN 사용 금지 — import 문으로 대체
+
+AI가 Java 코드를 생성할 때 메서드 바디나 필드 선언 내에 FQN(Fully Qualified Name)을 직접 사용하지 않는다.
+반드시 파일 상단 import 블록에 선언하고 짧은 클래스명만 사용한다.
+
+## ❌ 금지
+
+```java
+// 메서드 바디 내 FQN 직접 사용
+java.util.stream.IntStream.range(0, 3)
+java.util.concurrent.CompletableFuture.supplyAsync(task)
+java.util.concurrent.CompletableFuture::join
+} catch (java.io.IOException e) {
+throw new com.example.project.domain.SomeErrorCode.SOME_ERROR;
+```
+
+## ✅ 사용
+
+```java
+// import 블록에 선언
+import java.io.IOException;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
+import com.example.project.domain.SomeErrorCode;
+
+// 메서드 바디에서는 짧은 이름만 사용
+IntStream.range(0, 3)
+CompletableFuture.supplyAsync(task)
+CompletableFuture::join
+} catch (IOException e) {
+throw new BizException(SomeErrorCode.SOME_ERROR);
+```
+
+## 예외
+
+- `@SuppressWarnings` 같은 어노테이션 문자열 내부
+- Javadoc `{@link com.example.Foo}` 링크
+- 위 두 경우 외에는 예외 없음
