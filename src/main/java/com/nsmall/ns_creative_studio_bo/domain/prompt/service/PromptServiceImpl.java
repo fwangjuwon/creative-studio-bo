@@ -193,6 +193,9 @@ public class PromptServiceImpl implements PromptService {
             try {
                 byte[] imageBytes = referenceImage.getBytes();
                 String mimeType = referenceImage.getContentType();
+                if (mimeType == null) {
+                    throw new BizException(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE);
+                }
                 imageUrls = IntStream.range(0, 3)
                         .mapToObj(i -> CompletableFuture.supplyAsync(
                                 () -> imageGenerationService.generateImageMime(promptText, imageBytes, mimeType)))
