@@ -23,7 +23,7 @@ CREATE TABLE "user" (
     name            VARCHAR(100)    NOT NULL,
     role            VARCHAR(20)     NOT NULL,           -- ADMIN / MANAGER / USER
     team_name       VARCHAR(100),
-    daily_limit     INT             NOT NULL DEFAULT 10,
+    daily_limit     INT             NOT NULL DEFAULT 3,
     init_regi_pic   VARCHAR(50),
     init_regi_dttm  TIMESTAMP,
     final_rvis_pic  VARCHAR(50),
