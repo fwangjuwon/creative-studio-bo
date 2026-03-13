@@ -11,7 +11,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +29,7 @@ import java.util.List;
  * @since 2026-02-27
  */
 @Tag(name = "Prompt", description = "프롬프트 생성 및 히스토리 조회 API")
+@Validated
 @RestController
 @RequestMapping("/api/prompts")
 @RequiredArgsConstructor
@@ -59,13 +62,13 @@ public class PromptController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "이미지 생성 성공")
-    @ApiResponse(responseCode = "400", description = "promptText 누락")
+    @ApiResponse(responseCode = "400", description = "promptText 누락 또는 빈 문자열")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PreAuthorize("hasRole('USER')")
     @PostMapping(value = "/goods/generate-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public CommonResponse<ImageGenerateRespDto> generateGoodsImage(
             @RequestParam(required = false) Long historyId,
-            @RequestParam String promptText,
+            @NotBlank @RequestParam String promptText,
             @RequestParam(required = false) MultipartFile referenceImage) {
         List<String> imageUrls = promptService.generateGoodsImage(historyId, promptText, referenceImage);
         return CommonResponse.success(ImageGenerateRespDto.builder().imageUrls(imageUrls).build());
