@@ -62,7 +62,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
 
     @Override
     public String generateImageMime(String prompt, byte[] imageBytes, String mimeType) {
-        log.debug("NanaBanana 이미지 생성 호출 (참조 이미지 포함) — model: {}", geminiProperties.getImageModel());
+        log.debug("NanoBanana 이미지 생성 호출 (참조 이미지 포함) — model: {}", geminiProperties.getImageModel());
 
         String base64Image = Base64.getEncoder().encodeToString(imageBytes);
 

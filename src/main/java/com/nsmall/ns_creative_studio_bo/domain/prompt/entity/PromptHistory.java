@@ -36,7 +36,7 @@ public class PromptHistory {
     private String promptStyle;      // 'NANO_BANANA' | 'MID_JOURNEY'
     private String promptText;
 
-    private String imageUrl;         // NanaBanana 이미지 URL (없으면 null)
+    private String imageUrl;         // NanoBanana 이미지 URL (없으면 null)
     private String purpose;          // 생성 목적 (선택, 상품·인물 공통)
     private String additionalNotes;  // 추가 지시 사항 (선택, 상품·인물 공통)
     private String initRegiPic;
