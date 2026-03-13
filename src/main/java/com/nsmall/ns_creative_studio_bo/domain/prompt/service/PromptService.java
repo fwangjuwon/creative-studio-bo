@@ -11,9 +11,7 @@ import java.util.List;
  *
  * <pre>
  * 프롬프트 생성, 일일 한도 체크, 히스토리 조회를 담당한다.
- * 히스토리 조회는 요청 사용자의 권한에 따라 범위가 달라진다:
- *   - USER  → 같은 팀(team_name) 유저들의 히스토리만 조회
- *   - MANAGER / ADMIN → 전체 히스토리 조회
+ * 히스토리 조회는 Role 구분 없이 전체 이력을 반환한다.
  * </pre>
  *
  * @author jjhoo8936
@@ -31,12 +29,11 @@ public interface PromptService {
     PromptHistoryRespDto createGoodsPrompt(Long currentUserId, GoodsPromptCreateReqDto dto);
 
     /**
-     * 요청 사용자의 권한에 따라 프롬프트 히스토리 목록을 조회한다.
+     * 프롬프트 히스토리 전체 목록을 조회한다. Role 구분 없이 동일한 결과를 반환한다.
      *
-     * @param requestUserId 요청한 사용자 ID
      * @return 프롬프트 히스토리 응답 DTO 목록
      */
-    List<PromptHistoryRespDto> getPromptHistories(Long requestUserId);
+    List<PromptHistoryRespDto> getPromptHistories();
 
     /**
      * NanoBanana 이미지를 3개 병렬 생성하고 URL 목록을 이력에 저장한다.

@@ -151,23 +151,8 @@ public class PromptServiceImpl implements PromptService {
     }
 
     @Override
-    public List<PromptHistoryRespDto> getPromptHistories(Long requestUserId) {
-        User user = userMapper.selectById(requestUserId)
-                .orElseThrow(() -> new BizException(PromptErrorCode.USER_NOT_FOUND,
-                        "사용자를 찾을 수 없습니다. userId=" + requestUserId));
-
-        // USER 권한: 같은 팀의 히스토리만, MANAGER/ADMIN: 전체
-        // USER인데 팀 미배정(teamName == null)이면 빈 목록 반환
-        String teamName = null;
-        if ("USER".equals(user.getRole())) {
-            if (user.getTeamName() == null) {
-                log.warn("팀 미배정 USER의 히스토리 조회 요청 — userId={}", requestUserId);
-                return List.of();
-            }
-            teamName = user.getTeamName();
-        }
-
-        List<PromptHistory> histories = promptHistoryMapper.selectList(teamName);
+    public List<PromptHistoryRespDto> getPromptHistories() {
+        List<PromptHistory> histories = promptHistoryMapper.selectList();
 
         return histories.stream()
                 .map(history -> {

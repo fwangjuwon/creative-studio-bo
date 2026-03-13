@@ -92,7 +92,7 @@ ADMIN > MANAGER > USER
 |------|---------|
 | `ADMIN` | 모든 기능 풀 접근, 유저 생성/관리, daily_limit 설정 |
 | `MANAGER` | USER 권한 + 카테고리·태그·인물프롬프트(Step/Attr/Option) CUD |
-| `USER` | 프롬프트 생성(하루 N회), 같은 팀 프롬프트 조회 |
+| `USER` | 프롬프트 생성(하루 N회), 전체 프롬프트 조회 |
 
 - 회원가입 없음. ADMIN이 API를 통해 직접 계정 생성
 - 팀 개념: `User.team_name` VARCHAR 컬럼으로 관리 (별도 Team 테이블 없음)

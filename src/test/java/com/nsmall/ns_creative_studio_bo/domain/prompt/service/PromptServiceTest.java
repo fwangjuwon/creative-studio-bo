@@ -384,85 +384,32 @@ public class PromptServiceTest {
     @Test
     @Transactional
     @Rollback
-    @DisplayName("[성공] 히스토리 조회 - USER: 같은 팀만 조회")
-    void 성공_히스토리_조회_USER_같은팀만() {
-        UserRespDto userA1 = 유저_생성("hist_a1", "USER", "팀Alpha", 10);
-        UserRespDto userA2 = 유저_생성("hist_a2", "USER", "팀Alpha", 10);
-        UserRespDto userB  = 유저_생성("hist_b1", "USER", "팀Beta",  10);
-        CategoryRespDto dcs = DCS_카테고리_생성("히스토리팀조회");
+    @DisplayName("[성공] 히스토리 조회 - ADMIN/MANAGER/USER 모두 동일한 전체 결과 반환")
+    void 성공_히스토리_조회_전체_권한별_동일결과() {
+        UserRespDto admin   = 유저_생성("hist_role_adm", "ADMIN",   "관리팀", 10);
+        UserRespDto manager = 유저_생성("hist_role_mgr", "MANAGER", "운영팀", 10);
+        UserRespDto user    = 유저_생성("hist_role_usr", "USER",    "팀A",   10);
+        CategoryRespDto dcs = DCS_카테고리_생성("권한별동일결과");
 
-        히스토리_직접_삽입(userA1.getId(), dcs.getId());
-        히스토리_직접_삽입(userA2.getId(), dcs.getId());
-        히스토리_직접_삽입(userB.getId(),  dcs.getId());
+        히스토리_직접_삽입(admin.getId(),   dcs.getId());
+        히스토리_직접_삽입(manager.getId(), dcs.getId());
+        히스토리_직접_삽입(user.getId(),    dcs.getId());
 
-        List<PromptHistoryRespDto> result = promptService.getPromptHistories(userA1.getId());
+        List<Long> result1 = promptService.getPromptHistories().stream()
+                .map(PromptHistoryRespDto::getId).toList();
+        List<Long> result2 = promptService.getPromptHistories().stream()
+                .map(PromptHistoryRespDto::getId).toList();
+        List<Long> result3 = promptService.getPromptHistories().stream()
+                .map(PromptHistoryRespDto::getId).toList();
 
-        assertThat(result).isNotEmpty();
-        List<Long> userIds = result.stream().map(PromptHistoryRespDto::getUserId).toList();
-        assertThat(userIds).doesNotContain(userB.getId());
-        assertThat(userIds).contains(userA1.getId(), userA2.getId());
-    }
+        // 세 번 호출해도 항상 동일한 결과 — Role 기반 필터가 존재하지 않음을 증명
+        assertThat(result1).containsExactlyInAnyOrderElementsOf(result2);
+        assertThat(result1).containsExactlyInAnyOrderElementsOf(result3);
 
-    @Test
-    @Transactional
-    @Rollback
-    @DisplayName("[성공] 히스토리 조회 - MANAGER: 전체 조회")
-    void 성공_히스토리_조회_MANAGER_전체() {
-        UserRespDto manager = 유저_생성("hist_mgr",   "MANAGER", "관리팀", 10);
-        UserRespDto userA   = 유저_생성("hist_ua",    "USER",    "팀A",   10);
-        UserRespDto userB   = 유저_생성("hist_ub",    "USER",    "팀B",   10);
-        CategoryRespDto dcs = DCS_카테고리_생성("MANAGER전체조회");
-
-        히스토리_직접_삽입(userA.getId(), dcs.getId());
-        히스토리_직접_삽입(userB.getId(), dcs.getId());
-
-        List<PromptHistoryRespDto> result = promptService.getPromptHistories(manager.getId());
-
-        List<Long> userIds = result.stream().map(PromptHistoryRespDto::getUserId).toList();
-        assertThat(userIds).contains(userA.getId(), userB.getId());
-    }
-
-    @Test
-    @Transactional
-    @Rollback
-    @DisplayName("[성공] 히스토리 조회 - ADMIN: 전체 조회")
-    void 성공_히스토리_조회_ADMIN_전체() {
-        UserRespDto admin   = 유저_생성("hist_adm",   "ADMIN",   "관리팀", 10);
-        UserRespDto userA   = 유저_생성("hist_ua2",   "USER",    "팀A",   10);
-        UserRespDto userB   = 유저_생성("hist_ub2",   "USER",    "팀B",   10);
-        CategoryRespDto dcs = DCS_카테고리_생성("ADMIN전체조회");
-
-        히스토리_직접_삽입(userA.getId(), dcs.getId());
-        히스토리_직접_삽입(userB.getId(), dcs.getId());
-
-        List<PromptHistoryRespDto> result = promptService.getPromptHistories(admin.getId());
-
-        List<Long> userIds = result.stream().map(PromptHistoryRespDto::getUserId).toList();
-        assertThat(userIds).contains(userA.getId(), userB.getId());
-    }
-
-    @Test
-    @DisplayName("[예외] 히스토리 조회 - 존재하지 않는 사용자")
-    void 예외_히스토리_조회_사용자_미존재() {
-        assertThatThrownBy(() -> promptService.getPromptHistories(Long.MAX_VALUE))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(PromptErrorCode.USER_NOT_FOUND));
-    }
-
-    @Test
-    @Transactional
-    @Rollback
-    @DisplayName("[성공] 히스토리 조회 - USER 팀 미배정: 빈 목록 반환")
-    void 성공_히스토리_조회_USER_팀_미배정_빈목록() {
-        UserRespDto userNoTeam = 유저_생성("hist_no_team", "USER", null, 10);
-        CategoryRespDto dcs = DCS_카테고리_생성("팀미배정조회");
-
-        히스토리_직접_삽입(userNoTeam.getId(), dcs.getId());
-
-        List<PromptHistoryRespDto> result = promptService.getPromptHistories(userNoTeam.getId());
-
-        assertThat(result).isEmpty();
+        // 세 Role의 히스토리가 모두 포함되어 있는지 검증
+        List<Long> histUserIds = promptService.getPromptHistories().stream()
+                .map(PromptHistoryRespDto::getUserId).toList();
+        assertThat(histUserIds).contains(admin.getId(), manager.getId(), user.getId());
     }
 
     // ================================================================
@@ -497,7 +444,7 @@ public class PromptServiceTest {
 
         promptService.createGoodsPrompt(user.getId(), dto);
 
-        List<PromptHistoryRespDto> histories = promptService.getPromptHistories(user.getId());
+        List<PromptHistoryRespDto> histories = promptService.getPromptHistories();
         PromptHistoryRespDto found = histories.stream()
                 .filter(h -> "PRODUCT".equals(h.getPromptType()))
                 .findFirst()
