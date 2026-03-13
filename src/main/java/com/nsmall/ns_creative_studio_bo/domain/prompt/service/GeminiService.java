@@ -21,6 +21,8 @@ public interface GeminiService {
      *
      * @param goodsCategoryName 선택한 상품 카테고리명 (LCS→DCS 전체 경로)
      * @param tagNames          선택한 태그명 목록
+     * @param purpose           생성 목적 (nullable)
+     * @param additionalNotes   추가 지시 사항 (nullable)
      * @return Gemini가 생성한 영문 프롬프트 텍스트
      */
     String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames,
