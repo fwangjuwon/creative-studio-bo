@@ -4,6 +4,7 @@ import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserUsageRespDto;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,4 +29,15 @@ public interface UserService {
     UserRespDto updateUser(Long id, UserUpdateReqDto dto);
 
     void deleteUser(Long id);
+
+    /**
+     * 사용자 일일 사용량 조회 — 본인 및 ADMIN의 특정 유저 조회 모두 이 메서드 사용
+     */
+    UserUsageRespDto getUserUsage(Long userId);
+
+    /**
+     * 전체 회원의 금일 사용량 목록 조회 — ADMIN 전용
+     * DB JOIN 단일 쿼리로 처리 (N+1 없음)
+     */
+    List<UserUsageRespDto> getUserUsageList();
 }

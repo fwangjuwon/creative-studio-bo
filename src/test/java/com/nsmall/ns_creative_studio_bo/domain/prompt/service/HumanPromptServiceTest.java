@@ -15,7 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +27,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
 
 /**
@@ -56,10 +57,10 @@ public class HumanPromptServiceTest {
     @Autowired
     private UserService userService;
 
-    @MockBean
+    @MockitoBean
     private GeminiService geminiService;
 
-    @MockBean
+    @MockitoBean
     private ImageGenerationService imageGenerationService;
 
     private static final String MOCK_PROMPT = "A photorealistic portrait of a young Korean woman, soft natural daylight, blurred background.";
@@ -80,15 +81,22 @@ public class HumanPromptServiceTest {
     }
 
     /**
-     * data.sql 시드 데이터에서 첫 번째 step의 첫 번째 option ID를 동적으로 조회하여
-     * 최소 1개 선택지가 담긴 selections 맵을 구성한다.
+     * data.sql 시드 데이터에서 is_required=true인 모든 attr에 대해
+     * 각 attr의 첫 번째 option ID를 선택하여 selections 맵을 구성한다.
+     * HumanPromptServiceImpl의 필수 attr 검증(Step 3)을 통과하기 위한 최소 구성.
      */
     private Map<Long, List<Long>> 최소_선택지_구성() {
         List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
-        HumanPromptStepRespDto.AttrDto firstAttr = steps.get(0).getAttrs().get(0);
-        Long attrId = firstAttr.getId();
-        Long optionId = firstAttr.getOptions().get(0).getId();
-        return Map.of(attrId, List.of(optionId));
+        Map<Long, List<Long>> selections = new java.util.HashMap<>();
+        for (HumanPromptStepRespDto step : steps) {
+            for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
+                if (attr.isRequired()) {
+                    Long optionId = attr.getOptions().get(0).getId();
+                    selections.put(attr.getId(), List.of(optionId));
+                }
+            }
+        }
+        return selections;
     }
 
     private PromptHistory PERSON_히스토리_직접_삽입(Long userId) {
@@ -374,17 +382,19 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 이미지 생성 - 이미지URL과 최종수정자 이력에 업데이트됨")
     void 성공_이미지_생성_이미지URL_최종수정자_업데이트() {
-        given(imageGenerationService.generateImage(any())).willReturn("/images/test-uuid.jpg");
+        given(imageGenerationService.generateImages(any(), anyInt()))
+                .willReturn(List.of("/images/test-uuid-1.jpg", "/images/test-uuid-2.jpg", "/images/test-uuid-3.jpg"));
 
         UserRespDto user = 유저_생성("img_gen_user", "USER", "팀E", 5);
         PromptHistory history = PERSON_히스토리_직접_삽입(user.getId());
 
-        String imageUrl = humanPromptService.generateImage(history.getId(), MOCK_PROMPT);
+        List<String> imageUrls = humanPromptService.generateImage(history.getId(), MOCK_PROMPT);
 
-        assertThat(imageUrl).isEqualTo("/images/test-uuid.jpg");
+        assertThat(imageUrls).hasSize(3);
+        assertThat(imageUrls).contains("/images/test-uuid-1.jpg");
 
         PromptHistory updated = promptHistoryMapper.selectById(history.getId()).orElseThrow();
-        assertThat(updated.getImageUrl()).isEqualTo("/images/test-uuid.jpg");
+        assertThat(updated.getImageUrl()).contains("test-uuid-1"); // JSON 배열로 저장됨
         assertThat(updated.getFinalRvisPic()).isEqualTo("system"); // 테스트 환경 SecurityUtil 반환값
         assertThat(updated.getFinalRvisDttm()).isNotNull();
     }
@@ -394,14 +404,15 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 이미지 생성 - 이력ID 없으면 이력 미업데이트")
     void 성공_이미지_생성_이력ID_없으면_이력_미업데이트() {
-        given(imageGenerationService.generateImage(any())).willReturn("/images/test-uuid.jpg");
+        given(imageGenerationService.generateImages(any(), anyInt()))
+                .willReturn(List.of("/images/test-uuid-1.jpg", "/images/test-uuid-2.jpg", "/images/test-uuid-3.jpg"));
 
         UserRespDto user = 유저_생성("img_gen_nohistory", "USER", "팀F", 5);
         PromptHistory history = PERSON_히스토리_직접_삽입(user.getId());
 
-        String imageUrl = humanPromptService.generateImage(null, MOCK_PROMPT);
+        List<String> imageUrls = humanPromptService.generateImage(null, MOCK_PROMPT);
 
-        assertThat(imageUrl).isEqualTo("/images/test-uuid.jpg");
+        assertThat(imageUrls).hasSize(3);
 
         // historyId가 null이므로 이력의 imageUrl은 그대로 null
         PromptHistory unchanged = promptHistoryMapper.selectById(history.getId()).orElseThrow();
