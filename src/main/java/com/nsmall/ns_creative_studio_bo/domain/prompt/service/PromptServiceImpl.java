@@ -7,6 +7,7 @@ import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
 import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
@@ -25,8 +26,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 /**
  * Prompt 서비스 구현체
@@ -189,16 +193,16 @@ public class PromptServiceImpl implements PromptService {
             try {
                 byte[] imageBytes = referenceImage.getBytes();
                 String mimeType = referenceImage.getContentType();
-                imageUrls = java.util.stream.IntStream.range(0, 3)
-                        .mapToObj(i -> java.util.concurrent.CompletableFuture.supplyAsync(
+                imageUrls = IntStream.range(0, 3)
+                        .mapToObj(i -> CompletableFuture.supplyAsync(
                                 () -> imageGenerationService.generateImageMime(promptText, imageBytes, mimeType)))
                         .toList()
                         .stream()
-                        .map(java.util.concurrent.CompletableFuture::join)
+                        .map(CompletableFuture::join)
                         .toList();
-            } catch (java.io.IOException e) {
+            } catch (IOException e) {
                 log.error("참조 이미지 읽기 실패", e);
-                throw new BizException(com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
+                throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
             }
         } else {
             imageUrls = imageGenerationService.generateImages(promptText, 3);
