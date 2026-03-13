@@ -52,6 +52,8 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class PromptServiceImpl implements PromptService {
 
+    private static final int IMAGE_GENERATE_COUNT = 3;
+
     private final PromptHistoryMapper promptHistoryMapper;
     private final GoodsPromptHistoryTagMapper goodsPromptHistoryTagMapper;
     private final HumanPromptHistoryOptionMapper humanPromptHistoryOptionMapper;
@@ -187,7 +189,7 @@ public class PromptServiceImpl implements PromptService {
     @Override
     @Transactional
     public List<String> generateGoodsImage(Long historyId, String promptText, MultipartFile referenceImage) {
-        // 1. 이미지 3개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        // 1. 이미지 IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
         List<String> imageUrls;
         if (referenceImage != null && !referenceImage.isEmpty()) {
             try {
@@ -196,7 +198,7 @@ public class PromptServiceImpl implements PromptService {
                 if (mimeType == null) {
                     throw new BizException(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE);
                 }
-                imageUrls = IntStream.range(0, 3)
+                imageUrls = IntStream.range(0, IMAGE_GENERATE_COUNT)
                         .mapToObj(i -> CompletableFuture.supplyAsync(
                                 () -> imageGenerationService.generateImageMime(promptText, imageBytes, mimeType)))
                         .toList()
@@ -208,7 +210,7 @@ public class PromptServiceImpl implements PromptService {
                 throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
             }
         } else {
-            imageUrls = imageGenerationService.generateImages(promptText, 3);
+            imageUrls = imageGenerationService.generateImages(promptText, IMAGE_GENERATE_COUNT);
         }
 
         // 2. 이력에 JSON 배열로 저장 (image_url 컬럼에 "[url1,url2,url3]" 형태)
