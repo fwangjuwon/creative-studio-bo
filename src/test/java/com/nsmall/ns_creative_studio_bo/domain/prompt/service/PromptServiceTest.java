@@ -1,6 +1,8 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.common.page.PageReqDto;
+import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRespDto;
@@ -395,11 +397,13 @@ public class PromptServiceTest {
         히스토리_직접_삽입(manager.getId(), dcs.getId());
         히스토리_직접_삽입(user.getId(),    dcs.getId());
 
-        List<Long> result1 = promptService.getPromptHistories().stream()
+        PageReqDto pageReqDto = new PageReqDto(1, 100);
+
+        List<Long> result1 = promptService.getPromptHistories(pageReqDto).items().stream()
                 .map(PromptHistoryRespDto::getId).toList();
-        List<Long> result2 = promptService.getPromptHistories().stream()
+        List<Long> result2 = promptService.getPromptHistories(pageReqDto).items().stream()
                 .map(PromptHistoryRespDto::getId).toList();
-        List<Long> result3 = promptService.getPromptHistories().stream()
+        List<Long> result3 = promptService.getPromptHistories(pageReqDto).items().stream()
                 .map(PromptHistoryRespDto::getId).toList();
 
         // 세 번 호출해도 항상 동일한 결과 — Role 기반 필터가 존재하지 않음을 증명
@@ -407,7 +411,7 @@ public class PromptServiceTest {
         assertThat(result1).containsExactlyInAnyOrderElementsOf(result3);
 
         // 세 Role의 히스토리가 모두 포함되어 있는지 검증
-        List<Long> histUserIds = promptService.getPromptHistories().stream()
+        List<Long> histUserIds = promptService.getPromptHistories(pageReqDto).items().stream()
                 .map(PromptHistoryRespDto::getUserId).toList();
         assertThat(histUserIds).contains(admin.getId(), manager.getId(), user.getId());
     }
@@ -444,8 +448,8 @@ public class PromptServiceTest {
 
         promptService.createGoodsPrompt(user.getId(), dto);
 
-        List<PromptHistoryRespDto> histories = promptService.getPromptHistories();
-        PromptHistoryRespDto found = histories.stream()
+        PageRespDto<PromptHistoryRespDto> page = promptService.getPromptHistories(new PageReqDto(1, 100));
+        PromptHistoryRespDto found = page.items().stream()
                 .filter(h -> "PRODUCT".equals(h.getPromptType()))
                 .findFirst()
                 .orElseThrow();
@@ -453,5 +457,69 @@ public class PromptServiceTest {
         assertThat(found.getCategoryPath()).isEqualTo("의류 > 상의 > 티셔츠 > 반팔");
         assertThat(found.getTagNames()).containsExactly("야외");
         assertThat(found.getPromptStyle()).isEqualTo("MID_JOURNEY");
+    }
+
+    // ================================================================
+    // 히스토리 조회 — 페이징
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 페이징 - 첫 페이지 메타정보 검증")
+    void 성공_히스토리_조회_페이징_첫페이지_메타정보() {
+        UserRespDto user = 유저_생성("paging_meta_user", "USER", "팀P", 10);
+        CategoryRespDto dcs = DCS_카테고리_생성("페이징메타");
+
+        히스토리_직접_삽입(user.getId(), dcs.getId());
+        히스토리_직접_삽입(user.getId(), dcs.getId());
+        히스토리_직접_삽입(user.getId(), dcs.getId());
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(new PageReqDto(1, 10));
+
+        assertThat(result).isNotNull();
+        assertThat(result.pageNum()).isEqualTo(1);
+        assertThat(result.pageSize()).isEqualTo(10);
+        assertThat(result.total()).isGreaterThanOrEqualTo(3L);
+        assertThat(result.hasPreviousPage()).isFalse();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 페이징 - pageSize 제한 적용 확인")
+    void 성공_히스토리_조회_페이징_pageSize_제한() {
+        UserRespDto user = 유저_생성("paging_limit_user", "USER", "팀Q", 10);
+        CategoryRespDto dcs = DCS_카테고리_생성("페이징제한");
+
+        히스토리_직접_삽입(user.getId(), dcs.getId());
+        히스토리_직접_삽입(user.getId(), dcs.getId());
+        히스토리_직접_삽입(user.getId(), dcs.getId());
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(new PageReqDto(1, 1));
+
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.total()).isGreaterThanOrEqualTo(3L);
+        assertThat(result.hasNextPage()).isTrue();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 페이징 - 빈 결과")
+    void 성공_히스토리_조회_페이징_빈결과() {
+        UserRespDto user = 유저_생성("paging_empty_user", "USER", "팀R", 10);
+        CategoryRespDto dcs = DCS_카테고리_생성("페이징빈결과");
+
+        히스토리_직접_삽입(user.getId(), dcs.getId());
+        히스토리_직접_삽입(user.getId(), dcs.getId());
+
+        // 전체 2건이므로 pageSize=2, pageNum=2 → 2페이지는 항상 빈 결과
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(new PageReqDto(2, 1000));
+
+        assertThat(result).isNotNull();
+        assertThat(result.items()).isEmpty();
+        assertThat(result.hasPreviousPage()).isTrue();
+        assertThat(result.hasNextPage()).isFalse();
     }
 }

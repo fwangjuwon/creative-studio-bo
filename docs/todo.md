@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ refactor/prompt-history-remove-team-filter 완료
-> 최종 업데이트: 2026-03-13 (refactor/prompt-history-remove-team-filter — 프롬프트 이력 조회 팀 필터 제거, 전체 조회로 단순화)
+> 상태: ✅ feat/paging-prompt-history 완료
+> 최종 업데이트: 2026-03-16 (feat/paging-prompt-history — 프롬프트 히스토리 조회 PageHelper 페이징 적용)
 
 ---
 
@@ -12,6 +12,36 @@
 ---
 
 ## 완료
+
+### feat/paging-prompt-history. 프롬프트 히스토리 조회 페이징 적용
+
+> `GET /api/prompts` 히스토리 조회에 PageHelper 기반 페이징 도입.
+> 공통 페이징 모듈(`PageReqDto`, `PageRespDto`, `PageHelperUtil`)을 `common/page/`에 신규 생성.
+> `pageNum`(기본 1) / `pageSize`(기본 10) 쿼리 파라미터로 제어.
+
+#### 의존성
+- [x] `build.gradle` — `pagehelper-spring-boot-starter:2.1.0` 추가
+
+#### 공통 모듈 (`common/page/`)
+- [x] `PageReqDto` — 페이징 요청 DTO (`pageNum`, `pageSize`, 유효성 검증 포함)
+- [x] `PageRespDto` — 페이징 응답 DTO (`record`, `of` / `ofWithItems` 팩토리)
+  - `ofWithItems` — 쿼리 결과와 응답 타입이 다를 때(추가 조회 후 변환) 메타정보 보존용
+- [x] `PageHelperUtil` — `pagedQuery` / `pagedResponse` 정적 유틸 (try-with-resources로 ThreadLocal 안전 처리)
+
+#### Service / Controller
+- [x] `PromptService` — `getPromptHistories()` → `getPromptHistories(PageReqDto)` 시그니처 변경
+- [x] `PromptServiceImpl` — `pagedQuery` + `ofWithItems` 로 구현 변경
+- [x] `PromptController` — `@ModelAttribute @Valid PageReqDto` 추가, 반환 타입 `PageRespDto<PromptHistoryRespDto>`
+
+#### 테스트
+- [x] `PromptServiceTest` — 기존 `getPromptHistories()` 호출 4곳 수정 (`.items()` 접근으로 변경)
+- [x] `PromptServiceTest` — 페이징 신규 케이스 3개 추가
+  - `[성공] 히스토리 조회 페이징 - 첫 페이지 메타정보 검증`
+  - `[성공] 히스토리 조회 페이징 - pageSize 제한 적용 확인`
+  - `[성공] 히스토리 조회 페이징 - 빈 결과`
+- [x] `HumanPromptServiceTest` — `getPromptHistories()` 호출 1곳 수정
+
+---
 
 ### refactor/prompt-history-remove-team-filter. 프롬프트 이력 조회 팀 필터 제거
 
