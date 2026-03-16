@@ -2,7 +2,11 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.pagehelper.PageInfo;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.common.page.PageHelperUtil;
+import com.nsmall.ns_creative_studio_bo.common.page.PageReqDto;
+import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
@@ -151,10 +155,10 @@ public class PromptServiceImpl implements PromptService {
     }
 
     @Override
-    public List<PromptHistoryRespDto> getPromptHistories() {
-        List<PromptHistory> histories = promptHistoryMapper.selectList();
+    public PageRespDto<PromptHistoryRespDto> getPromptHistories(PageReqDto pageReqDto) {
+        PageInfo<PromptHistory> pageInfo = PageHelperUtil.pagedQuery(pageReqDto, promptHistoryMapper::selectList);
 
-        return histories.stream()
+        List<PromptHistoryRespDto> items = pageInfo.getList().stream()
                 .map(history -> {
                     if ("PRODUCT".equals(history.getPromptType())) {
                         String categoryPath = history.getCategoryId() != null
@@ -169,6 +173,8 @@ public class PromptServiceImpl implements PromptService {
                     }
                 })
                 .toList();
+
+        return PageRespDto.ofWithItems(pageInfo, items);
     }
 
     @Override

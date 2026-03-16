@@ -293,7 +293,7 @@ PromptHistoryTag (프롬프트-태그 매핑)
 | 응답 형식 | JSON |
 | 인증 방식 | JWT Bearer Token |
 | **API URL prefix** | `/api/{domain}` (예: `/api/users`, `/api/categories`, `/api/prompts`) |
-| **페이지네이션** | PoC 단계에서는 전체 리스트 한 번에 반환. 추후 필요 시 PageHelper 적용 예정 |
+| **페이지네이션** | `GET /api/prompts` 히스토리 조회에 PageHelper 적용 완료. `pageNum`(기본 1) / `pageSize`(기본 10) 쿼리 파라미터로 제어. 공통 모듈: `common/page/` (`PageReqDto`, `PageRespDto`, `PageHelperUtil`) |
 | **공통 응답 래퍼** | `CommonResponse<T>(int code, String message, T data)` — `code`는 HTTP 상태코드 |
 
 ---

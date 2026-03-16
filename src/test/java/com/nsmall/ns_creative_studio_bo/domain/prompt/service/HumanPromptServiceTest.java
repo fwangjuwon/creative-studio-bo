@@ -1,6 +1,8 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.common.page.PageReqDto;
+import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
@@ -361,8 +363,8 @@ public class HumanPromptServiceTest {
 
         humanPromptService.createPrompt(user.getId(), dto);
 
-        List<PromptHistoryRespDto> histories = promptService.getPromptHistories();
-        PromptHistoryRespDto found = histories.stream()
+        PageRespDto<PromptHistoryRespDto> page = promptService.getPromptHistories(new PageReqDto(1, 100));
+        PromptHistoryRespDto found = page.items().stream()
                 .filter(h -> "PERSON".equals(h.getPromptType()))
                 .findFirst()
                 .orElseThrow();

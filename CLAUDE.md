@@ -136,7 +136,7 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 | Controller 반환 타입 | `CommonResponse<T>` 직접 반환 — `ResponseEntity` 사용 금지 |
 | 성공 HTTP 상태 | **무조건 200** — CUD/READ 구분 없음, 201/204 사용 금지 |
 | 조회 결과 없음 | 200 + `data: null` — 404 사용 안 함 (내부 API 개발 편의성) |
-| 페이지네이션 | PoC 단계 없음, 추후 PageHelper 적용 예정 |
+| 페이지네이션 | `GET /api/prompts` PageHelper 적용 완료. `pageNum`(기본 1) / `pageSize`(기본 10). 공통 모듈: `common/page/` |
 | JWT | 완료 (Access Token 1시간, Refresh Token 없음, PoC) |
 | Gemini API Key | `.env` 파일의 `GEMINI_API_KEY` 환경변수 |
 
