@@ -6,6 +6,7 @@ import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * 페이징 요청 공통 DTO
@@ -21,6 +22,7 @@ import lombok.NoArgsConstructor;
  * @since 2026-03-16
  */
 @Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Schema(description = "페이징 요청")
