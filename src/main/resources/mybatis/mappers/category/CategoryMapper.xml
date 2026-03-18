@@ -64,7 +64,7 @@
     </select>
 
     <!--
-        DCS id → 상위 계층을 재귀적으로 탐색하여 LCS→MCS→SCS→DCS 이름 목록 반환
+        SCS id → 상위 계층을 재귀적으로 탐색하여 LCS→MCS→SCS 이름 목록 반환
         depth 기준 내림차순 정렬로 LCS(depth 최대)가 먼저 오도록 함
     -->
     <select id="selectCategoryPath" resultType="String">

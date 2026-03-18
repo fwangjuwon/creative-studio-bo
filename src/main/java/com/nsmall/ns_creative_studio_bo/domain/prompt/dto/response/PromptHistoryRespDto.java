@@ -50,7 +50,7 @@ public class PromptHistoryRespDto {
 
     // 상품 프롬프트 전용
     private Long categoryId;
-    private String categoryPath;     // "식품 > 건강식품 > 약재 > 인삼"
+    private String categoryPath;     // "식품 > 건강식품 > 인삼"
     private List<Long> tagIds;
     private List<String> tagNames;
 
@@ -90,7 +90,7 @@ public class PromptHistoryRespDto {
     /**
      * 상품 프롬프트 이력 응답 생성.
      *
-     * @param categoryPath "식품 > 건강식품 > 약재 > 인삼" 형태의 카테고리 전체 경로
+     * @param categoryPath "식품 > 건강식품 > 인삼" 형태의 카테고리 전체 경로
      * @param tagNames     선택한 태그 한국어명 목록
      */
     public static PromptHistoryRespDto fromGoods(PromptHistory history,

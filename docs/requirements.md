@@ -109,7 +109,7 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
 #### 흐름
 ```
 사용자
-  → 카테고리 선택 (상품군: 대/중/소/세분류)
+  → 카테고리 선택 (상품군: 대/중/소분류)
   → 태그 선택 (이미지 스타일: 단일/복수 선택)
   → 프롬프트 생성 요청
   → Gemini API 호출
@@ -140,11 +140,11 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
 
 #### 카테고리 (상품군)
 - **목적**: 이미지로 생성할 **상품이 무엇인지** 지정
-- **구조**: 최대 4단계 계층 (대분류 > 중분류 > 소분류 > 세분류)
+- **구조**: 3단계 계층 (대분류 > 중분류 > 소분류)
 - **예시**:
   ```
-  식품 > 건강식품 > 약재 > 인삼
-  식품 > 음료 > 주스 > 오렌지주스
+  식품 > 건강식품 > 인삼
+  식품 > 음료 > 오렌지주스
   ```
 - **관리**: ADMIN, MANAGER만 CUD 가능
 - **조회**: 전체 회원 가능
@@ -155,10 +155,9 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
 1. 대분류(LCS) 전체 목록 조회
 2. 선택한 LCS의 중분류(MCS) 목록 조회 (parent_id = LCS.id)
 3. 선택한 MCS의 소분류(SCS) 목록 조회 (parent_id = MCS.id)
-4. 선택한 SCS의 세분류(DCS) 목록 조회 (parent_id = SCS.id)
-5. DCS를 최종 선택 → 프롬프트 생성 요청에 포함
+4. SCS를 최종 선택 → 프롬프트 생성 요청에 포함
 ```
-- 사용자(USER)는 DCS를 최종 선택하여 프롬프트 생성에 사용
+- 사용자(USER)는 SCS를 최종 선택하여 프롬프트 생성에 사용
 - 각 단계별로 `parent_id` 파라미터를 받는 단일 API로 구현 가능
 
 #### 태그 (이미지 스타일)
@@ -210,7 +209,7 @@ Gemini API를 통해 최적화된 영문 프롬프트를 생성하는 것이 핵
   - `init_regi_dttm` → `initRegiDttm` — 등록일시
   - `final_rvis_pic` → `finalRvisPic` — 최종수정자 (login_id 저장)
   - `final_rvis_dttm` → `finalRvisDttm` — 최종수정일시
-- **카테고리 계층**: `depth` 숫자 대신 `category_type` 으로 명시 (`LCS` / `MCS` / `SCS` / `DCS`)
+- **카테고리 계층**: `depth` 숫자 대신 `category_type` 으로 명시 (`LCS` / `MCS` / `SCS`)
 
 ---
 
@@ -233,7 +232,7 @@ User
 Category
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - name              VARCHAR
-  - category_type     VARCHAR  (LCS=대분류 / MCS=중분류 / SCS=소분류 / DCS=세분류)
+  - category_type     VARCHAR  (LCS=대분류 / MCS=중분류 / SCS=소분류)
   - parent_id         BIGINT   (self-reference, nullable → LCS는 null)
   - sort_order        INT
   - init_regi_pic     VARCHAR
@@ -264,7 +263,7 @@ Tag (태그 값)
 PromptHistory (프롬프트 저장)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - user_id           BIGINT   (논리 FK → User, 제약 없음)
-  - category_id BIGINT   (논리 FK → Category 최종 선택값 DCS, 제약 없음)
+  - category_id BIGINT   (논리 FK → Category 최종 선택값 SCS, 제약 없음)
   - prompt_text       TEXT     (생성된 영문 프롬프트)
   - init_regi_pic     VARCHAR
   - init_regi_dttm    TIMESTAMP

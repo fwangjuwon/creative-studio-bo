@@ -36,10 +36,11 @@ ADMIN > MANAGER > USER  (계층 구조, 한 유저는 하나의 Role만 가짐)
 ## 카테고리 vs 태그 — 완전히 다른 개념
 
 ### 카테고리 (상품군 — 어떤 상품을 이미지로 만들지)
-- 4단계 계층: `LCS(대분류) > MCS(중분류) > SCS(소분류) > DCS(세분류)`
+- 3단계 계층: `LCS(대분류) > MCS(중분류) > SCS(소분류)`
 - self-reference 구조 (`parent_id`, nullable → LCS는 null)
 - `category_type` 컬럼으로 계층 구분 (depth 숫자 사용 안 함)
-- ex: `식품 > 건강식품 > 약재 > 인삼`
+- SCS가 최종 선택 단계 (프롬프트 생성 시 SCS 카테고리 ID 사용)
+- ex: `식품 > 건강식품 > 인삼`
 
 ### 태그 (이미지 스타일 — 어떻게 보일지)
 - `TagGroup → Tag` 구조
@@ -52,7 +53,7 @@ ADMIN > MANAGER > USER  (계층 구조, 한 유저는 하나의 Role만 가짐)
 
 **상품 프롬프트 (Tab 1)**
 ```
-DCS 카테고리 선택 + 태그 선택
+SCS 카테고리 선택 + 태그 선택
   → Gemini API (gemini-3-flash-preview)
   → 영문 프롬프트 텍스트 반환
   → PromptHistory + GoodsPromptHistoryTag 저장
@@ -91,7 +92,7 @@ PromptHistory COUNT(user_id = ?, DATE(init_regi_dttm) = 오늘)
 | 엔티티 클래스 | 테이블명 | 설명 |
 |------------|---------|------|
 | `User` | `user` | 회원, 권한, 팀명, 일일 한도 |
-| `Category` | `category` | 상품 카테고리 계층 (LCS~DCS) |
+| `Category` | `category` | 상품 카테고리 계층 (LCS~SCS) |
 | `TagGroup` | `tag_group` | 태그 그룹 (인물, 분위기 등) |
 | `Tag` | `tag` | 태그 값 (남자, 화사한 등) |
 | `PromptHistory` | `prompt_history` | 생성된 프롬프트 저장 (상품/인물 공통) |

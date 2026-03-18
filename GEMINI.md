@@ -100,9 +100,9 @@ ADMIN > MANAGER > USER
 ### 카테고리 vs 태그 — 완전히 다른 개념
 
 **카테고리** (어떤 상품을 촬영/생성할지)
-- 4단계 계층: LCS(대) > MCS(중) > SCS(소) > DCS(세분류)
+- 3단계 계층: LCS(대) > MCS(중) > SCS(소)
 - self-reference 구조 (`parent_id`)
-- ex: `식품 > 건강식품 > 약재 > 인삼`
+- ex: `식품 > 건강식품 > 인삼`
 
 **태그** (이미지 스타일/분위기)
 - TagGroup → Tag 구조
@@ -111,13 +111,13 @@ ADMIN > MANAGER > USER
 
 ### 카테고리 조회 흐름 (단계별 드릴다운)
 ```
-LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS 최종 선택
+LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 최종 선택
 ```
-사용자는 DCS를 최종 선택하여 프롬프트 생성에 사용
+사용자는 SCS를 최종 선택하여 프롬프트 생성에 사용
 
 ### 프롬프트 생성 흐름
 ```
-카테고리(DCS) 선택 + 태그 선택 → Gemini API → 영문 프롬프트 반환 → PromptHistory 저장
+카테고리(SCS) 선택 + 태그 선택 → Gemini API → 영문 프롬프트 반환 → PromptHistory 저장
 ```
 
 ### 사용량 체크 (배치 없음)
@@ -149,7 +149,7 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 - **공통 컬럼** (DB: snake_case → Java: camelCase 자동 매핑):
   - `init_regi_pic` / `init_regi_dttm` — 등록자(login_id) / 등록일시
   - `final_rvis_pic` / `final_rvis_dttm` — 최종수정자(login_id) / 최종수정일시
-- **카테고리 계층 구분**: `category_type` 컬럼 (`LCS` / `MCS` / `SCS` / `DCS`)
+- **카테고리 계층 구분**: `category_type` 컬럼 (`LCS` / `MCS` / `SCS`)
 
 > ⚠️ `createdAt`, `updatedAt` 사용 금지. 반드시 위의 공통 컬럼 네이밍을 사용할 것.
 
@@ -160,7 +160,7 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 조회 → DCS
 | 엔티티 | 테이블명 | 설명 |
 |--------|---------|------|
 | User | `user` | 회원 정보, 권한, 팀명, 일일 한도 |
-| Category | `category` | 상품 카테고리 계층 (LCS~DCS) |
+| Category | `category` | 상품 카테고리 계층 (LCS~SCS) |
 | TagGroup | `tag_group` | 태그 묶음 (인물, 분위기 등) |
 | Tag | `tag` | 태그 값 (남자, 화사한 등) |
 | PromptHistory | `prompt_history` | 생성된 프롬프트 저장 (상품/인물 공통) |

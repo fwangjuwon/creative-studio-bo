@@ -81,17 +81,15 @@ public class CategoryServiceTest {
     @Test
     @Transactional
     @Rollback
-    @DisplayName("[성공] 카테고리 생성 - 4단계 정상 계층 (LCS→MCS→SCS→DCS)")
-    void 성공_카테고리_생성_4단계_정상계층() {
+    @DisplayName("[성공] 카테고리 생성 - 3단계 정상 계층 (LCS→MCS→SCS)")
+    void 성공_카테고리_생성_3단계_정상계층() {
         CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("부모대분류"));
         CategoryRespDto mcs = categoryService.createCategory(하위_생성_DTO("중분류", CategoryType.MCS, lcs.getId()));
         CategoryRespDto scs = categoryService.createCategory(하위_생성_DTO("소분류", CategoryType.SCS, mcs.getId()));
-        CategoryRespDto dcs = categoryService.createCategory(하위_생성_DTO("세분류", CategoryType.DCS, scs.getId()));
 
         assertThat(mcs.getCategoryType()).isEqualTo(CategoryType.MCS);
         assertThat(scs.getCategoryType()).isEqualTo(CategoryType.SCS);
-        assertThat(dcs.getCategoryType()).isEqualTo(CategoryType.DCS);
-        assertThat(dcs.getParentId()).isEqualTo(scs.getId());
+        assertThat(scs.getParentId()).isEqualTo(mcs.getId());
     }
 
     @Test
@@ -110,8 +108,8 @@ public class CategoryServiceTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = CategoryType.class, names = {"MCS", "SCS", "DCS"})
-    @DisplayName("[예외] 카테고리 생성 - MCS/SCS/DCS인데 parentId null")
+    @EnumSource(value = CategoryType.class, names = {"MCS", "SCS"})
+    @DisplayName("[예외] 카테고리 생성 - MCS/SCS인데 parentId null")
     void 예외_카테고리_생성_하위_카테고리에_parentId_없음(CategoryType categoryType) {
         CategoryCreateReqDto dto = CategoryCreateReqDto.builder()
                 .name("부모없는자식")
@@ -129,13 +127,8 @@ public class CategoryServiceTest {
     @CsvSource({
             "MCS, MCS",
             "MCS, SCS",
-            "MCS, DCS",
             "SCS, LCS",
-            "SCS, SCS",
-            "SCS, DCS",
-            "DCS, LCS",
-            "DCS, MCS",
-            "DCS, DCS"
+            "SCS, SCS"
     })
     @Transactional
     @Rollback
@@ -147,17 +140,13 @@ public class CategoryServiceTest {
         CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("계층위반_LCS"));
 
         Long wrongParentId = lcs.getId();
-        if (List.of(CategoryType.MCS, CategoryType.SCS, CategoryType.DCS).contains(wrongParentType)) {
+        if (List.of(CategoryType.MCS, CategoryType.SCS).contains(wrongParentType)) {
             CategoryRespDto mcs = categoryService.createCategory(하위_생성_DTO("계층위반_MCS", CategoryType.MCS, lcs.getId()));
             wrongParentId = mcs.getId();
         }
-        if (List.of(CategoryType.SCS, CategoryType.DCS).contains(wrongParentType)) {
+        if (CategoryType.SCS == wrongParentType) {
             CategoryRespDto scs = categoryService.createCategory(하위_생성_DTO("계층위반_SCS", CategoryType.SCS, wrongParentId));
             wrongParentId = scs.getId();
-        }
-        if (CategoryType.DCS == wrongParentType) {
-            CategoryRespDto dcs = categoryService.createCategory(하위_생성_DTO("계층위반_DCS", CategoryType.DCS, wrongParentId));
-            wrongParentId = dcs.getId();
         }
 
         final Long finalWrongParentId = wrongParentId;
@@ -246,12 +235,11 @@ public class CategoryServiceTest {
     @Test
     @Transactional
     @Rollback
-    @DisplayName("[성공] 카테고리 목록 조회 - 4단계 전체 드릴다운 (LCS→MCS→SCS→DCS)")
-    void 성공_카테고리_목록_조회_4단계_드릴다운() {
+    @DisplayName("[성공] 카테고리 목록 조회 - 3단계 전체 드릴다운 (LCS→MCS→SCS)")
+    void 성공_카테고리_목록_조회_3단계_드릴다운() {
         CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("식품"));
         CategoryRespDto mcs = categoryService.createCategory(하위_생성_DTO("건강식품", CategoryType.MCS, lcs.getId()));
-        CategoryRespDto scs = categoryService.createCategory(하위_생성_DTO("약재", CategoryType.SCS, mcs.getId()));
-        CategoryRespDto dcs = categoryService.createCategory(하위_생성_DTO("인삼", CategoryType.DCS, scs.getId()));
+        CategoryRespDto scs = categoryService.createCategory(하위_생성_DTO("인삼", CategoryType.SCS, mcs.getId()));
 
         assertThat(categoryService.getCategories(null))
                 .anyMatch(c -> c.getId().equals(lcs.getId()));
@@ -259,8 +247,6 @@ public class CategoryServiceTest {
                 .anyMatch(c -> c.getId().equals(mcs.getId()));
         assertThat(categoryService.getCategories(mcs.getId()))
                 .anyMatch(c -> c.getId().equals(scs.getId()));
-        assertThat(categoryService.getCategories(scs.getId()))
-                .anyMatch(c -> c.getId().equals(dcs.getId()));
     }
 
     // ============================================================
@@ -346,12 +332,11 @@ public class CategoryServiceTest {
         CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("사용중_대분류"));
         CategoryRespDto mcs = categoryService.createCategory(하위_생성_DTO("사용중_중분류", CategoryType.MCS, lcs.getId()));
         CategoryRespDto scs = categoryService.createCategory(하위_생성_DTO("사용중_소분류", CategoryType.SCS, mcs.getId()));
-        CategoryRespDto dcs = categoryService.createCategory(하위_생성_DTO("사용중_세분류", CategoryType.DCS, scs.getId()));
 
         LocalDateTime now = LocalDateTime.now();
         promptHistoryMapper.insert(PromptHistory.builder()
                 .userId(0L)
-                .categoryId(dcs.getId())
+                .categoryId(scs.getId())
                 .promptType("PRODUCT")
                 .promptStyle("NANO_BANANA")
                 .promptText("테스트 프롬프트")
@@ -361,7 +346,7 @@ public class CategoryServiceTest {
                 .finalRvisDttm(now)
                 .build());
 
-        assertThatThrownBy(() -> categoryService.deleteCategory(dcs.getId()))
+        assertThatThrownBy(() -> categoryService.deleteCategory(scs.getId()))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(CategoryErrorCode.CATEGORY_IN_USE));

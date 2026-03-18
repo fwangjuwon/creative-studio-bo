@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ feat/paging-prompt-history 완료
-> 최종 업데이트: 2026-03-16 (feat/paging-prompt-history — 프롬프트 히스토리 조회 PageHelper 페이징 적용)
+> 상태: ✅ feat/category-depth-3 완료
+> 최종 업데이트: 2026-03-18 (feat/category-depth-3 — 상품 카테고리 4단계 → 3단계 변경)
 
 ---
 
@@ -12,6 +12,45 @@
 ---
 
 ## 완료
+
+### feat/category-depth-3. 상품 카테고리 4단계 → 3단계 변경
+
+> `DCS(세분류)` 제거 → `LCS(대)/MCS(중)/SCS(소)` 3단계 유지.
+> SCS가 최종 선택 단계 (기존 DCS 역할 흡수).
+
+#### Java 소스 — 로직 변경
+- [x] `CategoryType.java` — `DCS` enum 값 제거
+- [x] `CategoryServiceImpl.java` — `EXPECTED_PARENT_TYPE` map에서 `DCS → SCS` 항목 제거
+- [x] `PromptServiceImpl.java` — DCS 검증 → SCS 검증 + 인라인 주석 수정
+- [x] `PromptErrorCode.java` — `INVALID_CATEGORY_TYPE` 메시지 수정
+
+#### Java 소스 — JavaDoc / 인라인 주석 수정
+- [x] `Category.java` — 클래스 JavaDoc: "4단계 계층 구조" → "3단계 계층 구조"
+- [x] `CategoryCreateReqDto.java` — JavaDoc: "MCS/SCS/DCS" → "MCS/SCS"
+- [x] `GoodsPromptCreateReqDto.java` — JavaDoc: "DCS 카테고리 ID" → "SCS 카테고리 ID"
+- [x] `GeminiService.java` — `@param goodsCategoryName`: "LCS→DCS" → "LCS→SCS"
+- [x] `CategoryMapper.java` — `selectCategoryPath` JavaDoc 수정
+- [x] `PromptHistoryRespDto.java` — `categoryPath` 인라인 주석 3단계 예시로 변경
+
+#### MyBatis XML
+- [x] `CategoryMapper.xml` — `selectCategoryPath` 주석 수정 (SQL 변경 없음)
+
+#### DB 스키마
+- [x] `db/schema.sql` — category 테이블 주석 수정 (4단계→3단계)
+
+#### 테스트 코드
+- [x] `CategoryServiceTest.java` — 3단계 계층 테스트로 전환, DCS 참조 전체 제거
+- [x] `PromptServiceTest.java` — `DCS_카테고리_생성()` → `SCS_카테고리_생성()` (3단계), DCS 참조 전체 제거
+
+#### 문서 및 룰
+- [x] `docs/requirements.md` — 카테고리 3단계로 수정
+- [x] `docs/erd.md` — 계층 구조 예시, 컬럼 설명 수정
+- [x] `CLAUDE.md` — 카테고리 설명 수정
+- [x] `GEMINI.md` — 카테고리 설명 수정
+- [x] `.cursor/rules/project-context.mdc` — 카테고리 계층 설명 수정
+- [x] `.cursor/rules/coding-convention.mdc` — `CategoryType` enum 예시에서 `DCS` 제거
+
+---
 
 ### feat/paging-prompt-history. 프롬프트 히스토리 조회 페이징 적용
 

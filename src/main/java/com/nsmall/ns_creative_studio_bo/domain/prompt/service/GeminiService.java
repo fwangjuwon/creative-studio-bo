@@ -19,7 +19,7 @@ public interface GeminiService {
     /**
      * 상품 카테고리와 태그 정보를 기반으로 영문 이미지 생성 프롬프트를 생성한다.
      *
-     * @param goodsCategoryName 선택한 상품 카테고리명 (LCS→DCS 전체 경로)
+     * @param goodsCategoryName 선택한 상품 카테고리명 (LCS→SCS 전체 경로)
      * @param tagNames          선택한 태그명 목록
      * @param purpose           생성 목적 (nullable)
      * @param additionalNotes   추가 지시 사항 (nullable)

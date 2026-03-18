@@ -33,15 +33,16 @@ CREATE TABLE "user" (
 
 -- -----------------------------------------------------------------------------
 -- TABLE: category
--- 설명: 상품 카테고리 4단계 계층 (LCS → MCS → SCS → DCS)
+-- 설명: 상품 카테고리 3단계 계층 (LCS → MCS → SCS)
 --       self-reference 구조로 관리. LCS는 parent_id = NULL
+--       SCS가 최종 선택 단계 (프롬프트 생성 시 SCS 카테고리 ID 사용)
 -- 논리 FK: category.parent_id → category.id (self-ref)
 --          prompt_history.goods_category_id → category.id
 -- -----------------------------------------------------------------------------
 CREATE TABLE category (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name            VARCHAR(200)    NOT NULL,
-    category_type   VARCHAR(10)     NOT NULL,           -- LCS / MCS / SCS / DCS
+    category_type   VARCHAR(10)     NOT NULL,           -- LCS / MCS / SCS
     parent_id       BIGINT,                             -- 논리 FK → category.id (LCS는 NULL)
     sort_order      INT             NOT NULL DEFAULT 0,
     init_regi_pic   VARCHAR(50),
@@ -92,12 +93,12 @@ CREATE TABLE tag (
 -- 설명: Gemini가 생성한 영문 프롬프트 저장
 --       init_regi_dttm 기준으로 일일 사용량 집계 (범위 조건: >= CURRENT_DATE, < 다음날)
 -- 논리 FK: prompt_history.user_id → user.id
---          prompt_history.category_id → category.id (DCS만 저장, 상품 프롬프트만)
+--          prompt_history.category_id → category.id (SCS만 저장, 상품 프롬프트만)
 -- -----------------------------------------------------------------------------
 CREATE TABLE prompt_history (
     id               BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id          BIGINT          NOT NULL,          -- 논리 FK → user.id
-    category_id      BIGINT,                            -- 논리 FK → category.id (DCS), 인물 프롬프트는 NULL
+    category_id      BIGINT,                            -- 논리 FK → category.id (SCS), 인물 프롬프트는 NULL
     prompt_type      VARCHAR(10)     NOT NULL DEFAULT 'PRODUCT',  -- 'PRODUCT' | 'PERSON'
     prompt_style     VARCHAR(20)     NOT NULL,                        -- 'NANO_BANANA' | 'MID_JOURNEY'
     prompt_text      TEXT            NOT NULL,
@@ -137,7 +138,7 @@ CREATE TABLE goods_prompt_history_tag (
 CREATE INDEX idx_prompt_history_user_date
     ON prompt_history (user_id, init_regi_dttm);
 
--- 카테고리 단계별 드릴다운 조회 최적화
+-- 카테고리 단계별 드릴다운 조회 최적화 (LCS→MCS→SCS)
 -- WHERE parent_id = ? ORDER BY sort_order
 CREATE INDEX idx_category_parent_id
     ON category (parent_id);
