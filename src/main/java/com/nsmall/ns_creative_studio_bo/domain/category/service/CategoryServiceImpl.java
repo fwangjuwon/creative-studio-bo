@@ -28,11 +28,10 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CategoryServiceImpl implements CategoryService {
 
-    /** 하위 타입 → 기대되는 부모 타입 매핑 (MCS 부모=LCS, SCS 부모=MCS, DCS 부모=SCS) */
+    /** 하위 타입 → 기대되는 부모 타입 매핑 (MCS 부모=LCS, SCS 부모=MCS) */
     private static final Map<CategoryType, CategoryType> EXPECTED_PARENT_TYPE = Map.of(
             CategoryType.MCS, CategoryType.LCS,
-            CategoryType.SCS, CategoryType.MCS,
-            CategoryType.DCS, CategoryType.SCS
+            CategoryType.SCS, CategoryType.MCS
     );
 
     private final CategoryMapper categoryMapper;

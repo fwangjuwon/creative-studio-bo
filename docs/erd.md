@@ -25,7 +25,7 @@
 | 테이블명 | Java 엔티티 | 설명 |
 |---|---|---|
 | `user` | `User` | 회원 정보, 권한, 팀명, 일일 생성 한도 |
-| `category` | `Category` | 상품 카테고리 (4단계 계층: LCS→MCS→SCS→DCS) |
+| `category` | `Category` | 상품 카테고리 (3단계 계층: LCS→MCS→SCS) |
 | `tag_group` | `TagGroup` | 태그 묶음 (인물, 분위기 등) |
 | `tag` | `Tag` | 태그 값 (남자, 화사한 등) |
 | `prompt_history` | `PromptHistory` | 생성된 프롬프트 저장 (상품/인물 공통) |
@@ -58,13 +58,13 @@
 
 ### `category`
 
-상품 카테고리. 4단계 계층을 self-reference 구조로 관리.
+상품 카테고리. 3단계 계층을 self-reference 구조로 관리.
 
 | 컬럼명 | 타입 | 제약 | 설명 |
 |---|---|---|---|
 | `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 카테고리 고유 ID |
 | `name` | VARCHAR | NOT NULL | 카테고리명 |
-| `category_type` | VARCHAR | NOT NULL | 계층 구분 (`LCS` / `MCS` / `SCS` / `DCS`) |
+| `category_type` | VARCHAR | NOT NULL | 계층 구분 (`LCS` / `MCS` / `SCS`) |
 | `parent_id` | BIGINT | nullable | 상위 카테고리 ID (LCS는 NULL) |
 | `sort_order` | INT | | 정렬 순서 |
 | `init_regi_pic` | VARCHAR | | 등록자 |
@@ -76,8 +76,7 @@
 ```
 LCS: 식품 (parent_id = NULL)
   MCS: 건강식품 (parent_id = LCS.id)
-    SCS: 약재 (parent_id = MCS.id)
-      DCS: 인삼 (parent_id = SCS.id)  ← 프롬프트 생성 시 최종 선택값
+    SCS: 인삼 (parent_id = MCS.id)  ← 프롬프트 생성 시 최종 선택값
 ```
 
 ---
@@ -124,7 +123,7 @@ LCS: 식품 (parent_id = NULL)
 |---|---|---|---|
 | `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 프롬프트 히스토리 고유 ID |
 | `user_id` | BIGINT | NOT NULL | 생성자 ID (논리 FK → `user.id`) |
-| `category_id` | BIGINT | nullable | 선택한 상품 DCS 카테고리 ID (논리 FK → `category.id`), 인물은 NULL |
+| `category_id` | BIGINT | nullable | 선택한 상품 SCS 카테고리 ID (논리 FK → `category.id`), 인물은 NULL |
 | `prompt_type` | VARCHAR(10) | NOT NULL DEFAULT 'PRODUCT' | `'PRODUCT'` / `'PERSON'` |
 | `prompt_style` | VARCHAR(20) | NOT NULL | `'NANO_BANANA'` / `'MID_JOURNEY'` (기본값은 Service에서 적용) |
 | `prompt_text` | TEXT | NOT NULL | Gemini가 생성한 영문 프롬프트 |
@@ -260,7 +259,7 @@ erDiagram
     }
 
     USER ||--o{ PROMPT_HISTORY : "생성"
-    CATEGORY ||--o{ PROMPT_HISTORY : "선택됨 (DCS, 상품만)"
+    CATEGORY ||--o{ PROMPT_HISTORY : "선택됨 (SCS, 상품만)"
     CATEGORY ||--o{ CATEGORY : "parent_id (self-ref)"
     TAG_GROUP ||--o{ TAG : "포함"
     PROMPT_HISTORY ||--o{ GOODS_PROMPT_HISTORY_TAG : "상품 태그 매핑"

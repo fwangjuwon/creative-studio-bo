@@ -557,7 +557,7 @@ public class AllLayersTests {}
 // ❌ DB에 FK CONSTRAINT 생성 금지
 FOREIGN KEY (user_id) REFERENCES USER(id)
 
-// ❌ category depth 숫자(1/2/3/4) 사용 금지 — category_type(LCS/MCS/SCS/DCS) 사용
+// ❌ category depth 숫자(1/2/3) 사용 금지 — category_type(LCS/MCS/SCS) 사용
 ```
 
 ---
@@ -568,9 +568,8 @@ FOREIGN KEY (user_id) REFERENCES USER(id)
 
 ```java
 public enum CategoryType {
-    LCS,  // 대분류
-    MCS,  // 중분류
-    SCS,  // 소분류
-    DCS   // 세분류
+    LCS, // 대분류
+    MCS, // 중분류
+    SCS  // 소분류 (최종 선택 단계)
 }
 ```

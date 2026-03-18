@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
  * Category 생성 요청 DTO
  *
  * <pre>
- * parentId — LCS 생성 시 null, MCS/SCS/DCS 생성 시 상위 카테고리 id
+ * parentId — LCS 생성 시 null, MCS/SCS 생성 시 상위 카테고리 id
  * sortOrder — nullable, 미입력 시 null 저장
  * </pre>
  *

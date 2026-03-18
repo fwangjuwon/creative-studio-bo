@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
  * <pre>
  * 사용자가 생성한 프롬프트 이력 (상품/인물 공통).
  * user_id     : 논리 FK → User (DB 제약 없음)
- * category_id : 논리 FK → Category DCS (상품 프롬프트만, 인물은 null)
+ * category_id : 논리 FK → Category SCS (상품 프롬프트만, 인물은 null)
  * prompt_type : 'PRODUCT' | 'PERSON'
  * prompt_style: 'NANO_BANANA' | 'MID_JOURNEY'
  * purpose, additional_notes: 생성 목적 (선택, 상품·인물 공통)

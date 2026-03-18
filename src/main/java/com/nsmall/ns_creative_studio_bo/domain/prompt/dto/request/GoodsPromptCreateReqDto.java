@@ -12,7 +12,7 @@ import java.util.List;
  * 상품(Goods) 프롬프트 생성 요청 DTO
  *
  * <pre>
- * goodsCategoryId: 최종 선택한 DCS 카테고리 ID (상품군)
+ * goodsCategoryId: 최종 선택한 SCS 카테고리 ID (상품군)
  * tagIds         : 선택한 태그 ID 목록 (빈 리스트 허용)
  * promptStyle    : 프롬프트 스타일 (선택, 기본값: NANO_BANANA)
  *                  NANO_BANANA — 문장형 (NanoBanana/Gemini 최적화)

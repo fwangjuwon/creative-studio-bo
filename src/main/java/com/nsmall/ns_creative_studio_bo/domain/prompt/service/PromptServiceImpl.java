@@ -83,17 +83,17 @@ public class PromptServiceImpl implements PromptService {
             throw new BizException(PromptErrorCode.DAILY_LIMIT_EXCEEDED);
         }
 
-        // 2. 상품 카테고리 조회 + DCS 검증
+        // 2. 상품 카테고리 조회 + SCS 검증
         Category category = categoryMapper.selectById(dto.getGoodsCategoryId())
                 .orElseThrow(() -> new BizException(PromptErrorCode.CATEGORY_NOT_FOUND,
                         "카테고리를 찾을 수 없습니다. categoryId=" + dto.getGoodsCategoryId()));
 
-        if (CategoryType.DCS != category.getCategoryType()) {
+        if (CategoryType.SCS != category.getCategoryType()) {
             throw new BizException(PromptErrorCode.INVALID_CATEGORY_TYPE,
-                    "DCS 카테고리가 아닙니다. categoryType=" + category.getCategoryType());
+                    "SCS 카테고리가 아닙니다. categoryType=" + category.getCategoryType());
         }
 
-        // DCS 이름만 보내면 맥락이 불분명하므로 LCS→DCS 전체 경로를 조합하여 전달
+        // SCS 이름만 보내면 맥락이 불분명하므로 LCS→SCS 전체 경로를 조합하여 전달
         List<String> categoryPath = categoryMapper.selectCategoryPath(dto.getGoodsCategoryId());
         String goodsCategoryName = String.join(" > ", categoryPath);
 

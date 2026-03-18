@@ -12,8 +12,9 @@ import java.time.LocalDateTime;
  * Category 엔티티 — {@code category} 테이블 매핑
  *
  * <pre>
- * 4단계 계층 구조: LCS(대분류) > MCS(중분류) > SCS(소분류) > DCS(세분류)
+ * 3단계 계층 구조: LCS(대분류) > MCS(중분류) > SCS(소분류)
  * parent_id self-reference — LCS는 parent_id = null
+ * SCS가 최종 선택 단계 (프롬프트 생성 시 SCS 카테고리 ID 사용)
  * </pre>
  *
  * @author jjhoo8936

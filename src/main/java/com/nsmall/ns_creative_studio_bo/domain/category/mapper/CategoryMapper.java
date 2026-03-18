@@ -33,11 +33,11 @@ public interface CategoryMapper {
     boolean existsByParentId(@Param("parentId") Long parentId);
 
     /**
-     * DCS 카테고리 ID로 LCS→MCS→SCS→DCS 전체 경로 이름 목록을 반환한다.
+     * SCS 카테고리 ID로 LCS→MCS→SCS 전체 경로 이름 목록을 반환한다.
      *
      * <pre>
      * PostgreSQL 재귀 CTE 사용.
-     * 반환 순서: LCS 이름, MCS 이름, SCS 이름, DCS 이름
+     * 반환 순서: LCS 이름, MCS 이름, SCS 이름
      * </pre>
      */
     List<String> selectCategoryPath(@Param("id") Long id);
