@@ -93,10 +93,12 @@ public class GeminiServiceImpl implements GeminiService {
             Given a subject/category and style tags, generate a single vivid English portrait prompt
             following this exact structure:
 
-            1. SUBJECT — Age aesthetic, gender presentation, pose, and facial expression:
-               "A [age aesthetic, e.g. young adult / mid-30s] [gender presentation, e.g. woman / man]
-                [pose, e.g. standing with relaxed posture / seated with crossed legs]
-                [expression, e.g. with a confident subtle smile / gazing thoughtfully into the distance]"
+            1. SUBJECT — Number of people, age aesthetic, gender presentation, pose, and facial expression:
+               - If group (Couple / Family portrait / Small group): describe ALL subjects together,
+                 their relationship and interaction (e.g. "A Korean family of four — parents in their 30s
+                 with two young children — laughing together")
+               - If solo: "A [age aesthetic] [gender presentation] [pose] [expression]"
+               Always use the exact group/count specified — never default to a single person.
 
             2. WARDROBE & STYLING — Clothing details, accessories, hair style and color:
                Describe specific fabrics, fits, colors, and hair characteristics
@@ -118,8 +120,8 @@ public class GeminiServiceImpl implements GeminiService {
             6. MOOD & STYLE — Weave the style tags into the overall emotional tone and atmosphere
 
             7. CLOSING — End with the best format for the portrait:
-               Default to "Portrait format." for standard person/fashion shots.
-               Use "Square format." only if the composition clearly calls for it.
+               Choose "Square format.", "Landscape format.", or "Portrait format." based on context.
+               Do NOT use any other format notation (no "--ar", no ratios).
 
             Rules:
             - Write in NARRATIVE PARAGRAPH form — do NOT use comma-separated keyword lists
@@ -144,7 +146,10 @@ public class GeminiServiceImpl implements GeminiService {
             Given a subject/category and style tags, generate a single concise English MidJourney prompt
             as a flat comma-separated keyword list following this order:
 
-            1. SUBJECT — age, gender, and key physical traits (e.g. "young Korean woman, early 20s")
+            1. SUBJECT — number of people, age, gender, and key physical traits:
+               - If group (Couple / Family portrait / Small group): list ALL subjects (e.g. "Korean family of four, parents early 30s, two young children")
+               - If solo: age, gender, key traits (e.g. "young Korean woman, early 20s")
+               Always use the exact group/count specified — never default to a single person.
             2. POSE & EXPRESSION — (e.g. "standing relaxed, confident smile")
             3. WARDROBE & HAIR — key clothing and hair descriptors (e.g. "white linen blouse, wavy black hair")
             4. SETTING — background keywords (e.g. "sunlit studio, clean white seamless backdrop")
@@ -180,7 +185,8 @@ public class GeminiServiceImpl implements GeminiService {
 
     @Override
     public String generateHumanPrompt(Map<Integer, List<String>> stepOptionValues,
-                                      String purpose, String additionalNotes, String promptStyle) {
+                                      String purpose, String additionalNotes, String promptStyle,
+                                      String imageAspectRatio) {
         StringBuilder sb = new StringBuilder();
 
         // step 번호 오름차순으로 user message 구성
@@ -227,7 +233,16 @@ public class GeminiServiceImpl implements GeminiService {
                 .retrieve()
                 .body(GeminiResponse.class);
 
-        return extractText(response);
+        String promptText = extractText(response);
+
+        String formatSuffix = toFormatSuffix(imageAspectRatio);
+        if (formatSuffix != null) {
+            promptText = promptText.strip()
+                    .replaceAll("(?i)(Square|Portrait|Landscape) format\\.$", "")
+                    .strip() + " " + formatSuffix;
+        }
+
+        return promptText;
     }
 
     @Override

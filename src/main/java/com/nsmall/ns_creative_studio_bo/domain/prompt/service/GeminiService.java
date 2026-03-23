@@ -37,8 +37,10 @@ public interface GeminiService {
      * @param additionalNotes  추가 지시 사항 (nullable)
      * @param promptStyle      프롬프트 스타일 — {@code "NANO_BANANA"} (문장형) 또는
      *                         {@code "MID_JOURNEY"} (키워드 나열형)
+     * @param imageAspectRatio 이미지 비율 (nullable, 예: "1:1", "4:3", "16:9", "9:16")
      * @return Gemini가 생성한 영문 프롬프트 텍스트
      */
     String generateHumanPrompt(Map<Integer, List<String>> stepOptionValues,
-                               String purpose, String additionalNotes, String promptStyle);
+                               String purpose, String additionalNotes, String promptStyle,
+                               String imageAspectRatio);
 }

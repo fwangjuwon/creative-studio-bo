@@ -122,7 +122,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
         // 6. Gemini 호출 (promptStyle 기본값: NANO_BANANA)
         String style = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
                 ? dto.getPromptStyle() : "NANO_BANANA";
-        String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes(), style);
+        String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio());
 
         // 7. PromptHistory 저장 (PERSON 타입, categoryId=null)
         LocalDateTime now = LocalDateTime.now();
@@ -134,6 +134,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
                 .promptType("PERSON")
                 .promptStyle(style)
                 .promptText(promptText)
+                .imageAspectRatio(dto.getImageAspectRatio())
                 .imageUrl(null)
                 .purpose(dto.getPurpose())
                 .additionalNotes(dto.getAdditionalNotes())
