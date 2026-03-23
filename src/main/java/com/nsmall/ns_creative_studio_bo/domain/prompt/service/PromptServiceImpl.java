@@ -107,7 +107,7 @@ public class PromptServiceImpl implements PromptService {
 
         // 4. Gemini API 호출
         String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames,
-                dto.getPurpose(), dto.getAdditionalNotes());
+                dto.getImageAspectRatio(), dto.getPurpose(), dto.getAdditionalNotes());
 
         // 5. PromptHistory 저장
         LocalDateTime now = LocalDateTime.now();
@@ -121,6 +121,7 @@ public class PromptServiceImpl implements PromptService {
                 .promptType("PRODUCT")
                 .promptStyle(promptStyle)
                 .promptText(promptText)
+                .imageAspectRatio(dto.getImageAspectRatio())
                 .purpose(dto.getPurpose())
                 .additionalNotes(dto.getAdditionalNotes())
                 .initRegiPic(requesterId)

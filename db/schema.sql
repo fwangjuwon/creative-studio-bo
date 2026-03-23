@@ -103,6 +103,7 @@ CREATE TABLE prompt_history (
     prompt_style     VARCHAR(20)     NOT NULL,                        -- 'NANO_BANANA' | 'MID_JOURNEY'
     prompt_text      TEXT            NOT NULL,
     image_url        VARCHAR(500),                      -- NanoBanana 이미지 생성 URL (없으면 NULL)
+    image_aspect_ratio VARCHAR(10),                    -- 선택한 이미지 종횡비 (예: '16:9', '1:1', NULL이면 미선택)
     purpose          TEXT,                              -- 인물 프롬프트 생성 목적 (상품은 NULL)
     additional_notes TEXT,                              -- 인물 프롬프트 추가 지시사항 (상품은 NULL)
     init_regi_pic    VARCHAR(50),

@@ -66,8 +66,9 @@ public class GeminiServiceImpl implements GeminiService {
 
             5. MOOD & STYLE — Weave the style tags into atmosphere and emotional tone
 
-            6. CLOSING — End with aspect ratio: "Square format." or "Landscape format."
-               or "Portrait format." depending on context
+            6. CLOSING — End with the best format for the composition:
+               Choose "Square format.", "Landscape format.", or "Portrait format." based on the product
+               category and style context. Do NOT use any other format notation (no "--ar", no ratios).
 
             Rules:
             - Write in NARRATIVE PARAGRAPH form — do NOT use comma-separated keyword lists
@@ -116,8 +117,9 @@ public class GeminiServiceImpl implements GeminiService {
 
             6. MOOD & STYLE — Weave the style tags into the overall emotional tone and atmosphere
 
-            7. CLOSING — End with aspect ratio: "Portrait format." or "Square format."
-               or "Landscape format." depending on context
+            7. CLOSING — End with the best format for the portrait:
+               Default to "Portrait format." for standard person/fashion shots.
+               Use "Square format." only if the composition clearly calls for it.
 
             Rules:
             - Write in NARRATIVE PARAGRAPH form — do NOT use comma-separated keyword lists
@@ -230,15 +232,15 @@ public class GeminiServiceImpl implements GeminiService {
 
     @Override
     public String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames,
-                                      String purpose, String additionalNotes) {
+                                      String imageAspectRatio, String purpose, String additionalNotes) {
         String userMessage = buildGoodsUserMessage(goodsCategoryName, tagNames, purpose, additionalNotes);
         GeminiRequest requestBody = buildRequest(userMessage);
 
         String uri = String.format("/models/%s:generateContent?key=%s",
                 geminiProperties.getModel(), geminiProperties.getApiKey());
 
-        log.debug("Gemini API 호출 — model: {}, goodsCategory: {}, tags: {}",
-                geminiProperties.getModel(), goodsCategoryName, tagNames);
+        log.debug("Gemini API 호출 — model: {}, goodsCategory: {}, tags: {}, aspectRatio: {}",
+                geminiProperties.getModel(), goodsCategoryName, tagNames, imageAspectRatio);
 
         GeminiResponse response = geminiRestClient.post()
                 .uri(uri)
@@ -247,7 +249,28 @@ public class GeminiServiceImpl implements GeminiService {
                 .retrieve()
                 .body(GeminiResponse.class);
 
-        return extractText(response);
+        String promptText = extractText(response);
+
+        // 이미지 비율이 선택된 경우 format suffix를 Java에서 직접 추가
+        // Gemini가 자체 붙인 format suffix를 먼저 제거 후 교체 ("Portrait format. Landscape format." 충돌 방지)
+        String formatSuffix = toFormatSuffix(imageAspectRatio);
+        if (formatSuffix != null) {
+            promptText = promptText.strip()
+                    .replaceAll("(?i)(Square|Portrait|Landscape) format\\.$", "")
+                    .strip() + " " + formatSuffix;
+        }
+
+        return promptText;
+    }
+
+    private String toFormatSuffix(String imageAspectRatio) {
+        if (imageAspectRatio == null) return null;
+        return switch (imageAspectRatio) {
+            case "1:1"       -> "Square format.";
+            case "4:3", "16:9" -> "Landscape format.";
+            case "9:16"      -> "Portrait format.";
+            default          -> null;
+        };
     }
 
     private String buildGoodsUserMessage(String goodsCategoryName, List<String> tagNames,
