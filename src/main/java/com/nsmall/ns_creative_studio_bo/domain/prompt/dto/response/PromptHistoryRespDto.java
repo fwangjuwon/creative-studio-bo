@@ -129,6 +129,7 @@ public class PromptHistoryRespDto {
                 .promptType(history.getPromptType())
                 .promptStyle(history.getPromptStyle())
                 .promptText(history.getPromptText())
+                .imageAspectRatio(history.getImageAspectRatio())
                 .imageUrl(history.getImageUrl())
                 .imageUrls(parseImageUrls(history.getImageUrl()))
                 .purpose(history.getPurpose())
