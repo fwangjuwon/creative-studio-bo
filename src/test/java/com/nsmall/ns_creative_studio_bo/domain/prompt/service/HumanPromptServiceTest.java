@@ -155,7 +155,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - 정상 케이스")
     void 성공_인물_프롬프트_생성_정상() {
-        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("human_user_ok", "USER", "팀A", 5);
 
@@ -178,7 +178,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - 일일 한도 미만")
     void 성공_인물_프롬프트_생성_일일한도_미만() {
-        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("human_user_limit", "USER", "팀A", 3);
         PERSON_히스토리_직접_삽입(user.getId());
@@ -288,7 +288,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - optionNames 응답 포함")
     void 성공_인물_프롬프트_생성_optionNames_응답_포함() {
-        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("opt_name_user", "USER", "팀A", 5);
 
@@ -306,7 +306,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - purpose/additionalNotes 저장 및 응답 포함")
     void 성공_인물_프롬프트_생성_purpose_additionalNotes_포함() {
-        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("purpose_user", "USER", "팀A", 5);
 
@@ -327,7 +327,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - promptStyle MID_JOURNEY 명시 저장")
     void 성공_인물_프롬프트_생성_promptStyle_MID_JOURNEY() {
-        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("human_style_mj", "USER", "팀A", 5);
 
@@ -350,7 +350,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 이력 조회 - PERSON 이력에 optionNames/purpose/additionalNotes 포함")
     void 성공_이력_조회_PERSON_신규필드_포함() {
-        given(geminiService.generateHumanPrompt(any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateHumanPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("hist_person_detail", "USER", "팀G", 10);
 

@@ -11,6 +11,7 @@
             prompt_style,
             prompt_text,
             image_url,
+            image_aspect_ratio,
             purpose,
             additional_notes,
             init_regi_pic,
@@ -24,6 +25,7 @@
             #{promptStyle},
             #{promptText},
             #{imageUrl},
+            #{imageAspectRatio},
             #{purpose},
             #{additionalNotes},
             #{initRegiPic},
@@ -42,6 +44,7 @@
             prompt_style,
             prompt_text,
             image_url,
+            image_aspect_ratio,
             purpose,
             additional_notes,
             init_regi_pic,
@@ -52,6 +55,7 @@
         WHERE id = #{id}
     </select>
 
+    <!-- PageHelper 가 자동으로 COUNT + LIMIT/OFFSET 처리 -->
     <select id="selectList" resultType="PromptHistory">
         SELECT
             id,
@@ -61,6 +65,7 @@
             prompt_style,
             prompt_text,
             image_url,
+            image_aspect_ratio,
             purpose,
             additional_notes,
             init_regi_pic,

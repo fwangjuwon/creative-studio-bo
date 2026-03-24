@@ -42,11 +42,12 @@ public class PromptHistoryRespDto {
     private Long userId;
 
     // 공통
-    private String promptType;       // 'PRODUCT' | 'PERSON'
-    private String promptStyle;      // 'NANO_BANANA' | 'MID_JOURNEY'
+    private String promptType;        // 'PRODUCT' | 'PERSON'
+    private String promptStyle;       // 'NANO_BANANA' | 'MID_JOURNEY'
     private String promptText;
-    private String imageUrl;         // DB 원본값 (단일 URL 또는 JSON 배열 문자열)
-    private List<String> imageUrls;  // 파싱된 이미지 URL 목록
+    private String imageAspectRatio;  // 선택한 이미지 비율 (예: "4:3", "1:1", nullable)
+    private String imageUrl;          // DB 원본값 (단일 URL 또는 JSON 배열 문자열)
+    private List<String> imageUrls;   // 파싱된 이미지 URL 목록
 
     // 상품 프롬프트 전용
     private Long categoryId;
@@ -103,6 +104,7 @@ public class PromptHistoryRespDto {
                 .promptType(history.getPromptType())
                 .promptStyle(history.getPromptStyle())
                 .promptText(history.getPromptText())
+                .imageAspectRatio(history.getImageAspectRatio())
                 .imageUrl(history.getImageUrl())
                 .imageUrls(parseImageUrls(history.getImageUrl()))
                 .categoryId(history.getCategoryId())
@@ -127,6 +129,7 @@ public class PromptHistoryRespDto {
                 .promptType(history.getPromptType())
                 .promptStyle(history.getPromptStyle())
                 .promptText(history.getPromptText())
+                .imageAspectRatio(history.getImageAspectRatio())
                 .imageUrl(history.getImageUrl())
                 .imageUrls(parseImageUrls(history.getImageUrl()))
                 .purpose(history.getPurpose())

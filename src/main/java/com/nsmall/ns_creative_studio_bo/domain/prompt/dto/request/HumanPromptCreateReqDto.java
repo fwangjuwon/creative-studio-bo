@@ -47,4 +47,7 @@ public class HumanPromptCreateReqDto {
      * </ul>
      */
     private String promptStyle;
+
+    /** 이미지 비율 (선택, 예: "1:1", "4:3", "16:9", "9:16") */
+    private String imageAspectRatio;
 }
