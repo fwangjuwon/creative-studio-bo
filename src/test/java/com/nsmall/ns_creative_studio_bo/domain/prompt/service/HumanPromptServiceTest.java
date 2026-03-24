@@ -36,7 +36,7 @@ import static org.mockito.BDDMockito.given;
  * HumanPromptService 통합 테스트 — 비즈니스 로직 + DB 연동 검증
  *
  * <pre>
- * GeminiService, ImageGenerationService는 외부 API 의존성이므로 @MockBean으로 모킹하여 테스트.
+ * GeminiService, ImageGenerationService는 외부 API 의존성이므로 @MockitoBean으로 모킹하여 테스트.
  * human_prompt_step / attr / option 시드 데이터는 data.sql에서 로드된다.
  * </pre>
  *
