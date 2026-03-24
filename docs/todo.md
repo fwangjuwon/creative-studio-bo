@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ feat/category-depth-3 완료
-> 최종 업데이트: 2026-03-18 (feat/category-depth-3 — 상품 카테고리 4단계 → 3단계 변경)
+> 상태: ✅ docs/mockitobean-migration 완료
+> 최종 업데이트: 2026-03-24 (docs/mockitobean-migration — @MockBean → @MockitoBean 마이그레이션 문서화)
 
 ---
 
@@ -12,6 +12,21 @@
 ---
 
 ## 완료
+
+### docs/mockitobean-migration. @MockBean → @MockitoBean 마이그레이션 문서화
+
+> 커밋 `03c053e3`에서 `@MockBean` → `@MockitoBean`으로 코드 변경이 이루어졌으나 문서화가 누락됨.
+> Spring Boot 3.4+에서 `@MockBean` (deprecated) → `@MockitoBean` 마이그레이션에 따른 주석 현행화.
+
+#### JavaDoc 주석 수정
+- [x] `PromptServiceTest.java` — `@MockBean으로 모킹` → `@MockitoBean으로 모킹`
+- [x] `HumanPromptServiceTest.java` — `@MockBean으로 모킹` → `@MockitoBean으로 모킹`
+
+#### docs/todo.md 현행화
+- [x] `Step 3-D-T` 항목 — `@MockBean GeminiService` → `@MockitoBean GeminiService`
+- [x] `feat/prompt-image-person` 항목 — `@MockBean GeminiService`, `@MockBean ImageGenerationService` → `@MockitoBean`
+
+---
 
 ### feat/category-depth-3. 상품 카테고리 4단계 → 3단계 변경
 
@@ -321,7 +336,7 @@
 - [x] `build.gradle` — `bootRun` 시 `.env` 환경변수 자동 주입 설정 추가
 
 #### 테스트
-- [x] `HumanPromptServiceTest` 작성 (`@MockBean GeminiService`, `@MockBean ImageGenerationService`)
+- [x] `HumanPromptServiceTest` 작성 (`@MockitoBean GeminiService`, `@MockitoBean ImageGenerationService`)
   - 단계 구조 조회 (5단계 반환 / 세부항목·선택지 포함)
   - 인물 프롬프트 생성 — 정상 / 일일 한도 미만 / 한도 초과 / PRODUCT 이력 합산 / 사용자 미존재 / 선택 옵션 없음
   - 이미지 생성 — imageUrl 이력 업데이트 / historyId null 시 미업데이트
@@ -385,7 +400,7 @@
 - [x] `application.yml` — model: `gemini-3-flash-preview` (system-prompt는 코드로 이전)
 
 ### Step 3-D-T. Prompt Service 단위 테스트
-- [x] `PromptServiceTest` 작성 (`@MockBean GeminiService` 모킹)
+- [x] `PromptServiceTest` 작성 (`@MockitoBean GeminiService` 모킹)
   - [x] 프롬프트 생성 — 일일 한도 미만 → 허용 (태그 포함 / 태그 없이)
   - [x] 프롬프트 생성 — 일일 한도 초과 → 거부 (`P001`)
   - [x] 프롬프트 생성 — 유저 미존재 예외 (`P002`)

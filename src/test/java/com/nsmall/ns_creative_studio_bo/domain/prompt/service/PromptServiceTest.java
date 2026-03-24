@@ -45,7 +45,7 @@ import static org.mockito.Mockito.verify;
  * PromptService 통합 테스트 — 비즈니스 로직 + DB 연동 검증
  *
  * <pre>
- * GeminiService는 외부 API 의존성이므로 @MockBean으로 모킹하여 테스트.
+ * GeminiService는 외부 API 의존성이므로 @MockitoBean으로 모킹하여 테스트.
  * </pre>
  *
  * @author jjhoo8936
