@@ -22,6 +22,10 @@ gemini:
 image:
   storage-path: ./generated-images
 
+cors:
+  allowed-origins:
+    - http://localhost:3000
+
 jwt:
   secret: ${JWT_SECRET:ns-creative-studio-bo-default-secret-key-for-local-dev-only}
   expiration: 3600
