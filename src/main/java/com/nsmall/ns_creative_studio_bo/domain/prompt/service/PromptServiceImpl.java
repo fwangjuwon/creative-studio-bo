@@ -26,6 +26,7 @@ import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -67,6 +68,9 @@ public class PromptServiceImpl implements PromptService {
     private final GeminiService geminiService;
     private final ImageGenerationService imageGenerationService;
     private final ObjectMapper objectMapper;
+
+    @Value("${image.base-url}")
+    private String imageBaseUrl;
 
     @Override
     @Transactional
@@ -152,7 +156,7 @@ public class PromptServiceImpl implements PromptService {
         String savedCategoryPath = String.join(" > ", categoryPath);
         List<Long> savedTagIds = goodsPromptHistoryTagMapper.selectTagIdsByPromptHistoryId(history.getId());
         List<String> savedTagNames = goodsPromptHistoryTagMapper.selectTagNamesByPromptHistoryId(history.getId());
-        return PromptHistoryRespDto.fromGoods(history, savedCategoryPath, savedTagIds, savedTagNames);
+        return PromptHistoryRespDto.fromGoods(history, savedCategoryPath, savedTagIds, savedTagNames, imageBaseUrl);
     }
 
     @Override
@@ -167,10 +171,10 @@ public class PromptServiceImpl implements PromptService {
                                 : null;
                         List<Long> tagIds = goodsPromptHistoryTagMapper.selectTagIdsByPromptHistoryId(history.getId());
                         List<String> tagNames = goodsPromptHistoryTagMapper.selectTagNamesByPromptHistoryId(history.getId());
-                        return PromptHistoryRespDto.fromGoods(history, categoryPath, tagIds, tagNames);
+                        return PromptHistoryRespDto.fromGoods(history, categoryPath, tagIds, tagNames, imageBaseUrl);
                     } else {
                         List<String> optionNames = humanPromptHistoryOptionMapper.selectOptionNamesByHistoryId(history.getId());
-                        return PromptHistoryRespDto.fromHuman(history, optionNames);
+                        return PromptHistoryRespDto.fromHuman(history, optionNames, imageBaseUrl);
                     }
                 })
                 .toList();
@@ -214,7 +218,7 @@ public class PromptServiceImpl implements PromptService {
             imageUrls = imageGenerationService.generateImages(promptText, IMAGE_GENERATE_COUNT);
         }
 
-        // 2. 이력에 JSON 배열로 저장 (image_url 컬럼에 "[url1,url2,url3]" 형태)
+        // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
         if (historyId != null) {
             try {
                 String imageUrlsJson = objectMapper.writeValueAsString(imageUrls);
@@ -226,6 +230,9 @@ public class PromptServiceImpl implements PromptService {
             }
         }
 
-        return imageUrls;
+        // 3. 응답에는 절대 URL로 조립하여 반환
+        return imageUrls.stream()
+                .map(path -> imageBaseUrl + path)
+                .toList();
     }
 }
