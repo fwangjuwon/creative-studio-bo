@@ -21,6 +21,7 @@ gemini:
 
 image:
   storage-path: ./generated-images
+  base-url: http://localhost:8080
 
 cors:
   allowed-origins:

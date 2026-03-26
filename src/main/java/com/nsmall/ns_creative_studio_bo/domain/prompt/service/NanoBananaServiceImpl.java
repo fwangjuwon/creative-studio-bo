@@ -47,8 +47,11 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     private final RestClient geminiRestClient;
     private final GeminiProperties geminiProperties;
 
-    @Value("${image.storage-path:./generated-images}")
+    @Value("${image.storage-path}")
     private String storagePath;
+
+    @Value("${image.base-url}")
+    private String imageBaseUrl;
 
     private String generateImage(String prompt) {
         log.debug("NanoBanana 이미지 생성 호출 — model: {}", geminiProperties.getImageModel());
@@ -156,7 +159,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             Files.createDirectories(dir);
             Files.write(dir.resolve(filename), imageBytes);
 
-            return "/images/" + filename;
+            return imageBaseUrl + "/images/" + filename;
         } catch (IOException e) {
             log.error("NanoBanana 이미지 저장 실패", e);
             throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
