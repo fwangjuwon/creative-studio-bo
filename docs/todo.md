@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ docs/mockitobean-migration 완료
-> 최종 업데이트: 2026-03-24 (docs/mockitobean-migration — @MockBean → @MockitoBean 마이그레이션 문서화)
+> 상태: ✅ chore/cors-local-profile 완료
+> 최종 업데이트: 2026-03-26 (CORS 설정, 이미지 URL 상대경로 저장, imageAspectRatio 지원, Dockerfile 추가 등 문서화)
 
 ---
 
@@ -12,6 +12,137 @@
 ---
 
 ## 완료
+
+### chore/cors-local-profile. CorsConfig local 프로필 전용으로 제한
+
+> dev/prod 환경은 APIM에서 CORS를 처리하므로 Spring CORS 설정을 local 프로필로 국한.
+> 기존 `CorsConfig`에 `@Profile("local")` 적용.
+
+#### 변경 사항
+- [x] `CorsConfig.java` — `@Profile("local")` 추가 (local 프로필에서만 Bean 등록)
+
+---
+
+### refactor/image-url-store-relative-path. DB에 이미지 URL 상대 경로로 저장, 응답 시 절대 URL 조립
+
+> `image.base-url` 설정을 기준으로 응답 시 절대 URL을 조립하는 방식으로 변경.
+> DB에는 `/images/{uuid}.ext` 형태의 상대 경로만 저장하고,
+> `PromptServiceImpl` / `HumanPromptServiceImpl`에서 응답 생성 시 base-url을 prefix로 붙인다.
+
+#### 변경 사항
+- [x] `NanoBananaServiceImpl.saveImage()` — 상대 경로(`/images/...`)만 반환하도록 수정
+- [x] `PromptServiceImpl` — `getPromptHistories` 에서 imageBaseUrl 전달
+- [x] `HumanPromptServiceImpl` — `getPromptHistories` 에서 imageBaseUrl 전달
+- [x] `PromptHistoryRespDto.parseImageUrls()` — `baseUrl` prefix 조립 로직 추가
+  - `null/blank` → 빈 List
+  - `"[...]"` (JSON 배열) → Jackson 파싱 후 각 경로에 baseUrl prefix
+  - 일반 상대 경로 → 단일 원소 List (baseUrl prefix)
+  - 이미 `http`로 시작하는 URL → prefix 미적용
+
+---
+
+### fix/image-url-absolute-path. 이미지 URL BO 도메인 기반 절대 경로 반환 (중간 fix)
+
+> `image.base-url` 설정 추가 및 NanoBananaServiceImpl에서 절대 URL 반환하도록 수정.
+> 이후 `refactor/image-url-store-relative-path`에서 상대 경로 저장 방식으로 재리팩터링.
+
+#### 변경 사항
+- [x] `application.yml` — `image.base-url: http://localhost:8080` 추가
+- [x] `application-dev.yml` — `image.base-url: https://nsm-dev-creative-bo.nsmall.com` 추가
+
+---
+
+### chore/cors-config. CORS 설정 추가
+
+> 프론트엔드(FO)와의 크로스 도메인 요청을 허용하기 위한 CORS 설정 추가.
+> local 프로필에서만 Spring Boot 수준 CORS를 활성화하고, dev/prod는 APIM에서 처리.
+
+#### 신규 클래스
+- [x] `CorsConfig.java` — `@Profile("local")`, `CorsConfigurationSource` Bean 등록
+  - 허용 메서드: `GET`, `POST`, `PUT`, `DELETE`, `PATCH`, `OPTIONS`
+  - 허용 헤더: `Authorization`, `Content-Type`, `Accept`, `Origin`, `X-Requested-With`
+  - `allowCredentials: true` (JWT 전달 허용)
+- [x] `CorsProperties.java` — `@ConfigurationProperties(prefix = "cors")`, `allowedOrigins` 바인딩
+
+#### 설정 파일 변경
+- [x] `application.yml` — `cors.allowed-origins: [http://localhost:3000]`
+- [x] `application-dev.yml` — `cors.allowed-origins: [https://nsm-dev-creative-fo.nsmall.com]`
+- [x] `SecurityConfig.java` — `.cors(withDefaults())` 적용
+
+---
+
+### feat/tag-image-size. 프롬프트 이미지 비율(imageAspectRatio) 지원
+
+> 상품 및 인물 프롬프트 생성 시 이미지 출력 비율을 선택할 수 있도록 지원.
+> 선택된 비율에 따라 Gemini 호출 후 Java에서 format suffix를 프롬프트에 직접 주입.
+
+#### DB 스키마
+- [x] `prompt_history` 테이블에 `image_aspect_ratio VARCHAR(10)` 컬럼 추가
+- [x] `db/schema.sql` 반영, `docs/erd.md` 반영
+
+#### 초기 데이터
+- [x] `db/data.sql` — 이미지 사이즈 태그 그룹 및 태그 4종 추가
+  - `1:1` (Square), `4:3` (Landscape), `16:9` (Landscape wide), `9:16` (Portrait)
+
+#### Entity / DTO
+- [x] `PromptHistory` entity — `imageAspectRatio` 필드 추가
+- [x] `GoodsPromptCreateReqDto` — `imageAspectRatio` 필드 추가 (선택, 예: `"1:1"`, `"4:3"`)
+- [x] `HumanPromptCreateReqDto` — `imageAspectRatio` 필드 추가
+- [x] `PromptHistoryRespDto` — `imageAspectRatio` 필드 추가 (fromGoods / fromHuman 공통)
+
+#### Service / GeminiServiceImpl
+- [x] `GeminiService.generateGoodsPrompt()` — `imageAspectRatio` 파라미터 추가
+- [x] `GeminiService.generateHumanPrompt()` — `imageAspectRatio` 파라미터 추가
+- [x] `GeminiServiceImpl` — Gemini 응답 후 Java에서 format suffix 직접 주입
+  - `1:1` → `Square format.`
+  - `4:3`, `16:9` → `Landscape format.`
+  - `9:16` → `Portrait format.`
+  - 미입력 시 suffix 없음 (Gemini 기본 비율 사용)
+- [x] `GeminiServiceImpl.SYSTEM_PROMPT_PERSON` — `"Default to Portrait format."` 제거 (suffix 주입으로 대체)
+- [x] `GeminiServiceImpl` — SUBJECT 섹션 그룹 처리 추가 (Couple/Family/Small group 선택 시 그룹 묘사 유도)
+- [x] `PromptServiceImpl` — `imageAspectRatio` Gemini 호출 및 저장에 전달
+- [x] `HumanPromptServiceImpl` — `imageAspectRatio` Gemini 호출 및 저장에 전달
+
+#### Mapper XML
+- [x] `PromptHistoryMapper.xml` — INSERT / SELECT에 `image_aspect_ratio` 컬럼 추가
+
+#### 테스트
+- [x] `PromptServiceTest` — `generateGoodsPrompt` mock 인자 수정 (5파라미터)
+- [x] `HumanPromptServiceTest` — `generateHumanPrompt` mock 5개 `any()`로 수정
+
+---
+
+### refactor/goods-prompt-quality. 참조 이미지 기반 이미지 생성 프롬프트 품질 개선
+
+> 참조 이미지가 있을 때 Gemini에 전달하는 지시문을 구체화하여 생성 품질 향상.
+> 형태·비율·질감·색감 보존 지시문을 번호 열거 방식으로 명확히 구조화.
+> 조명·구도는 promptText에 위임하여 3장 이미지 다양성을 확보.
+
+#### 변경 사항
+- [x] `PromptServiceImpl` — 참조 이미지 포함 Gemini 호출 시 지시문 구체화
+
+---
+
+### chore/add-dockerfile. Dockerfile 추가
+
+> GCP Cloud Run 배포를 위한 Dockerfile 추가 (Spring Boot 실행 이미지).
+
+#### 변경 사항
+- [x] `Dockerfile` — `eclipse-temurin:17-jre` 기반, `app.jar` 실행
+
+---
+
+### chore/application-dev. dev 프로필 DB 스키마 설정 및 application-dev.yml 추가
+
+> dev 환경 전용 Spring 프로필 설정 파일 추가.
+
+#### 변경 사항
+- [x] `application-dev.yml` 신규 생성
+  - datasource: `${POSTGRES_HOST}`, `${POSTGRES_PORT}`, `${POSTGRES_DB}`, `${POSTGRES_USER}`, `${POSTGRES_PASSWORD}` 환경변수 참조
+  - `cors.allowed-origins: [https://nsm-dev-creative-fo.nsmall.com]`
+  - `image.base-url: https://nsm-dev-creative-bo.nsmall.com`
+
+---
 
 ### docs/mockitobean-migration. @MockBean → @MockitoBean 마이그레이션 문서화
 

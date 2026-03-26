@@ -127,7 +127,8 @@ LCS: 식품 (parent_id = NULL)
 | `prompt_type` | VARCHAR(10) | NOT NULL DEFAULT 'PRODUCT' | `'PRODUCT'` / `'PERSON'` |
 | `prompt_style` | VARCHAR(20) | NOT NULL | `'NANO_BANANA'` / `'MID_JOURNEY'` (기본값은 Service에서 적용) |
 | `prompt_text` | TEXT | NOT NULL | Gemini가 생성한 영문 프롬프트 |
-| `image_url` | VARCHAR(500) | nullable | NanoBanana 이미지 생성 URL |
+| `image_url` | VARCHAR(500) | nullable | NanoBanana 이미지 생성 URL (DB에는 상대 경로 저장, 응답 시 `image.base-url` prefix를 붙여 절대 URL 조립) |
+| `image_aspect_ratio` | VARCHAR(10) | nullable | 이미지 생성 비율 (예: `1:1`, `4:3`, `16:9`, `9:16`). 상품·인물 공통. 미입력 시 Gemini가 기본 비율 사용 |
 | `purpose` | TEXT | nullable | 인물 프롬프트 생성 목적 (상품은 NULL) |
 | `additional_notes` | TEXT | nullable | 인물 프롬프트 추가 지시사항 (상품은 NULL) |
 | `init_regi_pic` | VARCHAR | | 등록자 |
@@ -216,6 +217,7 @@ erDiagram
         varchar prompt_type
         varchar prompt_style
         text prompt_text
+        varchar image_aspect_ratio
         varchar image_url
         text purpose
         text additional_notes

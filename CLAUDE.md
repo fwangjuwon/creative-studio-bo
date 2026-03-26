@@ -139,6 +139,9 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 최종 선택
 | 페이지네이션 | `GET /api/prompts` PageHelper 적용 완료. `pageNum`(기본 1) / `pageSize`(기본 10). 공통 모듈: `common/page/` |
 | JWT | 완료 (Access Token 1시간, Refresh Token 없음, PoC) |
 | Gemini API Key | `.env` 파일의 `GEMINI_API_KEY` 환경변수 |
+| 이미지 서빙 | 생성 이미지는 `image.storage-path` 경로에 저장, `image.base-url` prefix로 절대 URL 조립 후 응답. DB에는 `/images/{uuid}.ext` 상대 경로만 저장. `/images/**` 경로는 Security 인증 없이 공개. |
+| CORS | `local` 프로필에서만 Spring Boot `CorsConfig` 활성화 (`@Profile("local")`). dev/prod 환경은 APIM에서 CORS 처리. 허용 Origin은 `cors.allowed-origins`로 환경별 관리. |
+| imageAspectRatio | 상품·인물 프롬프트 생성 시 이미지 비율 선택 가능 (`1:1`, `4:3`, `16:9`, `9:16`). Gemini 응답 후 Java에서 format suffix 주입. |
 
 ---
 
