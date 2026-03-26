@@ -159,7 +159,9 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             Files.createDirectories(dir);
             Files.write(dir.resolve(filename), imageBytes);
 
-            return imageBaseUrl + "/images/" + filename;
+            String tempUrl = imageBaseUrl + "/images/" + filename;
+            log.info("@@@@@@@@@{}", tempUrl);
+            return tempUrl;
         } catch (IOException e) {
             log.error("NanoBanana 이미지 저장 실패", e);
             throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
