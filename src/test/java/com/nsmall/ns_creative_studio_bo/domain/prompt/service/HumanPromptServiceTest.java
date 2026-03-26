@@ -393,7 +393,7 @@ public class HumanPromptServiceTest {
         List<String> imageUrls = humanPromptService.generateImage(history.getId(), MOCK_PROMPT);
 
         assertThat(imageUrls).hasSize(3);
-        assertThat(imageUrls).contains("/images/test-uuid-1.jpg");
+        assertThat(imageUrls).contains("http://localhost:8080/images/test-uuid-1.jpg");
 
         PromptHistory updated = promptHistoryMapper.selectById(history.getId()).orElseThrow();
         assertThat(updated.getImageUrl()).contains("test-uuid-1"); // JSON 배열로 저장됨

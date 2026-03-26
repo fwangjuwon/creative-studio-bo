@@ -66,38 +66,45 @@ public class PromptHistoryRespDto {
     private LocalDateTime finalRvisDttm;
 
     /**
-     * image_url 컬럼값(단일 URL 또는 JSON 배열 문자열)을 List로 파싱한다.
+     * image_url 컬럼값(단일 URL 또는 JSON 배열 문자열)을 파싱하고 baseUrl을 prefix로 붙여 반환한다.
      *
      * <pre>
      * - null / blank        → 빈 List
-     * - "[...]" (JSON 배열) → Jackson 파싱
-     * - 일반 URL 문자열     → 단일 원소 List
+     * - "[...]" (JSON 배열) → Jackson 파싱 후 각 URL에 baseUrl prefix
+     * - 일반 URL 문자열     → 단일 원소 List (baseUrl prefix)
      * </pre>
      */
-    private static List<String> parseImageUrls(String raw) {
+    private static List<String> parseImageUrls(String raw, String baseUrl) {
         if (raw == null || raw.isBlank()) {
             return List.of();
         }
+        List<String> paths;
         if (raw.startsWith("[")) {
             try {
-                return OBJECT_MAPPER.readValue(raw, new TypeReference<List<String>>() {});
+                paths = OBJECT_MAPPER.readValue(raw, new TypeReference<List<String>>() {});
             } catch (Exception e) {
-                return List.of(raw);
+                paths = List.of(raw);
             }
+        } else {
+            paths = List.of(raw);
         }
-        return List.of(raw);
+        return paths.stream()
+                .map(path -> path.startsWith("http") ? path : baseUrl + path)
+                .toList();
     }
 
     /**
      * 상품 프롬프트 이력 응답 생성.
      *
-     * @param categoryPath "식품 > 건강식품 > 인삼" 형태의 카테고리 전체 경로
-     * @param tagNames     선택한 태그 한국어명 목록
+     * @param categoryPath  "식품 > 건강식품 > 인삼" 형태의 카테고리 전체 경로
+     * @param tagNames      선택한 태그 한국어명 목록
+     * @param imageBaseUrl  이미지 서빙 기준 URL (예: https://bo.nsmall.com)
      */
     public static PromptHistoryRespDto fromGoods(PromptHistory history,
                                                  String categoryPath,
                                                  List<Long> tagIds,
-                                                 List<String> tagNames) {
+                                                 List<String> tagNames,
+                                                 String imageBaseUrl) {
         return PromptHistoryRespDto.builder()
                 .id(history.getId())
                 .userId(history.getUserId())
@@ -106,7 +113,7 @@ public class PromptHistoryRespDto {
                 .promptText(history.getPromptText())
                 .imageAspectRatio(history.getImageAspectRatio())
                 .imageUrl(history.getImageUrl())
-                .imageUrls(parseImageUrls(history.getImageUrl()))
+                .imageUrls(parseImageUrls(history.getImageUrl(), imageBaseUrl))
                 .categoryId(history.getCategoryId())
                 .categoryPath(categoryPath)
                 .tagIds(tagIds)
@@ -120,9 +127,12 @@ public class PromptHistoryRespDto {
     /**
      * 인물 프롬프트 이력 응답 생성.
      *
-     * @param optionNames 선택한 옵션 한국어명 목록 (단계 순서대로 정렬)
+     * @param optionNames  선택한 옵션 한국어명 목록 (단계 순서대로 정렬)
+     * @param imageBaseUrl 이미지 서빙 기준 URL (예: https://bo.nsmall.com)
      */
-    public static PromptHistoryRespDto fromHuman(PromptHistory history, List<String> optionNames) {
+    public static PromptHistoryRespDto fromHuman(PromptHistory history,
+                                                 List<String> optionNames,
+                                                 String imageBaseUrl) {
         return PromptHistoryRespDto.builder()
                 .id(history.getId())
                 .userId(history.getUserId())
@@ -131,7 +141,7 @@ public class PromptHistoryRespDto {
                 .promptText(history.getPromptText())
                 .imageAspectRatio(history.getImageAspectRatio())
                 .imageUrl(history.getImageUrl())
-                .imageUrls(parseImageUrls(history.getImageUrl()))
+                .imageUrls(parseImageUrls(history.getImageUrl(), imageBaseUrl))
                 .purpose(history.getPurpose())
                 .additionalNotes(history.getAdditionalNotes())
                 .optionNames(optionNames)

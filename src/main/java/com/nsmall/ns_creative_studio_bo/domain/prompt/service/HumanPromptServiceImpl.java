@@ -21,6 +21,7 @@ import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +64,9 @@ public class HumanPromptServiceImpl implements HumanPromptService {
     private final GeminiService geminiService;
     private final ImageGenerationService imageGenerationService;
     private final ObjectMapper objectMapper;
+
+    @Value("${image.base-url}")
+    private String imageBaseUrl;
 
     @Override
     public List<HumanPromptStepRespDto> getSteps() {
@@ -164,7 +168,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         // 9. 응답 반환
         List<String> savedOptionNames = humanPromptHistoryOptionMapper.selectOptionNamesByHistoryId(history.getId());
-        return PromptHistoryRespDto.fromHuman(history, savedOptionNames);
+        return PromptHistoryRespDto.fromHuman(history, savedOptionNames, imageBaseUrl);
     }
 
     @Override
@@ -173,7 +177,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
         // 1. 이미지 3개 병렬 생성
         List<String> imageUrls = imageGenerationService.generateImages(promptText, 3);
 
-        // 2. 이력에 JSON 배열로 저장 (image_url 컬럼에 "[url1,url2,url3]" 형태)
+        // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
         if (historyId != null) {
             try {
                 String imageUrlsJson = objectMapper.writeValueAsString(imageUrls);
@@ -185,6 +189,9 @@ public class HumanPromptServiceImpl implements HumanPromptService {
             }
         }
 
-        return imageUrls;
+        // 3. 응답에는 절대 URL로 조립하여 반환
+        return imageUrls.stream()
+                .map(path -> imageBaseUrl + path)
+                .toList();
     }
 }
