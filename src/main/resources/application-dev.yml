@@ -12,3 +12,6 @@ spring:
 cors:
   allowed-origins:
     - https://nsm-dev-creative-fo.nsmall.com
+
+image:
+  base-url: https://nsm-dev-creative-bo.nsmall.com
