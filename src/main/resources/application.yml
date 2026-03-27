@@ -6,7 +6,18 @@ spring:
 
 logging:
   level:
+    # JDK 내부
+    jdk.internal.httpclient.debug: INFO
+    # DB / 커넥션 풀
+    org.postgresql.Driver: INFO
+    org.postgresql.jdbc.PgConnection: INFO
+    org.postgresql.core.v3.ConnectionFactoryImpl: INFO
+    com.zaxxer.hikari.pool.HikariPool: INFO
+    com.zaxxer.hikari.pool.PoolBase: INFO
+    # Tomcat HTTP 커넥터 내부 (요청 파싱, 커넥션 처리 등)
     org.apache.coyote.http11: INFO
+    # MyBatis 프레임워크 내부
+    org.mybatis.spring.SqlSessionUtils: INFO
 
 mybatis:
   config-location: classpath:mybatis-config.xml
