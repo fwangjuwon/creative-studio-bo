@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ chore/cors-local-profile 완료
-> 최종 업데이트: 2026-03-26 (CORS 설정, 이미지 URL 상대경로 저장, imageAspectRatio 지원, Dockerfile 추가 등 문서화)
+> 상태: ✅ fix/image-upload-validation 완료
+> 최종 업데이트: 2026-03-27 (참조 이미지 업로드 MIME 타입 / 파일 크기 서버 검증, multipart 설정, ExceptionHandler 추가)
 
 ---
 
@@ -12,6 +12,32 @@
 ---
 
 ## 완료
+
+### fix/image-upload-validation. 참조 이미지 업로드 서버 검증 추가
+
+> `POST /api/prompts/goods/generate-image`의 `referenceImage` 파라미터에 대해 서버 측 검증 추가.
+> 프론트엔드 검증만으로는 Content-Type 헤더 조작을 막을 수 없으므로 백엔드에서도 검증.
+
+#### 변경 사항
+- [x] `ImageGenerationErrorCode` — `UNSUPPORTED_IMAGE_TYPE` (IG005), `IMAGE_TOO_LARGE` (IG006) 추가
+- [x] `PromptServiceImpl` — 참조 이미지 검증 로직 추가 (getBytes() 호출 전 순서 보장)
+  - 파일 크기 10MB 초과 시 `IMAGE_TOO_LARGE` (IG006) 예외
+  - MIME 타입 null 시 `INVALID_IMAGE_MIME_TYPE` (IG004) 예외 (기존)
+  - MIME 타입 allowlist(jpeg/png/webp) 외 타입 시 `UNSUPPORTED_IMAGE_TYPE` (IG005) 예외
+- [x] `PromptController` — `@ApiResponse(400)` 설명에 MIME 타입 / 파일 크기 조건 추가
+- [x] `application.yml` — `spring.servlet.multipart.max-file-size/max-request-size: 10MB` 명시
+  - Spring Boot 기본값(1MB)과 코드 상의 10MB 제한 불일치 해소
+- [x] `GlobalExceptionHandler` — `MaxUploadSizeExceededException` 핸들러 추가 (400 반환)
+  - Spring이 multipart 제한을 먼저 차단할 때도 `CommonResponse` 형식으로 일관된 응답 보장
+
+#### 테스트
+- [x] `PromptServiceTest` — 참조 이미지 검증 실패 케이스 4개 추가
+  - `[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (text/plain)`
+  - `[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (application/x-sh)`
+  - `[예외] 상품 이미지 생성 - Content-Type null`
+  - `[예외] 상품 이미지 생성 - 파일 크기 10MB 초과`
+
+---
 
 ### chore/cors-local-profile. CorsConfig local 프로필 전용으로 제한
 

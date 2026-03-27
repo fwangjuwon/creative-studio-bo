@@ -7,6 +7,7 @@ import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.service.CategoryService;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
@@ -29,6 +30,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -39,6 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -513,5 +516,64 @@ public class PromptServiceTest {
         assertThat(result.items()).isEmpty();
         assertThat(result.hasPreviousPage()).isTrue();
         assertThat(result.hasNextPage()).isFalse();
+    }
+
+    // ================================================================
+    // 상품 이미지 생성 — 참조 이미지 검증
+    // ================================================================
+
+    @Test
+    @DisplayName("[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (text/plain)")
+    void 예외_상품_이미지_생성_허용되지않는_MIME타입() {
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(1024L);
+        given(file.getContentType()).willReturn("text/plain");
+
+        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
+    }
+
+    @Test
+    @DisplayName("[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (application/x-sh)")
+    void 예외_상품_이미지_생성_허용되지않는_MIME타입_sh() {
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(1024L);
+        given(file.getContentType()).willReturn("application/x-sh");
+
+        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
+    }
+
+    @Test
+    @DisplayName("[예외] 상품 이미지 생성 - Content-Type null")
+    void 예외_상품_이미지_생성_ContentType_null() {
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(1024L);
+        given(file.getContentType()).willReturn(null);
+
+        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE));
+    }
+
+    @Test
+    @DisplayName("[예외] 상품 이미지 생성 - 파일 크기 10MB 초과")
+    void 예외_상품_이미지_생성_파일크기_초과() {
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(11 * 1024 * 1024L); // 11MB
+
+        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.IMAGE_TOO_LARGE));
     }
 }

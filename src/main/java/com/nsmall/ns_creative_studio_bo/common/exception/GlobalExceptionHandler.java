@@ -17,6 +17,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
@@ -219,6 +220,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(CommonResponse.fail(HttpStatus.NOT_FOUND.value(), "요청한 리소스를 찾을 수 없습니다"));
+    }
+
+    /** 파일 업로드 크기 초과 (Spring multipart 제한) */
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<CommonResponse<Void>> handleMaxUploadSizeExceeded(
+            MaxUploadSizeExceededException e, HttpServletRequest request) {
+        log.warn("파일 업로드 크기 초과 [API: {} {}]: {}", request.getMethod(), request.getRequestURI(), e.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(CommonResponse.fail(HttpStatus.BAD_REQUEST.value(), "파일 크기가 허용 범위를 초과합니다. (최대 10MB)"));
     }
 
     /** 예상하지 못한 예외 (최종 방어선) */

@@ -17,7 +17,9 @@ public enum ImageGenerationErrorCode implements ErrorCode {
     EMPTY_IMAGE_RESPONSE("IG001", "Gemini 이미지 응답이 비어 있습니다.", 500),
     IMAGE_SAVE_FAILED("IG002", "이미지 저장에 실패했습니다.", 500),
     IMAGE_GENERATION_FAILED("IG003", "이미지 생성에 실패했습니다.", 500),
-    INVALID_IMAGE_MIME_TYPE("IG004", "참조 이미지의 Content-Type을 확인할 수 없습니다.", 400);
+    INVALID_IMAGE_MIME_TYPE("IG004", "참조 이미지의 Content-Type을 확인할 수 없습니다.", 400),
+    UNSUPPORTED_IMAGE_TYPE("IG005", "지원하지 않는 이미지 형식입니다. (jpeg, png, webp만 허용)", 400),
+    IMAGE_TOO_LARGE("IG006", "참조 이미지 크기가 허용 범위를 초과합니다. (최대 10MB)", 400);
 
     private final String code;
     private final String message;

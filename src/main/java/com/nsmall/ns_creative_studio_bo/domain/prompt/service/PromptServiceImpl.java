@@ -34,6 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
@@ -58,6 +59,10 @@ import java.util.stream.IntStream;
 public class PromptServiceImpl implements PromptService {
 
     private static final int IMAGE_GENERATE_COUNT = 3;
+    private static final long MAX_REFERENCE_IMAGE_BYTES = 10 * 1024 * 1024L; // 10MB
+    private static final Set<String> ALLOWED_IMAGE_MIME_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp"
+    );
 
     private final PromptHistoryMapper promptHistoryMapper;
     private final GoodsPromptHistoryTagMapper goodsPromptHistoryTagMapper;
@@ -189,11 +194,18 @@ public class PromptServiceImpl implements PromptService {
         List<String> imageUrls;
         if (referenceImage != null && !referenceImage.isEmpty()) {
             try {
-                byte[] imageBytes = referenceImage.getBytes();
+                if (referenceImage.getSize() > MAX_REFERENCE_IMAGE_BYTES) {
+                    throw new BizException(ImageGenerationErrorCode.IMAGE_TOO_LARGE);
+                }
                 String mimeType = referenceImage.getContentType();
                 if (mimeType == null) {
                     throw new BizException(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE);
                 }
+                if (!ALLOWED_IMAGE_MIME_TYPES.contains(mimeType)) {
+                    log.warn("허용되지 않은 MIME 타입 — mimeType={}", mimeType);
+                    throw new BizException(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE);
+                }
+                byte[] imageBytes = referenceImage.getBytes();
                 // 참조 이미지의 형태·비율·질감·색감을 보존하도록 지시문 앞에 추가
                 // 조명·구도는 promptText에 위임하여 이미지 다양성을 확보
                 String referenceGuidePrompt = "Use the provided reference image as the primary visual guide. "
