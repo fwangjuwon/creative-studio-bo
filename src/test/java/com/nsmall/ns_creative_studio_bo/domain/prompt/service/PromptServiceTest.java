@@ -99,16 +99,16 @@ public class PromptServiceTest {
 
     private CategoryRespDto SCS_카테고리_생성(String prefix) {
         CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name(prefix + "_대분류").categoryType(CategoryType.LCS).sortOrder(1).build());
+                .name(prefix + "_대분류").categoryType(CategoryType.LCS).sortOrder(1000).build());
         CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
                 .name(prefix + "_중분류").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
         return categoryService.createCategory(CategoryCreateReqDto.builder()
                 .name(prefix + "_소분류").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
     }
 
-    private TagRespDto 태그_생성(String tagGroupName, String tagName) {
+    private TagRespDto 태그_생성(String tagGroupName, String tagName, int groupSortOrder) {
         TagGroupRespDto group = tagGroupService.createTagGroup(TagGroupCreateReqDto.builder()
-                .name(tagGroupName).isMultiSelect(false).sortOrder(1).build());
+                .name(tagGroupName).isMultiSelect(false).sortOrder(groupSortOrder).build());
         return tagService.createTag(TagCreateReqDto.builder()
                 .tagGroupId(group.getId()).name(tagName).sortOrder(1).build());
     }
@@ -153,7 +153,7 @@ public class PromptServiceTest {
 
         UserRespDto user = 유저_생성("prompt_user_ok", "USER", "팀A", 3);
         CategoryRespDto scs = SCS_카테고리_생성("한도미만");
-        TagRespDto tag = 태그_생성("분위기_한도미만", "화사한");
+        TagRespDto tag = 태그_생성("분위기_한도미만", "화사한", 1000);
 
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())
@@ -201,7 +201,7 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("prompt_user_path", "USER", "팀A", 5);
 
         CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("식품").categoryType(CategoryType.LCS).sortOrder(1).build());
+                .name("식품").categoryType(CategoryType.LCS).sortOrder(1000).build());
         CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
                 .name("건강식품").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
         CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
@@ -283,7 +283,7 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("prompt_user_lcs", "USER", "팀D", 5);
 
         CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("SCS검증_대분류").categoryType(CategoryType.LCS).sortOrder(1).build());
+                .name("SCS검증_대분류").categoryType(CategoryType.LCS).sortOrder(1000).build());
 
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(lcs.getId())
@@ -351,7 +351,7 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("path_resp_user", "USER", "팀A", 5);
 
         CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("식품").categoryType(CategoryType.LCS).sortOrder(1).build());
+                .name("식품").categoryType(CategoryType.LCS).sortOrder(1000).build());
         CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
                 .name("건강식품").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
         CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
@@ -376,8 +376,8 @@ public class PromptServiceTest {
 
         UserRespDto user = 유저_생성("tagname_resp_user", "USER", "팀A", 5);
         CategoryRespDto scs = SCS_카테고리_생성("태그명응답");
-        TagRespDto tag1 = 태그_생성("분위기_태그명", "화사한");
-        TagRespDto tag2 = 태그_생성("인물_태그명", "여자");
+        TagRespDto tag1 = 태그_생성("분위기_태그명", "화사한", 1000);
+        TagRespDto tag2 = 태그_생성("인물_태그명", "여자", 1001);
 
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())
@@ -440,13 +440,13 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("hist_detail_user", "USER", "팀Detail", 10);
 
         CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("의류").categoryType(CategoryType.LCS).sortOrder(1).build());
+                .name("의류").categoryType(CategoryType.LCS).sortOrder(1000).build());
         CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
                 .name("상의").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
         CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
                 .name("반팔").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
 
-        TagRespDto tag = 태그_생성("배경_이력상세", "야외");
+        TagRespDto tag = 태그_생성("배경_이력상세", "야외", 1000);
 
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())

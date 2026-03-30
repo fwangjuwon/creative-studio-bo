@@ -55,7 +55,7 @@ public class TagServiceTest {
                 TagGroupCreateReqDto.builder()
                         .name(name)
                         .isMultiSelect(false)
-                        .sortOrder(1)
+                        .sortOrder(1000)
                         .build()
         );
     }
@@ -139,8 +139,9 @@ public class TagServiceTest {
     @DisplayName("[성공] 태그 목록 조회 - TagGroup별 필터링")
     void 성공_태그_목록_조회_그룹별() {
         TagGroupRespDto group = 태그그룹_생성("인물그룹");
-        tagService.createTag(태그_생성_DTO(group.getId(), "남자"));
-        tagService.createTag(태그_생성_DTO(group.getId(), "여자"));
+        tagService.createTag(태그_생성_DTO(group.getId(), "남자")); // sortOrder=1
+        tagService.createTag(TagCreateReqDto.builder()
+                .tagGroupId(group.getId()).name("여자").sortOrder(2).build());
 
         List<TagRespDto> result = tagService.getTags(group.getId());
 
@@ -153,10 +154,12 @@ public class TagServiceTest {
     @Rollback
     @DisplayName("[성공] 태그 목록 조회 - 전체 (tagGroupId null)")
     void 성공_태그_목록_조회_전체() {
-        TagGroupRespDto group1 = 태그그룹_생성("인물전체조회");
-        TagGroupRespDto group2 = 태그그룹_생성("분위기전체조회");
-        tagService.createTag(태그_생성_DTO(group1.getId(), "남자"));
-        tagService.createTag(태그_생성_DTO(group2.getId(), "화사한"));
+        TagGroupRespDto group1 = tagGroupService.createTagGroup(
+                TagGroupCreateReqDto.builder().name("인물전체조회").isMultiSelect(false).sortOrder(1000).build());
+        TagGroupRespDto group2 = tagGroupService.createTagGroup(
+                TagGroupCreateReqDto.builder().name("분위기전체조회").isMultiSelect(false).sortOrder(1001).build());
+        tagService.createTag(태그_생성_DTO(group1.getId(), "남자")); // sortOrder=1 (group1 스코프)
+        tagService.createTag(태그_생성_DTO(group2.getId(), "화사한")); // sortOrder=1 (group2 스코프 — 다른 스코프 허용)
 
         List<TagRespDto> result = tagService.getTags(null);
 
@@ -169,10 +172,12 @@ public class TagServiceTest {
     @Rollback
     @DisplayName("[성공] 태그 목록 조회 - 다른 그룹 태그가 섞이지 않음")
     void 성공_태그_목록_조회_그룹_격리() {
-        TagGroupRespDto groupA = 태그그룹_생성("그룹A격리");
-        TagGroupRespDto groupB = 태그그룹_생성("그룹B격리");
-        tagService.createTag(태그_생성_DTO(groupA.getId(), "그룹A태그"));
-        tagService.createTag(태그_생성_DTO(groupB.getId(), "그룹B태그"));
+        TagGroupRespDto groupA = tagGroupService.createTagGroup(
+                TagGroupCreateReqDto.builder().name("그룹A격리").isMultiSelect(false).sortOrder(1000).build());
+        TagGroupRespDto groupB = tagGroupService.createTagGroup(
+                TagGroupCreateReqDto.builder().name("그룹B격리").isMultiSelect(false).sortOrder(1001).build());
+        tagService.createTag(태그_생성_DTO(groupA.getId(), "그룹A태그")); // sortOrder=1 (groupA 스코프)
+        tagService.createTag(태그_생성_DTO(groupB.getId(), "그룹B태그")); // sortOrder=1 (groupB 스코프 — 다른 스코프 허용)
 
         List<TagRespDto> resultA = tagService.getTags(groupA.getId());
 
@@ -213,6 +218,87 @@ public class TagServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(TagErrorCode.TAG_NOT_FOUND));
+    }
+
+    // ============================================================
+    // Tag sortOrder 중복 검증
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 생성 - sortOrder 중복 (같은 TagGroup 스코프)")
+    void 예외_태그_생성_sortOrder_중복() {
+        TagGroupRespDto group = 태그그룹_생성("중복테스트그룹");
+        tagService.createTag(태그_생성_DTO(group.getId(), "태그A")); // sortOrder=1
+
+        TagCreateReqDto dto = TagCreateReqDto.builder()
+                .tagGroupId(group.getId())
+                .name("태그B")
+                .sortOrder(1)
+                .build();
+
+        assertThatThrownBy(() -> tagService.createTag(dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagErrorCode.DUPLICATE_SORT_ORDER));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 수정 - sortOrder 중복")
+    void 예외_태그_수정_sortOrder_중복() {
+        TagGroupRespDto group = 태그그룹_생성("수정중복테스트그룹");
+        tagService.createTag(태그_생성_DTO(group.getId(), "태그A")); // sortOrder=1
+        TagRespDto tagB = tagService.createTag(TagCreateReqDto.builder()
+                .tagGroupId(group.getId()).name("태그B").sortOrder(2).build());
+
+        TagUpdateReqDto updateDto = TagUpdateReqDto.builder()
+                .name("태그B수정")
+                .sortOrder(1) // 태그A의 sortOrder와 중복
+                .build();
+
+        assertThatThrownBy(() -> tagService.updateTag(tagB.getId(), updateDto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagErrorCode.DUPLICATE_SORT_ORDER));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 수정 - 자신의 sortOrder로 수정 (중복 허용)")
+    void 성공_태그_수정_자신의_sortOrder() {
+        TagGroupRespDto group = 태그그룹_생성("자신sortOrder테스트그룹");
+        TagRespDto tag = tagService.createTag(태그_생성_DTO(group.getId(), "태그A")); // sortOrder=1
+
+        TagUpdateReqDto updateDto = TagUpdateReqDto.builder()
+                .name("태그A수정")
+                .sortOrder(1)
+                .build();
+
+        TagRespDto updated = tagService.updateTag(tag.getId(), updateDto);
+
+        assertThat(updated.getName()).isEqualTo("태그A수정");
+        assertThat(updated.getSortOrder()).isEqualTo(1);
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 생성 - 다른 TagGroup에 같은 sortOrder 허용")
+    void 성공_태그_생성_다른그룹_같은_sortOrder() {
+        TagGroupRespDto group1 = tagGroupService.createTagGroup(
+                TagGroupCreateReqDto.builder().name("다른그룹허용1").isMultiSelect(false).sortOrder(1000).build());
+        TagGroupRespDto group2 = tagGroupService.createTagGroup(
+                TagGroupCreateReqDto.builder().name("다른그룹허용2").isMultiSelect(false).sortOrder(1001).build());
+
+        tagService.createTag(태그_생성_DTO(group1.getId(), "그룹1태그")); // sortOrder=1
+        TagRespDto result = tagService.createTag(태그_생성_DTO(group2.getId(), "그룹2태그")); // sortOrder=1 (다른 그룹)
+
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getSortOrder()).isEqualTo(1);
     }
 
     // ============================================================

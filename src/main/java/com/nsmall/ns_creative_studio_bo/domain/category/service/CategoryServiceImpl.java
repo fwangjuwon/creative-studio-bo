@@ -63,6 +63,12 @@ public class CategoryServiceImpl implements CategoryService {
             }
         }
 
+        if (dto.getSortOrder() != null
+                && categoryMapper.existsBySortOrder(dto.getParentId(), dto.getSortOrder())) {
+            throw new BizException(CategoryErrorCode.DUPLICATE_SORT_ORDER,
+                    "동일 위치에 정렬순서 " + dto.getSortOrder() + "이(가) 이미 존재합니다.");
+        }
+
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
@@ -98,9 +104,15 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryRespDto updateCategory(Long id, CategoryUpdateReqDto dto) {
-        categoryMapper.selectById(id)
+        Category existing = categoryMapper.selectById(id)
                 .orElseThrow(() -> new BizException(CategoryErrorCode.CATEGORY_NOT_FOUND,
                         "카테고리를 찾을 수 없습니다. id=" + id));
+
+        if (dto.getSortOrder() != null
+                && categoryMapper.existsBySortOrderExcludingId(id, existing.getParentId(), dto.getSortOrder())) {
+            throw new BizException(CategoryErrorCode.DUPLICATE_SORT_ORDER,
+                    "동일 위치에 정렬순서 " + dto.getSortOrder() + "이(가) 이미 존재합니다.");
+        }
 
         String requesterId = SecurityUtil.getCurrentLoginId();
 

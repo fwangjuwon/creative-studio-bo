@@ -37,6 +37,12 @@ public class TagServiceImpl implements TagService {
                 .orElseThrow(() -> new BizException(TagErrorCode.TAG_GROUP_NOT_FOUND,
                         "태그 그룹을 찾을 수 없습니다. tagGroupId=" + dto.getTagGroupId()));
 
+        if (dto.getSortOrder() != null
+                && tagMapper.existsBySortOrder(dto.getTagGroupId(), dto.getSortOrder())) {
+            throw new BizException(TagErrorCode.DUPLICATE_SORT_ORDER,
+                    "동일 그룹 내에 정렬순서 " + dto.getSortOrder() + "이(가) 이미 존재합니다.");
+        }
+
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
@@ -71,9 +77,15 @@ public class TagServiceImpl implements TagService {
 
     @Override
     public TagRespDto updateTag(Long id, TagUpdateReqDto dto) {
-        tagMapper.selectById(id)
+        Tag existing = tagMapper.selectById(id)
                 .orElseThrow(() -> new BizException(TagErrorCode.TAG_NOT_FOUND,
                         "태그를 찾을 수 없습니다. id=" + id));
+
+        if (dto.getSortOrder() != null
+                && tagMapper.existsBySortOrderExcludingId(id, existing.getTagGroupId(), dto.getSortOrder())) {
+            throw new BizException(TagErrorCode.DUPLICATE_SORT_ORDER,
+                    "동일 그룹 내에 정렬순서 " + dto.getSortOrder() + "이(가) 이미 존재합니다.");
+        }
 
         String requesterId = SecurityUtil.getCurrentLoginId();
 

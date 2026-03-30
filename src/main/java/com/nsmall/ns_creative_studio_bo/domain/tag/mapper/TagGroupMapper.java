@@ -25,4 +25,10 @@ public interface TagGroupMapper {
     void update(TagGroup tagGroup);
 
     void deleteById(@Param("id") Long id);
+
+    /** 전체 스코프에서 sortOrder 중복 여부 확인 */
+    boolean existsBySortOrder(@Param("sortOrder") Integer sortOrder);
+
+    /** 전체 스코프에서 자신(id)을 제외한 sortOrder 중복 여부 확인 — 수정 시 사용 */
+    boolean existsBySortOrderExcludingId(@Param("id") Long id, @Param("sortOrder") Integer sortOrder);
 }

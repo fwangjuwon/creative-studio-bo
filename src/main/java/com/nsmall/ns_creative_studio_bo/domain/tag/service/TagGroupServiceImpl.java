@@ -31,13 +31,19 @@ public class TagGroupServiceImpl implements TagGroupService {
 
     @Override
     public TagGroupRespDto createTagGroup(TagGroupCreateReqDto dto) {
+        if (dto.getSortOrder() != null
+                && tagGroupMapper.existsBySortOrder(dto.getSortOrder())) {
+            throw new BizException(TagGroupErrorCode.DUPLICATE_SORT_ORDER,
+                    "이미 정렬순서 " + dto.getSortOrder() + "을(를) 가진 태그 그룹이 존재합니다.");
+        }
+
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
         TagGroup tagGroup = TagGroup.builder()
                 .name(dto.getName())
                 .isMultiSelect(dto.getIsMultiSelect())
-                .sortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0)
+                .sortOrder(dto.getSortOrder())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -69,13 +75,19 @@ public class TagGroupServiceImpl implements TagGroupService {
                 .orElseThrow(() -> new BizException(TagGroupErrorCode.TAG_GROUP_NOT_FOUND,
                         "태그 그룹을 찾을 수 없습니다. id=" + id));
 
+        if (dto.getSortOrder() != null
+                && tagGroupMapper.existsBySortOrderExcludingId(id, dto.getSortOrder())) {
+            throw new BizException(TagGroupErrorCode.DUPLICATE_SORT_ORDER,
+                    "이미 정렬순서 " + dto.getSortOrder() + "을(를) 가진 태그 그룹이 존재합니다.");
+        }
+
         String requesterId = SecurityUtil.getCurrentLoginId();
 
         TagGroup updated = TagGroup.builder()
                 .id(id)
                 .name(dto.getName())
                 .isMultiSelect(dto.getIsMultiSelect())
-                .sortOrder(dto.getSortOrder() != null ? dto.getSortOrder() : 0)
+                .sortOrder(dto.getSortOrder())
                 .finalRvisPic(requesterId)
                 .finalRvisDttm(LocalDateTime.now())
                 .build();
