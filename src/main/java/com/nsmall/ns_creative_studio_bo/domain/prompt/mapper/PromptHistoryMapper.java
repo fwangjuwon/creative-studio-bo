@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.mapper;
 
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,7 +21,7 @@ public interface PromptHistoryMapper {
 
     Optional<PromptHistory> selectById(@Param("id") Long id);
 
-    List<PromptHistory> selectList();
+    List<PromptHistory> selectList(PromptHistorySearchReqDto dto);
 
     /**
      * 오늘 날짜 기준 해당 유저의 프롬프트 생성 횟수 조회 (일일 한도 체크용)

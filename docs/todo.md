@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ fix/image-upload-validation 완료
-> 최종 업데이트: 2026-03-27 (참조 이미지 업로드 MIME 타입 / 파일 크기 서버 검증, multipart 설정, ExceptionHandler 추가)
+> 상태: ✅ feat/prompt-history-filter 완료
+> 최종 업데이트: 2026-03-30 (프롬프트 이력 조회 검색 필터 추가 — loginId / promptType / promptStyle / 생성일 범위)
 
 ---
 
@@ -12,6 +12,41 @@
 ---
 
 ## 완료
+
+### feat/prompt-history-filter. 프롬프트 이력 조회 검색 필터 추가
+
+> `GET /api/prompts` 이력 조회에 조건 기반 필터링 추가.
+> 기존에는 전체 이력을 페이징만 제공하였으며, 이번 작업으로 아래 조건으로 필터링 가능.
+> 모든 필터 조건은 선택 사항 — null이면 전체 조회와 동일.
+
+#### 변경 사항
+
+- [x] `PromptHistorySearchReqDto` 신규 생성 (`PageReqDto` extend, 검색 조건 통합)
+  - `loginId` : 생성자 필터 (`init_regi_pic` 컬럼 직접 비교, JOIN 없음)
+  - `promptType` : 상품/인물 구분 (`PRODUCT` | `PERSON`)
+  - `promptStyle` : 프롬프트 스타일 (`NANO_BANANA` | `MID_JOURNEY`)
+  - `dateFrom` / `dateTo` : 생성일 범위 (포함)
+- [x] `PromptHistoryMapper` — `selectList()` → `selectList(PromptHistorySearchReqDto dto)` 시그니처 변경
+- [x] `PromptHistoryMapper.xml` — `<where>` + `<if>` 동적 SQL 추가 (인라인 CDATA 처리)
+- [x] `PromptService` — `getPromptHistories(PageReqDto)` → `getPromptHistories(PromptHistorySearchReqDto)` 시그니처 변경
+- [x] `PromptServiceImpl` — `pagedQuery` 호출 방식 변경 (람다로 dto 전달)
+- [x] `PromptController` — 파라미터 타입 변경, `@Operation` description 업데이트
+
+#### 테스트
+
+- [x] `PromptServiceTest` — 기존 `getPromptHistories(new PageReqDto(...))` 호출 전체 수정
+- [x] `PromptServiceTest` — 필터 신규 케이스 8개 추가
+  - `[성공] 히스토리 조회 - loginId 필터`
+  - `[성공] 히스토리 조회 - promptType PRODUCT 필터`
+  - `[성공] 히스토리 조회 - promptType PERSON 필터`
+  - `[성공] 히스토리 조회 - promptStyle MID_JOURNEY 필터`
+  - `[성공] 히스토리 조회 - 날짜 범위 필터 (오늘 날짜 포함)`
+  - `[성공] 히스토리 조회 - 날짜 범위 필터 (미래 날짜 → 빈 결과)`
+  - `[성공] 히스토리 조회 - 복합 필터 (loginId + promptType + promptStyle)`
+  - `[없음] 히스토리 조회 - 존재하지 않는 loginId 조건`
+- [x] `HumanPromptServiceTest` — `getPromptHistories(new PageReqDto(...))` 호출 수정
+
+---
 
 ### fix/image-upload-validation. 참조 이미지 업로드 서버 검증 추가
 

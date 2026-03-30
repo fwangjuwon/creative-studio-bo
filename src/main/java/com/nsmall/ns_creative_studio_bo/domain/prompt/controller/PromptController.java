@@ -1,10 +1,10 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
-import com.nsmall.ns_creative_studio_bo.common.page.PageReqDto;
 import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.ImageGenerateRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.PromptService;
@@ -78,7 +78,11 @@ public class PromptController {
 
     @Operation(
             summary = "프롬프트 히스토리 조회",
-            description = "Role 구분 없이 전체 히스토리를 페이지 단위로 조회한다. " +
+            description = "Role 구분 없이 전체 히스토리를 검색 조건 + 페이지 단위로 조회한다. " +
+                          "모든 검색 조건은 선택 사항(null이면 전체 조회). " +
+                          "loginId: 생성자 필터, promptType: PRODUCT|PERSON, " +
+                          "promptStyle: NANO_BANANA|MID_JOURNEY, " +
+                          "dateFrom/dateTo: 생성일 범위(포함). " +
                           "pageNum(기본 1), pageSize(기본 10). 정렬 기준: 등록일시 내림차순.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
@@ -87,7 +91,7 @@ public class PromptController {
     @PreAuthorize("hasRole('USER')")
     @GetMapping
     public CommonResponse<PageRespDto<PromptHistoryRespDto>> getPromptHistories(
-            @ModelAttribute @Valid PageReqDto pageReqDto) {
-        return CommonResponse.success(promptService.getPromptHistories(pageReqDto));
+            @ModelAttribute @Valid PromptHistorySearchReqDto searchReqDto) {
+        return CommonResponse.success(promptService.getPromptHistories(searchReqDto));
     }
 }

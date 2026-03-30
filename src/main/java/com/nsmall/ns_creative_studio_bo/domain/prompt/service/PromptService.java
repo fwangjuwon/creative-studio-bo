@@ -1,8 +1,8 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
-import com.nsmall.ns_creative_studio_bo.common.page.PageReqDto;
 import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,12 +31,12 @@ public interface PromptService {
     PromptHistoryRespDto createGoodsPrompt(Long currentUserId, GoodsPromptCreateReqDto dto);
 
     /**
-     * 프롬프트 히스토리 전체 목록을 페이지 단위로 조회한다. Role 구분 없이 동일한 결과를 반환한다.
+     * 프롬프트 히스토리 목록을 검색 조건과 페이지 단위로 조회한다. Role 구분 없이 동일한 결과를 반환한다.
      *
-     * @param pageReqDto 페이징 요청 (pageNum 기본 1, pageSize 기본 10)
+     * @param searchReqDto 검색 + 페이징 요청 (loginId, promptType, promptStyle, dateFrom, dateTo, pageNum, pageSize)
      * @return 페이징 처리된 프롬프트 히스토리 응답
      */
-    PageRespDto<PromptHistoryRespDto> getPromptHistories(PageReqDto pageReqDto);
+    PageRespDto<PromptHistoryRespDto> getPromptHistories(PromptHistorySearchReqDto searchReqDto);
 
     /**
      * NanoBanana 이미지를 3개 병렬 생성하고 URL 목록을 이력에 저장한다.
