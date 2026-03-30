@@ -8,7 +8,7 @@
             name,
             category_type,
             parent_id,
-            sort_order,
+            <if test="sortOrder != null">sort_order,</if>
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -17,7 +17,7 @@
             #{name},
             #{categoryType},
             #{parentId},
-            #{sortOrder},
+            <if test="sortOrder != null">#{sortOrder},</if>
             #{initRegiPic},
             #{initRegiDttm},
             #{finalRvisPic},
@@ -85,6 +85,37 @@
     <select id="existsByParentId" resultType="boolean">
         SELECT EXISTS (
             SELECT 1 FROM category WHERE parent_id = #{parentId}
+        )
+    </select>
+
+    <select id="existsBySortOrder" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM category
+            WHERE sort_order = #{sortOrder}
+            <choose>
+                <when test="parentId == null">
+                    AND parent_id IS NULL
+                </when>
+                <otherwise>
+                    AND parent_id = #{parentId}
+                </otherwise>
+            </choose>
+        )
+    </select>
+
+    <select id="existsBySortOrderExcludingId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM category
+            WHERE sort_order = #{sortOrder}
+              AND id <![CDATA[ <> ]]> #{id}
+            <choose>
+                <when test="parentId == null">
+                    AND parent_id IS NULL
+                </when>
+                <otherwise>
+                    AND parent_id = #{parentId}
+                </otherwise>
+            </choose>
         )
     </select>
 

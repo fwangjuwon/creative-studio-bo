@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ fix/image-upload-validation 완료
-> 최종 업데이트: 2026-03-27 (참조 이미지 업로드 MIME 타입 / 파일 크기 서버 검증, multipart 설정, ExceptionHandler 추가)
+> 상태: ✅ fix/sort-order-duplicate-validation 완료
+> 최종 업데이트: 2026-03-30 (카테고리/태그 정렬순서 동일 스코프 내 중복 검증 추가)
 
 ---
 
@@ -12,6 +12,39 @@
 ---
 
 ## 완료
+
+### fix/sort-order-duplicate-validation. 카테고리/태그 정렬순서 중복 검증 추가
+
+> `sort_order`는 동일 스코프(같은 부모 카테고리 / 같은 TagGroup) 내에서 중복 불가.
+> 다른 스코프에서는 동일 `sort_order` 허용. 기존 코드에 중복 검증 로직이 누락되어 있었음.
+
+#### 추가된 ErrorCode
+- [x] `CategoryErrorCode.DUPLICATE_SORT_ORDER` (C006) — 동일 부모(parent_id) 스코프 내 중복
+- [x] `TagGroupErrorCode.DUPLICATE_SORT_ORDER` (TG003) — 전역 스코프 내 중복
+- [x] `TagErrorCode.DUPLICATE_SORT_ORDER` (T004) — 동일 tag_group_id 스코프 내 중복
+
+#### Mapper 인터페이스 + XML
+- [x] `CategoryMapper` — `existsBySortOrder(parentId, sortOrder)`, `existsBySortOrderExcludingId(id, parentId, sortOrder)` 추가
+- [x] `TagGroupMapper` — `existsBySortOrder(sortOrder)`, `existsBySortOrderExcludingId(id, sortOrder)` 추가
+- [x] `TagMapper` — `existsBySortOrder(tagGroupId, sortOrder)`, `existsBySortOrderExcludingId(id, tagGroupId, sortOrder)` 추가
+- [x] `CategoryMapper.xml` / `TagGroupMapper.xml` / `TagMapper.xml` — INSERT `sort_order` null 시 컬럼 제외 (`<if test="sortOrder != null">`) → DB `DEFAULT 0` 활용
+
+#### Service
+- [x] `CategoryServiceImpl.createCategory` / `updateCategory` — 중복 검증 추가
+- [x] `TagGroupServiceImpl.createTagGroup` / `updateTagGroup` — 중복 검증 추가
+- [x] `TagServiceImpl.createTag` / `updateTag` — 중복 검증 추가
+
+#### 테스트
+- [x] `CategoryServiceTest` — sortOrder 중복 예외 3케이스, 자신의 sortOrder 수정 허용, null 다수 허용
+- [x] `TagGroupServiceTest` — sortOrder 중복 예외 2케이스, 자신의 sortOrder 수정 허용
+- [x] `TagServiceTest` — sortOrder 중복 예외 2케이스, 자신의 sortOrder 수정 허용, 다른 그룹 동일 sortOrder 허용
+- [x] 기존 테스트 픽스처 sort_order 1000+ 범위로 변경 (시드 데이터 1~4, 99와 충돌 방지)
+  - `CategoryServiceTest`, `TagGroupServiceTest`, `TagServiceTest`, `PromptServiceTest`
+
+#### 문서
+- [x] `docs/requirements.md` — Category / TagGroup / Tag `sort_order` 컬럼에 스코프 제약 설명 추가
+
+---
 
 ### fix/image-upload-validation. 참조 이미지 업로드 서버 검증 추가
 

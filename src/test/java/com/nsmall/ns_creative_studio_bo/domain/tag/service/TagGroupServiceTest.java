@@ -42,7 +42,7 @@ public class TagGroupServiceTest {
         return TagGroupCreateReqDto.builder()
                 .name(name)
                 .isMultiSelect(false)
-                .sortOrder(1)
+                .sortOrder(1000)
                 .build();
     }
 
@@ -50,7 +50,7 @@ public class TagGroupServiceTest {
         return TagGroupCreateReqDto.builder()
                 .name(name)
                 .isMultiSelect(true)
-                .sortOrder(2)
+                .sortOrder(1001)
                 .build();
     }
 
@@ -70,7 +70,7 @@ public class TagGroupServiceTest {
         TagGroupCreateReqDto dto = TagGroupCreateReqDto.builder()
                 .name(name)
                 .isMultiSelect(isMultiSelect)
-                .sortOrder(1)
+                .sortOrder(1000)
                 .build();
 
         TagGroupRespDto result = tagGroupService.createTagGroup(dto);
@@ -139,14 +139,14 @@ public class TagGroupServiceTest {
         TagGroupUpdateReqDto updateDto = TagGroupUpdateReqDto.builder()
                 .name("수정후그룹")
                 .isMultiSelect(true)
-                .sortOrder(99)
+                .sortOrder(1999)
                 .build();
 
         TagGroupRespDto updated = tagGroupService.updateTagGroup(created.getId(), updateDto);
 
         assertThat(updated.getName()).isEqualTo("수정후그룹");
         assertThat(updated.getIsMultiSelect()).isTrue();
-        assertThat(updated.getSortOrder()).isEqualTo(99);
+        assertThat(updated.getSortOrder()).isEqualTo(1999);
     }
 
     @Test
@@ -158,6 +158,68 @@ public class TagGroupServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(TagGroupErrorCode.TAG_GROUP_NOT_FOUND));
+    }
+
+    // ============================================================
+    // TagGroup sortOrder 중복 검증
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 그룹 생성 - sortOrder 중복")
+    void 예외_태그그룹_생성_sortOrder_중복() {
+        tagGroupService.createTagGroup(단일선택_그룹_DTO("그룹A")); // sortOrder=1000
+
+        TagGroupCreateReqDto dto = TagGroupCreateReqDto.builder()
+                .name("그룹B")
+                .isMultiSelect(false)
+                .sortOrder(1000)
+                .build();
+
+        assertThatThrownBy(() -> tagGroupService.createTagGroup(dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagGroupErrorCode.DUPLICATE_SORT_ORDER));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 그룹 수정 - sortOrder 중복")
+    void 예외_태그그룹_수정_sortOrder_중복() {
+        tagGroupService.createTagGroup(단일선택_그룹_DTO("그룹A")); // sortOrder=1000
+        TagGroupRespDto groupB = tagGroupService.createTagGroup(복수선택_그룹_DTO("그룹B")); // sortOrder=1001
+
+        TagGroupUpdateReqDto updateDto = TagGroupUpdateReqDto.builder()
+                .name("그룹B수정")
+                .isMultiSelect(false)
+                .sortOrder(1000) // 그룹A와 중복
+                .build();
+
+        assertThatThrownBy(() -> tagGroupService.updateTagGroup(groupB.getId(), updateDto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagGroupErrorCode.DUPLICATE_SORT_ORDER));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 그룹 수정 - 자신의 sortOrder로 수정 (중복 허용)")
+    void 성공_태그그룹_수정_자신의_sortOrder() {
+        TagGroupRespDto created = tagGroupService.createTagGroup(단일선택_그룹_DTO("그룹A")); // sortOrder=1000
+
+        TagGroupUpdateReqDto updateDto = TagGroupUpdateReqDto.builder()
+                .name("그룹A수정")
+                .isMultiSelect(false)
+                .sortOrder(1000)
+                .build();
+
+        TagGroupRespDto updated = tagGroupService.updateTagGroup(created.getId(), updateDto);
+
+        assertThat(updated.getName()).isEqualTo("그룹A수정");
+        assertThat(updated.getSortOrder()).isEqualTo(1000);
     }
 
     // ============================================================

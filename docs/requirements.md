@@ -234,7 +234,7 @@ Category
   - name              VARCHAR
   - category_type     VARCHAR  (LCS=대분류 / MCS=중분류 / SCS=소분류)
   - parent_id         BIGINT   (self-reference, nullable → LCS는 null)
-  - sort_order        INT
+  - sort_order        INT      (동일 부모(parent_id) 스코프 내 중복 불가, null 허용 시 DB DEFAULT 0)
   - init_regi_pic     VARCHAR
   - init_regi_dttm    TIMESTAMP
   - final_rvis_pic    VARCHAR
@@ -244,7 +244,7 @@ TagGroup (태그 그룹)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - name              VARCHAR  (ex: 인물, 분위기)
   - is_multi_select   BOOLEAN  (복수 선택 가능 여부)
-  - sort_order        INT
+  - sort_order        INT      (전역 스코프 내 중복 불가, null 허용 시 DB DEFAULT 0)
   - init_regi_pic     VARCHAR
   - init_regi_dttm    TIMESTAMP
   - final_rvis_pic    VARCHAR
@@ -254,7 +254,7 @@ Tag (태그 값)
   - id                BIGINT GENERATED ALWAYS AS IDENTITY (PK)
   - tag_group_id      BIGINT   (논리 FK → TagGroup, 제약 없음)
   - name              VARCHAR  (ex: 남자, 여자, 화사한)
-  - sort_order        INT
+  - sort_order        INT      (동일 tag_group_id 스코프 내 중복 불가, null 허용 시 DB DEFAULT 0)
   - init_regi_pic     VARCHAR
   - init_regi_dttm    TIMESTAMP
   - final_rvis_pic    VARCHAR
