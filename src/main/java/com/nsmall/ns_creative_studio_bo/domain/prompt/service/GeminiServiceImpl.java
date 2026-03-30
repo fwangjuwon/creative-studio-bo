@@ -94,11 +94,15 @@ public class GeminiServiceImpl implements GeminiService {
             following this exact structure:
 
             1. SUBJECT — Number of people, age aesthetic, gender presentation, pose, and facial expression:
-               - If group (Couple / Family portrait / Small group): describe ALL subjects together,
-                 their relationship and interaction (e.g. "A Korean family of four — parents in their 30s
-                 with two young children — laughing together")
-               - If solo: "A [age aesthetic] [gender presentation] [pose] [expression]"
-               Always use the exact group/count specified — never default to a single person.
+               - "Couple" = EXACTLY 2 people (e.g. "A couple in their late 20s — a man and a woman —
+                 standing close together, smiling warmly")
+               - "Family portrait" = parents + children, describe ALL members
+                 (e.g. "A Korean family of four — parents in their 30s with two young children —
+                 laughing together")
+               - "Small group" = 3–5 people, describe the group dynamic
+               - Solo = single person: "A [age aesthetic] [gender presentation] [pose] [expression]"
+               CRITICAL: Use the EXACT count implied by the group type — Couple is always 2 people,
+               never add children or extra members unless "Family portrait" is specified.
 
             2. WARDROBE & STYLING — Clothing details, accessories, hair style and color:
                Describe specific fabrics, fits, colors, and hair characteristics
@@ -147,9 +151,11 @@ public class GeminiServiceImpl implements GeminiService {
             as a flat comma-separated keyword list following this order:
 
             1. SUBJECT — number of people, age, gender, and key physical traits:
-               - If group (Couple / Family portrait / Small group): list ALL subjects (e.g. "Korean family of four, parents early 30s, two young children")
-               - If solo: age, gender, key traits (e.g. "young Korean woman, early 20s")
-               Always use the exact group/count specified — never default to a single person.
+               - "Couple" = EXACTLY 2 people (e.g. "couple, man and woman, late 20s")
+               - "Family portrait" = parents + children, list ALL (e.g. "Korean family of four, parents 30s, two young children")
+               - "Small group" = 3–5 people (e.g. "three friends, mixed gender, mid 20s")
+               - Solo = single person (e.g. "young Korean woman, early 20s")
+               CRITICAL: Couple is always 2 people — never add children or extra members.
             2. POSE & EXPRESSION — (e.g. "standing relaxed, confident smile")
             3. WARDROBE & HAIR — key clothing and hair descriptors (e.g. "white linen blouse, wavy black hair")
             4. SETTING — background keywords (e.g. "sunlit studio, clean white seamless backdrop")
