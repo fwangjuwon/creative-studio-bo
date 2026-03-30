@@ -47,7 +47,7 @@ public class CategoryServiceTest {
                 .name(name)
                 .categoryType(CategoryType.LCS)
                 .parentId(null)
-                .sortOrder(1)
+                .sortOrder(1000)
                 .build();
     }
 
@@ -56,7 +56,7 @@ public class CategoryServiceTest {
                 .name(name)
                 .categoryType(categoryType)
                 .parentId(parentId)
-                .sortOrder(1)
+                .sortOrder(1000)
                 .build();
     }
 
@@ -204,8 +204,9 @@ public class CategoryServiceTest {
     @Rollback
     @DisplayName("[성공] 카테고리 목록 조회 - LCS 전체 목록 (parentId null)")
     void 성공_카테고리_목록_조회_LCS_전체() {
-        categoryService.createCategory(LCS_생성_DTO("대분류A"));
-        categoryService.createCategory(LCS_생성_DTO("대분류B"));
+        categoryService.createCategory(LCS_생성_DTO("대분류A")); // sortOrder=1000
+        categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("대분류B").categoryType(CategoryType.LCS).parentId(null).sortOrder(1001).build());
 
         List<CategoryRespDto> result = categoryService.getCategories(null);
 
@@ -220,8 +221,9 @@ public class CategoryServiceTest {
     @DisplayName("[성공] 카테고리 목록 조회 - 하위 카테고리 (parentId 지정)")
     void 성공_카테고리_목록_조회_하위() {
         CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("드릴다운대분류"));
-        categoryService.createCategory(하위_생성_DTO("중분류A", CategoryType.MCS, lcs.getId()));
-        categoryService.createCategory(하위_생성_DTO("중분류B", CategoryType.MCS, lcs.getId()));
+        categoryService.createCategory(하위_생성_DTO("중분류A", CategoryType.MCS, lcs.getId())); // sortOrder=1000
+        categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("중분류B").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1001).build());
 
         List<CategoryRespDto> result = categoryService.getCategories(lcs.getId());
 
@@ -282,6 +284,106 @@ public class CategoryServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(CategoryErrorCode.CATEGORY_NOT_FOUND));
+    }
+
+    // ============================================================
+    // 카테고리 sortOrder 중복 검증
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 카테고리 생성 - sortOrder 중복 (LCS 스코프)")
+    void 예외_카테고리_생성_sortOrder_중복_LCS() {
+        categoryService.createCategory(LCS_생성_DTO("대분류A")); // sortOrder=1000
+
+        CategoryCreateReqDto dto = CategoryCreateReqDto.builder()
+                .name("대분류B")
+                .categoryType(CategoryType.LCS)
+                .parentId(null)
+                .sortOrder(1000)
+                .build();
+
+        assertThatThrownBy(() -> categoryService.createCategory(dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(CategoryErrorCode.DUPLICATE_SORT_ORDER));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 카테고리 생성 - sortOrder 중복 (하위 카테고리 스코프)")
+    void 예외_카테고리_생성_sortOrder_중복_하위() {
+        CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("대분류"));
+        categoryService.createCategory(하위_생성_DTO("중분류A", CategoryType.MCS, lcs.getId())); // sortOrder=1000
+
+        CategoryCreateReqDto dto = CategoryCreateReqDto.builder()
+                .name("중분류B")
+                .categoryType(CategoryType.MCS)
+                .parentId(lcs.getId())
+                .sortOrder(1000)
+                .build();
+
+        assertThatThrownBy(() -> categoryService.createCategory(dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(CategoryErrorCode.DUPLICATE_SORT_ORDER));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 카테고리 수정 - sortOrder 중복")
+    void 예외_카테고리_수정_sortOrder_중복() {
+        categoryService.createCategory(LCS_생성_DTO("대분류A")); // sortOrder=1000
+        CategoryRespDto second = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("대분류B").categoryType(CategoryType.LCS).parentId(null).sortOrder(1001).build());
+
+        CategoryUpdateReqDto updateDto = CategoryUpdateReqDto.builder()
+                .name("대분류B수정")
+                .sortOrder(1000) // 대분류A의 sortOrder와 중복
+                .build();
+
+        assertThatThrownBy(() -> categoryService.updateCategory(second.getId(), updateDto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(CategoryErrorCode.DUPLICATE_SORT_ORDER));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 카테고리 수정 - 자신의 sortOrder로 수정 (중복 허용)")
+    void 성공_카테고리_수정_자신의_sortOrder() {
+        CategoryRespDto created = categoryService.createCategory(LCS_생성_DTO("대분류A")); // sortOrder=1000
+
+        CategoryUpdateReqDto updateDto = CategoryUpdateReqDto.builder()
+                .name("대분류A수정")
+                .sortOrder(1000)
+                .build();
+
+        CategoryRespDto updated = categoryService.updateCategory(created.getId(), updateDto);
+
+        assertThat(updated.getName()).isEqualTo("대분류A수정");
+        assertThat(updated.getSortOrder()).isEqualTo(1000);
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 카테고리 생성 - sortOrder null 여러 개 허용")
+    void 성공_카테고리_생성_sortOrder_null_다수() {
+        CategoryCreateReqDto dto1 = CategoryCreateReqDto.builder()
+                .name("null순서A").categoryType(CategoryType.LCS).parentId(null).sortOrder(null).build();
+        CategoryCreateReqDto dto2 = CategoryCreateReqDto.builder()
+                .name("null순서B").categoryType(CategoryType.LCS).parentId(null).sortOrder(null).build();
+
+        CategoryRespDto r1 = categoryService.createCategory(dto1);
+        CategoryRespDto r2 = categoryService.createCategory(dto2);
+
+        assertThat(r1.getId()).isNotNull();
+        assertThat(r2.getId()).isNotNull();
     }
 
     // ============================================================

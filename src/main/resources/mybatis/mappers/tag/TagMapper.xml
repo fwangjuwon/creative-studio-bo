@@ -7,7 +7,7 @@
         INSERT INTO tag (
             tag_group_id,
             name,
-            sort_order,
+            <if test="sortOrder != null">sort_order,</if>
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -15,7 +15,7 @@
         ) VALUES (
             #{tagGroupId},
             #{name},
-            #{sortOrder},
+            <if test="sortOrder != null">#{sortOrder},</if>
             #{initRegiPic},
             #{initRegiDttm},
             #{finalRvisPic},
@@ -79,5 +79,22 @@
         DELETE FROM tag
         WHERE id = #{id}
     </delete>
+
+    <select id="existsBySortOrder" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM tag
+            WHERE tag_group_id = #{tagGroupId}
+              AND sort_order = #{sortOrder}
+        )
+    </select>
+
+    <select id="existsBySortOrderExcludingId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM tag
+            WHERE tag_group_id = #{tagGroupId}
+              AND sort_order = #{sortOrder}
+              AND id <![CDATA[ <> ]]> #{id}
+        )
+    </select>
 
 </mapper>

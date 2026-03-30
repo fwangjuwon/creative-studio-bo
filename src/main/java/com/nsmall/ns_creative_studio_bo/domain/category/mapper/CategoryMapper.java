@@ -33,6 +33,21 @@ public interface CategoryMapper {
     boolean existsByParentId(@Param("parentId") Long parentId);
 
     /**
+     * 동일 parent_id 스코프에서 sortOrder 중복 여부 확인
+     *
+     * <pre>
+     * parentId == null → LCS 스코프 (WHERE parent_id IS NULL)
+     * parentId != null → 해당 parent의 하위 스코프 (WHERE parent_id = #{parentId})
+     * </pre>
+     */
+    boolean existsBySortOrder(@Param("parentId") Long parentId, @Param("sortOrder") Integer sortOrder);
+
+    /**
+     * 동일 parent_id 스코프에서 자신(id)을 제외한 sortOrder 중복 여부 확인 — 수정 시 사용
+     */
+    boolean existsBySortOrderExcludingId(@Param("id") Long id, @Param("parentId") Long parentId, @Param("sortOrder") Integer sortOrder);
+
+    /**
      * SCS 카테고리 ID로 LCS→MCS→SCS 전체 경로 이름 목록을 반환한다.
      *
      * <pre>
