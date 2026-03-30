@@ -36,13 +36,19 @@
 
 #### 테스트
 - [x] `CategoryServiceTest` — sortOrder 중복 예외 3케이스, 자신의 sortOrder 수정 허용, null 다수 허용
-- [x] `TagGroupServiceTest` — sortOrder 중복 예외 2케이스, 자신의 sortOrder 수정 허용
+- [x] `TagGroupServiceTest` — sortOrder 중복 예외 2케이스, 자신의 sortOrder 수정 허용, **null 다수 허용 케이스 추가**
 - [x] `TagServiceTest` — sortOrder 중복 예외 2케이스, 자신의 sortOrder 수정 허용, 다른 그룹 동일 sortOrder 허용
 - [x] 기존 테스트 픽스처 sort_order 1000+ 범위로 변경 (시드 데이터 1~4, 99와 충돌 방지)
   - `CategoryServiceTest`, `TagGroupServiceTest`, `TagServiceTest`, `PromptServiceTest`
 
 #### 문서
 - [x] `docs/requirements.md` — Category / TagGroup / Tag `sort_order` 컬럼에 스코프 제약 설명 추가
+
+#### 버그 픽스 (커밋 후 발견)
+- [x] `TagGroupServiceImpl` — `sortOrder null` 시 `0`으로 치환 후 중복 체크하던 로직 제거
+  - Category / Tag와 동일하게 `null`이면 체크 스킵, DB `DEFAULT 0` 활용
+  - 원인: UI에 sortOrder 입력 필드 없어 항상 `null`로 전달 → 두 번째 태그 그룹 생성 시 "이미 정렬순서 0이 존재합니다" 에러
+  - `TagGroupServiceTest.성공_태그그룹_생성_sortOrder_null_다수` 테스트 케이스 추가
 
 ---
 

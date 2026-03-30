@@ -81,6 +81,23 @@ public class TagGroupServiceTest {
         assertThat(result.getIsMultiSelect()).isEqualTo(isMultiSelect);
     }
 
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 그룹 생성 - sortOrder null 여러 개 허용")
+    void 성공_태그그룹_생성_sortOrder_null_다수() {
+        TagGroupCreateReqDto dto1 = TagGroupCreateReqDto.builder()
+                .name("null순서그룹A").isMultiSelect(false).sortOrder(null).build();
+        TagGroupCreateReqDto dto2 = TagGroupCreateReqDto.builder()
+                .name("null순서그룹B").isMultiSelect(false).sortOrder(null).build();
+
+        TagGroupRespDto r1 = tagGroupService.createTagGroup(dto1);
+        TagGroupRespDto r2 = tagGroupService.createTagGroup(dto2);
+
+        assertThat(r1.getId()).isNotNull();
+        assertThat(r2.getId()).isNotNull();
+    }
+
     // ============================================================
     // TagGroup 단건 조회
     // ============================================================
