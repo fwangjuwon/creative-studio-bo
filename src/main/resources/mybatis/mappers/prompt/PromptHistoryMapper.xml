@@ -73,6 +73,23 @@
             final_rvis_pic,
             final_rvis_dttm
         FROM prompt_history
+        <where>
+            <if test="loginId != null and loginId != ''">
+                AND init_regi_pic = #{loginId}
+            </if>
+            <if test="promptType != null and promptType != ''">
+                AND prompt_type = #{promptType}
+            </if>
+            <if test="promptStyle != null and promptStyle != ''">
+                AND prompt_style = #{promptStyle}
+            </if>
+            <if test="dateFrom != null">
+                AND init_regi_dttm <![CDATA[ >= ]]> #{dateFrom}::date
+            </if>
+            <if test="dateTo != null">
+                AND init_regi_dttm <![CDATA[ < ]]> #{dateTo}::date + INTERVAL '1 day'
+            </if>
+        </where>
         ORDER BY init_regi_dttm DESC
     </select>
 

@@ -1,7 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
-import com.nsmall.ns_creative_studio_bo.common.page.PageReqDto;
 import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
@@ -10,6 +9,7 @@ import com.nsmall.ns_creative_studio_bo.domain.category.service.CategoryService;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
@@ -32,6 +32,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -113,18 +114,30 @@ public class PromptServiceTest {
     }
 
     private void 히스토리_직접_삽입(Long userId, Long goodsCategoryId) {
+        히스토리_직접_삽입_상세(userId, goodsCategoryId, "test", "PRODUCT", "NANO_BANANA");
+    }
+
+    private void 히스토리_직접_삽입_상세(Long userId, Long categoryId, String loginId,
+                                      String promptType, String promptStyle) {
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
-                .categoryId(goodsCategoryId)
-                .promptType("PRODUCT")
-                .promptStyle("NANO_BANANA")
+                .categoryId(categoryId)
+                .promptType(promptType)
+                .promptStyle(promptStyle)
                 .promptText("direct insert prompt")
-                .initRegiPic("test")
+                .initRegiPic(loginId)
                 .initRegiDttm(LocalDateTime.now())
-                .finalRvisPic("test")
+                .finalRvisPic(loginId)
                 .finalRvisDttm(LocalDateTime.now())
                 .build();
         promptHistoryMapper.insert(history);
+    }
+
+    private PromptHistorySearchReqDto 검색조건(int pageNum, int pageSize) {
+        PromptHistorySearchReqDto dto = new PromptHistorySearchReqDto();
+        dto.setPageNum(pageNum);
+        dto.setPageSize(pageSize);
+        return dto;
     }
 
     // ================================================================
@@ -394,13 +407,13 @@ public class PromptServiceTest {
         히스토리_직접_삽입(manager.getId(), scs.getId());
         히스토리_직접_삽입(user.getId(),    scs.getId());
 
-        PageReqDto pageReqDto = new PageReqDto(1, 100);
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
 
-        List<Long> result1 = promptService.getPromptHistories(pageReqDto).items().stream()
+        List<Long> result1 = promptService.getPromptHistories(searchReqDto).items().stream()
                 .map(PromptHistoryRespDto::getId).toList();
-        List<Long> result2 = promptService.getPromptHistories(pageReqDto).items().stream()
+        List<Long> result2 = promptService.getPromptHistories(searchReqDto).items().stream()
                 .map(PromptHistoryRespDto::getId).toList();
-        List<Long> result3 = promptService.getPromptHistories(pageReqDto).items().stream()
+        List<Long> result3 = promptService.getPromptHistories(searchReqDto).items().stream()
                 .map(PromptHistoryRespDto::getId).toList();
 
         // 세 번 호출해도 항상 동일한 결과 — Role 기반 필터가 존재하지 않음을 증명
@@ -408,7 +421,7 @@ public class PromptServiceTest {
         assertThat(result1).containsExactlyInAnyOrderElementsOf(result3);
 
         // 세 Role의 히스토리가 모두 포함되어 있는지 검증
-        List<Long> histUserIds = promptService.getPromptHistories(pageReqDto).items().stream()
+        List<Long> histUserIds = promptService.getPromptHistories(searchReqDto).items().stream()
                 .map(PromptHistoryRespDto::getUserId).toList();
         assertThat(histUserIds).contains(admin.getId(), manager.getId(), user.getId());
     }
@@ -443,7 +456,7 @@ public class PromptServiceTest {
 
         promptService.createGoodsPrompt(user.getId(), dto);
 
-        PageRespDto<PromptHistoryRespDto> page = promptService.getPromptHistories(new PageReqDto(1, 100));
+        PageRespDto<PromptHistoryRespDto> page = promptService.getPromptHistories(검색조건(1, 100));
         PromptHistoryRespDto found = page.items().stream()
                 .filter(h -> "PRODUCT".equals(h.getPromptType()))
                 .findFirst()
@@ -470,7 +483,7 @@ public class PromptServiceTest {
         히스토리_직접_삽입(user.getId(), scs.getId());
         히스토리_직접_삽입(user.getId(), scs.getId());
 
-        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(new PageReqDto(1, 10));
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(검색조건(1, 10));
 
         assertThat(result).isNotNull();
         assertThat(result.pageNum()).isEqualTo(1);
@@ -491,7 +504,7 @@ public class PromptServiceTest {
         히스토리_직접_삽입(user.getId(), scs.getId());
         히스토리_직접_삽입(user.getId(), scs.getId());
 
-        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(new PageReqDto(1, 1));
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(검색조건(1, 1));
 
         assertThat(result.items()).hasSize(1);
         assertThat(result.total()).isGreaterThanOrEqualTo(3L);
@@ -510,12 +523,188 @@ public class PromptServiceTest {
         히스토리_직접_삽입(user.getId(), scs.getId());
 
         // 전체 2건이므로 pageSize=2, pageNum=2 → 2페이지는 항상 빈 결과
-        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(new PageReqDto(2, 1000));
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(검색조건(2, 1000));
 
         assertThat(result).isNotNull();
         assertThat(result.items()).isEmpty();
         assertThat(result.hasPreviousPage()).isTrue();
         assertThat(result.hasNextPage()).isFalse();
+    }
+
+    // ================================================================
+    // 히스토리 조회 — 검색 필터
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 - loginId 필터")
+    void 성공_히스토리_조회_loginId_필터() {
+        UserRespDto user = 유저_생성("filter_login_usr", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("loginId필터");
+
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_login_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "other_login_usr", "PRODUCT", "NANO_BANANA");
+
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
+        searchReqDto.setLoginId("filter_login_usr");
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
+
+        assertThat(result.items()).isNotEmpty();
+        assertThat(result.items()).allMatch(h -> "filter_login_usr".equals(h.getInitRegiPic()));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 - promptType PRODUCT 필터")
+    void 성공_히스토리_조회_promptType_PRODUCT_필터() {
+        UserRespDto user = 유저_생성("filter_type_usr", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("타입필터");
+
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_type_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), null, "filter_type_usr", "PERSON", "NANO_BANANA");
+
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
+        searchReqDto.setLoginId("filter_type_usr");
+        searchReqDto.setPromptType("PRODUCT");
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
+
+        assertThat(result.items()).isNotEmpty();
+        assertThat(result.items()).allMatch(h -> "PRODUCT".equals(h.getPromptType()));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 - promptType PERSON 필터")
+    void 성공_히스토리_조회_promptType_PERSON_필터() {
+        UserRespDto user = 유저_생성("filter_person_usr", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("인물타입필터");
+
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_person_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), null, "filter_person_usr", "PERSON", "NANO_BANANA");
+
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
+        searchReqDto.setLoginId("filter_person_usr");
+        searchReqDto.setPromptType("PERSON");
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
+
+        assertThat(result.items()).isNotEmpty();
+        assertThat(result.items()).allMatch(h -> "PERSON".equals(h.getPromptType()));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 - promptStyle MID_JOURNEY 필터")
+    void 성공_히스토리_조회_promptStyle_MID_JOURNEY_필터() {
+        UserRespDto user = 유저_생성("filter_style_usr", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("스타일필터");
+
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_style_usr", "PRODUCT", "MID_JOURNEY");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_style_usr", "PRODUCT", "NANO_BANANA");
+
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
+        searchReqDto.setLoginId("filter_style_usr");
+        searchReqDto.setPromptStyle("MID_JOURNEY");
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
+
+        assertThat(result.items()).isNotEmpty();
+        assertThat(result.items()).allMatch(h -> "MID_JOURNEY".equals(h.getPromptStyle()));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 - 날짜 범위 필터 (오늘 날짜 포함)")
+    void 성공_히스토리_조회_날짜_범위_필터() {
+        UserRespDto user = 유저_생성("filter_date_usr", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("날짜필터");
+
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_date_usr", "PRODUCT", "NANO_BANANA");
+
+        LocalDate today = LocalDate.now();
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
+        searchReqDto.setLoginId("filter_date_usr");
+        searchReqDto.setDateFrom(today);
+        searchReqDto.setDateTo(today);
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
+
+        assertThat(result.items()).isNotEmpty();
+        assertThat(result.items()).allMatch(h ->
+                !h.getInitRegiDttm().toLocalDate().isBefore(today) &&
+                !h.getInitRegiDttm().toLocalDate().isAfter(today));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 - 날짜 범위 필터 (미래 날짜 → 빈 결과)")
+    void 성공_히스토리_조회_날짜_범위_필터_미래날짜_빈결과() {
+        UserRespDto user = 유저_생성("filter_future_usr", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("미래날짜필터");
+
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_future_usr", "PRODUCT", "NANO_BANANA");
+
+        LocalDate tomorrow = LocalDate.now().plusDays(1);
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
+        searchReqDto.setLoginId("filter_future_usr");
+        searchReqDto.setDateFrom(tomorrow);
+        searchReqDto.setDateTo(tomorrow);
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.total()).isZero();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 히스토리 조회 - 복합 필터 (loginId + promptType + promptStyle)")
+    void 성공_히스토리_조회_복합_필터() {
+        UserRespDto user = 유저_생성("filter_multi_usr", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("복합필터");
+
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_multi_usr", "PRODUCT", "MID_JOURNEY");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_multi_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), null, "filter_multi_usr", "PERSON", "NANO_BANANA");
+
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
+        searchReqDto.setLoginId("filter_multi_usr");
+        searchReqDto.setPromptType("PRODUCT");
+        searchReqDto.setPromptStyle("MID_JOURNEY");
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
+
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.items().get(0).getPromptType()).isEqualTo("PRODUCT");
+        assertThat(result.items().get(0).getPromptStyle()).isEqualTo("MID_JOURNEY");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[없음] 히스토리 조회 - 존재하지 않는 loginId 조건")
+    void 없음_히스토리_조회_존재하지않는_loginId() {
+        UserRespDto user = 유저_생성("filter_noexist_usr", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("없는loginId");
+
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_noexist_usr", "PRODUCT", "NANO_BANANA");
+
+        PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
+        searchReqDto.setLoginId("nonexistent_user_xyz");
+
+        PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
+
+        assertThat(result.items()).isEmpty();
+        assertThat(result.total()).isZero();
     }
 
     // ================================================================

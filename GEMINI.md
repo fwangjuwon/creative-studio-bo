@@ -136,7 +136,7 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 최종 선택
 | Controller 반환 타입 | `CommonResponse<T>` 직접 반환 — `ResponseEntity` 사용 금지 |
 | 성공 HTTP 상태 | **무조건 200** — CUD/READ 구분 없음, 201/204 사용 금지 |
 | 조회 결과 없음 | 200 + `data: null` — 404 사용 안 함 (내부 API 개발 편의성) |
-| 페이지네이션 | `GET /api/prompts` PageHelper 적용 완료. `pageNum`(기본 1) / `pageSize`(기본 10). 공통 모듈: `common/page/` |
+| 페이지네이션 / 필터 | `GET /api/prompts` PageHelper 페이징 + 검색 필터 적용 완료. `pageNum`(기본 1) / `pageSize`(기본 10). 검색 조건(모두 선택): `loginId`(생성자), `promptType`(`PRODUCT`\|`PERSON`), `promptStyle`(`NANO_BANANA`\|`MID_JOURNEY`), `dateFrom`/`dateTo`(생성일 범위). 공통 모듈: `common/page/` |
 | JWT | 완료 (Access Token 1시간, Refresh Token 없음, PoC) |
 | Gemini API Key | `.env` 파일의 `GEMINI_API_KEY` 환경변수 |
 | 이미지 서빙 | 생성 이미지는 `image.storage-path` 경로에 저장, `image.base-url` prefix로 절대 URL 조립 후 응답. DB에는 `/images/{uuid}.ext` 상대 경로만 저장. `/images/**` 경로는 Security 인증 없이 공개. |

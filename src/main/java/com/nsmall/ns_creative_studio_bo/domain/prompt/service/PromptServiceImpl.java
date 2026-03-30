@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.pagehelper.PageInfo;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.page.PageHelperUtil;
-import com.nsmall.ns_creative_studio_bo.common.page.PageReqDto;
 import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
@@ -14,6 +13,7 @@ import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.GoodsPromptHistoryTag;
@@ -165,8 +165,8 @@ public class PromptServiceImpl implements PromptService {
     }
 
     @Override
-    public PageRespDto<PromptHistoryRespDto> getPromptHistories(PageReqDto pageReqDto) {
-        PageInfo<PromptHistory> pageInfo = PageHelperUtil.pagedQuery(pageReqDto, promptHistoryMapper::selectList);
+    public PageRespDto<PromptHistoryRespDto> getPromptHistories(PromptHistorySearchReqDto searchReqDto) {
+        PageInfo<PromptHistory> pageInfo = PageHelperUtil.pagedQuery(searchReqDto, () -> promptHistoryMapper.selectList(searchReqDto));
 
         List<PromptHistoryRespDto> items = pageInfo.getList().stream()
                 .map(history -> {
