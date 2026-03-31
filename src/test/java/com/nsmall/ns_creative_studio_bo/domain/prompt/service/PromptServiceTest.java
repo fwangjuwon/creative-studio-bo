@@ -149,7 +149,7 @@ public class PromptServiceTest {
     @Rollback
     @DisplayName("[성공] 프롬프트 생성 - 일일 한도 미만")
     void 성공_프롬프트_생성_일일한도_미만() {
-        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("prompt_user_ok", "USER", "팀A", 3);
         CategoryRespDto scs = SCS_카테고리_생성("한도미만");
@@ -175,7 +175,7 @@ public class PromptServiceTest {
     @Rollback
     @DisplayName("[성공] 프롬프트 생성 - 태그 없이 카테고리만")
     void 성공_프롬프트_생성_태그없음() {
-        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("prompt_user_notag", "USER", "팀A", 5);
         CategoryRespDto scs = SCS_카테고리_생성("태그없음");
@@ -196,7 +196,7 @@ public class PromptServiceTest {
     @Rollback
     @DisplayName("[성공] 프롬프트 생성 - Gemini에 LCS→SCS 전체 경로 전달")
     void 성공_프롬프트_생성_카테고리_전체경로_전달() {
-        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("prompt_user_path", "USER", "팀A", 5);
 
@@ -215,7 +215,7 @@ public class PromptServiceTest {
         promptService.createGoodsPrompt(user.getId(), dto);
 
         ArgumentCaptor<String> categoryNameCaptor = ArgumentCaptor.forClass(String.class);
-        verify(geminiService).generateGoodsPrompt(categoryNameCaptor.capture(), any(), any(), any(), any());
+        verify(geminiService).generateGoodsPrompt(categoryNameCaptor.capture(), any(), any(), any(), any(), any());
 
         String capturedCategoryName = categoryNameCaptor.getValue();
         assertThat(capturedCategoryName).isEqualTo("식품 > 건강식품 > 인삼");
@@ -305,7 +305,7 @@ public class PromptServiceTest {
     @Rollback
     @DisplayName("[성공] 상품 프롬프트 생성 - promptStyle MID_JOURNEY 명시 저장")
     void 성공_상품_프롬프트_생성_promptStyle_MID_JOURNEY() {
-        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("style_mj_user", "USER", "팀A", 5);
         CategoryRespDto scs = SCS_카테고리_생성("스타일MJ");
@@ -326,7 +326,7 @@ public class PromptServiceTest {
     @Rollback
     @DisplayName("[성공] 상품 프롬프트 생성 - promptStyle 미입력 시 NANO_BANANA 기본값 적용")
     void 성공_상품_프롬프트_생성_promptStyle_기본값_NANO_BANANA() {
-        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("style_default_user", "USER", "팀A", 5);
         CategoryRespDto scs = SCS_카테고리_생성("스타일기본값");
@@ -346,7 +346,7 @@ public class PromptServiceTest {
     @Rollback
     @DisplayName("[성공] 상품 프롬프트 생성 - categoryPath 전체 경로 응답 포함")
     void 성공_상품_프롬프트_생성_categoryPath_응답_포함() {
-        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("path_resp_user", "USER", "팀A", 5);
 
@@ -372,7 +372,7 @@ public class PromptServiceTest {
     @Rollback
     @DisplayName("[성공] 상품 프롬프트 생성 - tagNames 응답 포함")
     void 성공_상품_프롬프트_생성_tagNames_응답_포함() {
-        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("tagname_resp_user", "USER", "팀A", 5);
         CategoryRespDto scs = SCS_카테고리_생성("태그명응답");
@@ -435,7 +435,7 @@ public class PromptServiceTest {
     @Rollback
     @DisplayName("[성공] 이력 조회 - PRODUCT 이력에 categoryPath/tagNames/promptStyle 포함")
     void 성공_이력_조회_PRODUCT_신규필드_포함() {
-        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("hist_detail_user", "USER", "팀Detail", 10);
 

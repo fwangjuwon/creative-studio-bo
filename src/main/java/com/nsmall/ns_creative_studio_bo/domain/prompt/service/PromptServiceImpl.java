@@ -115,14 +115,14 @@ public class PromptServiceImpl implements PromptService {
                 .toList();
 
         // 4. Gemini API 호출
+        String promptStyle = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
+                ? dto.getPromptStyle() : "NANO_BANANA";
         String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames,
-                dto.getImageAspectRatio(), dto.getPurpose(), dto.getAdditionalNotes());
+                dto.getImageAspectRatio(), dto.getPurpose(), dto.getAdditionalNotes(), promptStyle);
 
         // 5. PromptHistory 저장
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
-        String promptStyle = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
-                ? dto.getPromptStyle() : "NANO_BANANA";
 
         PromptHistory history = PromptHistory.builder()
                 .userId(currentUserId)

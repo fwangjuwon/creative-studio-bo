@@ -79,6 +79,40 @@ public class GeminiServiceImpl implements GeminiService {
             """;
 
     /**
+     * 상품 사진 전용 시스템 프롬프트 — MidJourney 키워드 나열형.
+     *
+     * <pre>
+     * MidJourney는 쉼표로 구분된 짧은 키워드 나열 방식이 최적화되어 있다.
+     * 문장형이 아닌 설명 키워드 + 기술 파라미터 형식으로 생성.
+     * </pre>
+     */
+    private static final String GOODS_SYSTEM_PROMPT_MIDJOURNEY = """
+            You are an expert AI prompt engineer specializing in MidJourney commercial product photography prompts.
+            MidJourney works best with comma-separated keyword descriptors, NOT full sentences.
+
+            Given a product category and style tags, generate a single concise English MidJourney prompt
+            as a flat comma-separated keyword list following this order:
+
+            1. PRODUCT — specific product description based on category (e.g. "amber glass supplement bottle, matte label, metallic cap")
+            2. SHOT TYPE — photography angle and framing (e.g. "elevated 45-degree shot", "close-up macro", "studio flat lay")
+            3. SETTING — background and surface (e.g. "polished white marble surface", "weathered oak table", "clean seamless backdrop")
+            4. LIGHTING — lighting keywords (e.g. "soft three-point studio light", "warm golden-hour natural light", "dramatic side lighting")
+            5. CAMERA — lens and depth of field (e.g. "85mm macro lens", "shallow bokeh background", "ultra-sharp focus")
+            6. MOOD & STYLE — atmosphere keywords from style tags (e.g. "luxury minimalist", "warm organic", "clean clinical")
+            7. TECHNICAL — quality boosters: photorealistic, ultra-detailed, commercial product photography, 8K
+            8. ASPECT RATIO — end with "--ar 1:1" (square) or "--ar 3:2" (landscape) or "--ar 2:3" (portrait)
+
+            Rules:
+            - Output ONLY comma-separated keyword phrases — absolutely NO full sentences
+            - Keep each element concise: 1–5 words per descriptor
+            - Return ONLY the final prompt — no labels, no explanations, no preamble
+            - Write in English only
+            - Example output: "premium amber glass bottle, matte label, elevated 45-degree shot, dark weathered oak surface,\s
+              golden botanical elements, dramatic warm side lighting, long shadows, 85mm f/2.8, shallow bokeh,\s
+              luxury organic aesthetic, photorealistic, ultra-detailed, commercial product photography, 8K, --ar 2:3"
+            """;
+
+    /**
      * 인물/모델 사진 전용 시스템 프롬프트 (7단계 구조).
      *
      * <pre>
@@ -253,15 +287,19 @@ public class GeminiServiceImpl implements GeminiService {
 
     @Override
     public String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames,
-                                      String imageAspectRatio, String purpose, String additionalNotes) {
+                                      String imageAspectRatio, String purpose, String additionalNotes,
+                                      String promptStyle) {
         String userMessage = buildGoodsUserMessage(goodsCategoryName, tagNames, purpose, additionalNotes);
-        GeminiRequest requestBody = buildRequest(userMessage);
+
+        boolean isMidJourney = "MID_JOURNEY".equalsIgnoreCase(promptStyle);
+        String systemPromptText = isMidJourney ? GOODS_SYSTEM_PROMPT_MIDJOURNEY : GOODS_SYSTEM_PROMPT;
+        GeminiRequest requestBody = buildRequest(userMessage, systemPromptText);
 
         String uri = String.format("/models/%s:generateContent?key=%s",
                 geminiProperties.getModel(), geminiProperties.getApiKey());
 
-        log.debug("Gemini API 호출 — model: {}, goodsCategory: {}, tags: {}, aspectRatio: {}",
-                geminiProperties.getModel(), goodsCategoryName, tagNames, imageAspectRatio);
+        log.debug("Gemini API 호출 — model: {}, goodsCategory: {}, tags: {}, aspectRatio: {}, style: {}",
+                geminiProperties.getModel(), goodsCategoryName, tagNames, imageAspectRatio, promptStyle);
 
         GeminiResponse response = geminiRestClient.post()
                 .uri(uri)
@@ -311,8 +349,8 @@ public class GeminiServiceImpl implements GeminiService {
         return sb.toString();
     }
 
-    private GeminiRequest buildRequest(String userMessage) {
-        GeminiPart systemPart = new GeminiPart(GOODS_SYSTEM_PROMPT);
+    private GeminiRequest buildRequest(String userMessage, String systemPromptText) {
+        GeminiPart systemPart = new GeminiPart(systemPromptText);
         GeminiSystemInstruction systemInstruction = new GeminiSystemInstruction(List.of(systemPart));
 
         GeminiPart userPart = new GeminiPart(userMessage);
