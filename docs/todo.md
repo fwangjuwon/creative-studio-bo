@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ feat/prompt-history-filter 완료
-> 최종 업데이트: 2026-03-30 (프롬프트 이력 조회 검색 필터 추가 — loginId / promptType / promptStyle / 생성일 범위)
+> 상태: ✅ perf/optimize-prompt-history-batch-query 완료
+> 최종 업데이트: 2026-03-31 (프롬프트 이력 목록 조회 N+1 쿼리 → 배치 IN 쿼리 최적화)
 
 ---
 
@@ -12,6 +12,47 @@
 ---
 
 ## 완료
+
+### perf/optimize-prompt-history-batch-query. 프롬프트 이력 목록 조회 N+1 쿼리 최적화
+
+> `GET /api/prompts` 이력 목록 조회 시 페이지 크기 N에 비례하여 1+3N 쿼리가 발생하던 문제를 최대 4쿼리(flat)로 개선.
+> PageHelper와 호환되는 Batch IN 쿼리 패턴 적용.
+
+#### 변경 전 (AS-IS)
+```
+쿼리 1: promptHistoryMapper.selectList()                    — 페이지 조회
+PRODUCT 1건당:
+  쿼리 +1: categoryMapper.selectCategoryPath()             — WITH RECURSIVE CTE (건당 1회)
+  쿼리 +1: selectTagIdsByPromptHistoryId()
+  쿼리 +1: selectTagNamesByPromptHistoryId()
+HUMAN 1건당:
+  쿼리 +1: selectOptionNamesByHistoryId()
+→ pageSize=N(PRODUCT 기준) 시 1+3N 쿼리 발생
+```
+
+#### 변경 후 (TO-BE)
+```
+쿼리 1: promptHistoryMapper.selectList()                    — 페이지 조회
+쿼리 2: categoryMapper.selectCategoryPathsByIds(IN)         — PRODUCT 카테고리 배치 (3-self-JOIN)
+쿼리 3: selectTagDetailsByPromptHistoryIds(IN)              — PRODUCT 태그 상세 배치 (tagId + tagName 통합)
+쿼리 4: selectOptionDetailsByHistoryIds(IN)                 — HUMAN 옵션명 배치
+→ 최대 4쿼리 (N에 무관, PRODUCT/HUMAN 혼재 시 타입별 empty check로 불필요 쿼리 스킵)
+```
+
+#### 신규 DTO
+- [x] `GoodsTagDetailDto` — goods 태그 배치 조회 결과 (promptHistoryId + tagId + tagName)
+- [x] `HumanOptionDetailDto` — human 옵션 배치 조회 결과 (promptHistoryId + optionName)
+- [x] `CategoryPathDto` — 카테고리 경로 배치 조회 결과 (id + categoryPath)
+
+#### Mapper 인터페이스 + XML (기존 단건 메서드 유지 — createGoodsPrompt 응답 조립에서 사용 중)
+- [x] `GoodsPromptHistoryTagMapper` — `selectTagDetailsByPromptHistoryIds(ids)` 추가
+- [x] `HumanPromptHistoryOptionMapper` — `selectOptionDetailsByHistoryIds(ids)` 추가
+- [x] `CategoryMapper` — `selectCategoryPathsByIds(ids)` 추가 (3단계 자기 JOIN — SCS 보장 전제)
+
+#### Service
+- [x] `PromptServiceImpl.getPromptHistories()` — 배치 쿼리 + `Collectors.groupingBy` 조립으로 전면 교체
+
+---
 
 ### feat/prompt-history-filter. 프롬프트 이력 조회 검색 필터 추가
 

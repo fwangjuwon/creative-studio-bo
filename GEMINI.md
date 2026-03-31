@@ -196,6 +196,15 @@ public class UserServiceImpl implements UserService { ... }
 private final UserService userService;
 ```
 
+### DTO 네이밍 규칙
+
+`{도메인}ReqDto` / `{도메인}RespDto` 규칙은 **Controller ↔ 클라이언트 간 API 요청/응답 DTO**에만 적용한다.
+
+Mapper → Service 등 **내부 계층 간 전달 전용 DTO**는 이 규칙을 적용하지 않는다.
+단, 내부 전용 DTO는 반드시 JavaDoc에 `※ 내부 전용 DTO — API 응답에 직접 노출되지 않음.` 문구를 명시한다.
+
+> 세부 규칙: [`.cursor/rules/coding-convention.mdc`](.cursor/rules/coding-convention.mdc) — "DTO 네이밍 적용 범위" 섹션
+
 ### JavaDoc
 
 모든 `.java` 파일 최상단에 JavaDoc 필수.

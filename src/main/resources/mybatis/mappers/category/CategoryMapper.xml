@@ -82,6 +82,24 @@
         ORDER BY depth DESC
     </select>
 
+    <!--
+        여러 SCS category_id에 대해 "LCS > MCS > SCS" 경로 문자열을 한 번에 조회 (N+1 방지용 배치 쿼리)
+        prompt_history.category_id는 SCS임이 Service 계층에서 보장되므로 3단계 자기 JOIN 사용
+        Service에서 id 기준 Map 변환 후 조립
+    -->
+    <select id="selectCategoryPathsByIds" resultType="CategoryPathDto">
+        SELECT
+            scs.id,
+            CONCAT(lcs.name, ' > ', mcs.name, ' > ', scs.name) AS category_path
+        FROM category scs
+        JOIN category mcs ON scs.parent_id = mcs.id
+        JOIN category lcs ON mcs.parent_id = lcs.id
+        WHERE scs.id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
     <select id="existsByParentId" resultType="boolean">
         SELECT EXISTS (
             SELECT 1 FROM category WHERE parent_id = #{parentId}
