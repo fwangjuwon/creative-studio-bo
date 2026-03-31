@@ -275,11 +275,18 @@ public class GeminiServiceImpl implements GeminiService {
 
         String promptText = extractText(response);
 
-        String formatSuffix = toFormatSuffix(imageAspectRatio);
+        String formatSuffix = toFormatSuffix(imageAspectRatio, isMidJourney);
         if (formatSuffix != null) {
-            promptText = promptText.strip()
-                    .replaceAll("(?i)(Square|Portrait|Landscape) format\\.$", "")
-                    .strip() + " " + formatSuffix;
+            if (isMidJourney) {
+                // Gemini가 자체 생성한 --ar X:X 제거 후 사용자 선택 비율로 교체
+                promptText = promptText.strip()
+                        .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
+                        .strip() + ", " + formatSuffix;
+            } else {
+                promptText = promptText.strip()
+                        .replaceAll("(?i)(Square|Portrait|Landscape) format\\.$", "")
+                        .strip() + " " + formatSuffix;
+            }
         }
 
         return promptText;
@@ -311,24 +318,42 @@ public class GeminiServiceImpl implements GeminiService {
         String promptText = extractText(response);
 
         // 이미지 비율이 선택된 경우 format suffix를 Java에서 직접 추가
-        // Gemini가 자체 붙인 format suffix를 먼저 제거 후 교체 ("Portrait format. Landscape format." 충돌 방지)
-        String formatSuffix = toFormatSuffix(imageAspectRatio);
+        // Gemini가 자체 붙인 format suffix(또는 --ar)를 먼저 제거 후 교체
+        String formatSuffix = toFormatSuffix(imageAspectRatio, isMidJourney);
         if (formatSuffix != null) {
-            promptText = promptText.strip()
-                    .replaceAll("(?i)(Square|Portrait|Landscape) format\\.$", "")
-                    .strip() + " " + formatSuffix;
+            if (isMidJourney) {
+                // Gemini가 자체 생성한 --ar X:X 제거 후 사용자 선택 비율로 교체
+                promptText = promptText.strip()
+                        .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
+                        .strip() + ", " + formatSuffix;
+            } else {
+                promptText = promptText.strip()
+                        .replaceAll("(?i)(Square|Portrait|Landscape) format\\.$", "")
+                        .strip() + " " + formatSuffix;
+            }
         }
 
         return promptText;
     }
 
-    private String toFormatSuffix(String imageAspectRatio) {
+    /**
+     * imageAspectRatio와 promptStyle에 따라 적절한 format suffix를 반환한다.
+     * MidJourney 스타일은 "--ar X:X" 형식, 일반 스타일은 텍스트 형식을 사용한다.
+     *
+     * @param imageAspectRatio 사용자가 선택한 이미지 비율 (예: "1:1", "4:3", "16:9", "9:16")
+     * @param isMidJourney     MidJourney 스타일 여부
+     * @return format suffix 문자열, 해당 없으면 null
+     */
+    private String toFormatSuffix(String imageAspectRatio, boolean isMidJourney) {
         if (imageAspectRatio == null) return null;
+        if (isMidJourney) {
+            return "--ar " + imageAspectRatio;
+        }
         return switch (imageAspectRatio) {
-            case "1:1"       -> "Square format.";
+            case "1:1"         -> "Square format.";
             case "4:3", "16:9" -> "Landscape format.";
-            case "9:16"      -> "Portrait format.";
-            default          -> null;
+            case "9:16"        -> "Portrait format.";
+            default            -> null;
         };
     }
 
