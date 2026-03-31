@@ -39,6 +39,24 @@
         ORDER BY ght.id ASC
     </select>
 
+    <!--
+        여러 prompt_history_id에 대한 tag_id + tag_name을 한 번에 조회 (N+1 방지용 배치 쿼리)
+        Service에서 promptHistoryId 기준으로 groupingBy 처리 후 조립
+    -->
+    <select id="selectTagDetailsByPromptHistoryIds" resultType="GoodsTagDetailDto">
+        SELECT
+            ght.prompt_history_id,
+            ght.tag_id,
+            t.name AS tag_name
+        FROM goods_prompt_history_tag ght
+        JOIN tag t ON ght.tag_id = t.id
+        WHERE ght.prompt_history_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+        ORDER BY ght.id ASC
+    </select>
+
     <select id="existsByTagId" resultType="boolean">
         SELECT COUNT(*) <![CDATA[ > ]]> 0
         FROM goods_prompt_history_tag

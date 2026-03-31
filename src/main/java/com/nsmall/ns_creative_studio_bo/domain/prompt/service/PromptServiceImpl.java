@@ -12,8 +12,11 @@ import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
 import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryPathDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.GoodsTagDetailDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanOptionDetailDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.GoodsPromptHistoryTag;
@@ -34,8 +37,10 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
@@ -166,19 +171,81 @@ public class PromptServiceImpl implements PromptService {
 
     @Override
     public PageRespDto<PromptHistoryRespDto> getPromptHistories(PromptHistorySearchReqDto searchReqDto) {
-        PageInfo<PromptHistory> pageInfo = PageHelperUtil.pagedQuery(searchReqDto, () -> promptHistoryMapper.selectList(searchReqDto));
+        // 쿼리 1: 페이지 조회
+        PageInfo<PromptHistory> pageInfo = PageHelperUtil.pagedQuery(
+                searchReqDto, () -> promptHistoryMapper.selectList(searchReqDto));
 
-        List<PromptHistoryRespDto> items = pageInfo.getList().stream()
+        List<PromptHistory> list = pageInfo.getList();
+
+        List<Long> productHistoryIds = list.stream()
+                .filter(h -> "PRODUCT".equals(h.getPromptType()))
+                .map(PromptHistory::getId)
+                .toList();
+
+        List<Long> humanHistoryIds = list.stream()
+                .filter(h -> "PERSON".equals(h.getPromptType()))
+                .map(PromptHistory::getId)
+                .toList();
+
+        // 쿼리 2: PRODUCT — 카테고리 경로 배치 조회
+        // 쿼리 3: PRODUCT — 태그 상세(tagId + tagName) 배치 조회
+        Map<Long, String> categoryPathMap = Map.of();
+        Map<Long, List<Long>> tagIdsMap = Map.of();
+        Map<Long, List<String>> tagNamesMap = Map.of();
+
+        if (!productHistoryIds.isEmpty()) {
+            List<Long> categoryIds = list.stream()
+                    .filter(h -> "PRODUCT".equals(h.getPromptType()) && h.getCategoryId() != null)
+                    .map(PromptHistory::getCategoryId)
+                    .distinct()
+                    .toList();
+
+            categoryPathMap = categoryMapper.selectCategoryPathsByIds(categoryIds)
+                    .stream()
+                    .collect(Collectors.toMap(CategoryPathDto::getId, CategoryPathDto::getCategoryPath));
+
+            List<GoodsTagDetailDto> tagDetails =
+                    goodsPromptHistoryTagMapper.selectTagDetailsByPromptHistoryIds(productHistoryIds);
+
+            tagIdsMap = tagDetails.stream()
+                    .collect(Collectors.groupingBy(
+                            GoodsTagDetailDto::getPromptHistoryId,
+                            Collectors.mapping(GoodsTagDetailDto::getTagId, Collectors.toList())));
+
+            tagNamesMap = tagDetails.stream()
+                    .collect(Collectors.groupingBy(
+                            GoodsTagDetailDto::getPromptHistoryId,
+                            Collectors.mapping(GoodsTagDetailDto::getTagName, Collectors.toList())));
+        }
+
+        // 쿼리 4: HUMAN — 옵션명 배치 조회
+        Map<Long, List<String>> optionNamesMap = Map.of();
+        if (!humanHistoryIds.isEmpty()) {
+            optionNamesMap = humanPromptHistoryOptionMapper
+                    .selectOptionDetailsByHistoryIds(humanHistoryIds)
+                    .stream()
+                    .collect(Collectors.groupingBy(
+                            HumanOptionDetailDto::getPromptHistoryId,
+                            Collectors.mapping(HumanOptionDetailDto::getOptionName, Collectors.toList())));
+        }
+
+        // Java에서 조립 (추가 쿼리 없음)
+        final Map<Long, String> finalCategoryPathMap = categoryPathMap;
+        final Map<Long, List<Long>> finalTagIdsMap = tagIdsMap;
+        final Map<Long, List<String>> finalTagNamesMap = tagNamesMap;
+        final Map<Long, List<String>> finalOptionNamesMap = optionNamesMap;
+
+        List<PromptHistoryRespDto> items = list.stream()
                 .map(history -> {
                     if ("PRODUCT".equals(history.getPromptType())) {
                         String categoryPath = history.getCategoryId() != null
-                                ? String.join(" > ", categoryMapper.selectCategoryPath(history.getCategoryId()))
+                                ? finalCategoryPathMap.get(history.getCategoryId())
                                 : null;
-                        List<Long> tagIds = goodsPromptHistoryTagMapper.selectTagIdsByPromptHistoryId(history.getId());
-                        List<String> tagNames = goodsPromptHistoryTagMapper.selectTagNamesByPromptHistoryId(history.getId());
+                        List<Long> tagIds = finalTagIdsMap.getOrDefault(history.getId(), List.of());
+                        List<String> tagNames = finalTagNamesMap.getOrDefault(history.getId(), List.of());
                         return PromptHistoryRespDto.fromGoods(history, categoryPath, tagIds, tagNames, imageBaseUrl);
                     } else {
-                        List<String> optionNames = humanPromptHistoryOptionMapper.selectOptionNamesByHistoryId(history.getId());
+                        List<String> optionNames = finalOptionNamesMap.getOrDefault(history.getId(), List.of());
                         return PromptHistoryRespDto.fromHuman(history, optionNames, imageBaseUrl);
                     }
                 })

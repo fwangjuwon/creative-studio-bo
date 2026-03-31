@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.category.mapper;
 
+import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryPathDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -56,6 +57,17 @@ public interface CategoryMapper {
      * </pre>
      */
     List<String> selectCategoryPath(@Param("id") Long id);
+
+    /**
+     * 여러 SCS 카테고리 ID에 대한 경로 문자열을 한 번에 조회 (N+1 방지용 배치 쿼리)
+     *
+     * <pre>
+     * prompt_history 목록 조회 시 category_id IN(...) 형태로 호출한다.
+     * 3단계 자기 JOIN(LCS→MCS→SCS) 사용 — prompt_history.category_id는 항상 SCS임이 보장된다.
+     * Service에서 id 기준 Map 변환 후 조립한다.
+     * </pre>
+     */
+    List<CategoryPathDto> selectCategoryPathsByIds(@Param("ids") List<Long> ids);
 
     void update(Category category);
 
