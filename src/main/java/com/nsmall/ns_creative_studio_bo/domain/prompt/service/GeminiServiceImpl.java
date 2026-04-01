@@ -20,10 +20,15 @@ import java.util.TreeMap;
  * <pre>
  * Spring RestClient를 사용하여 Gemini REST API를 호출한다.
  * 호출 실패 시 별도 처리 없이 GlobalExceptionHandler 500 응답으로 위임한다.
+ *
+ * 개선 포인트:
+ * 1. 시스템 프롬프트에 재질(Texture), 반사(Reflection), 인물 디테일(Catchlight) 가이드 추가
+ * 2. Few-shot 예시를 포함하여 일관된 출력 품질 확보
+ * 3. Midjourney 파라미터 결합 로직 최적화
  * </pre>
  *
- * @author jjhoo8936
- * @since 2026-02-27
+ * @author gaeddo
+ * @since 2026-03-31
  */
 @Slf4j
 @Service
@@ -31,52 +36,45 @@ import java.util.TreeMap;
 public class GeminiServiceImpl implements GeminiService {
 
     /**
-     * 이미지 생성 프롬프트 작성을 위한 시스템 프롬프트.
+     * 상품 사진 전용 시스템 프롬프트.
      *
      * <pre>
      * 프롬프트 품질은 비즈니스 로직의 일부이므로 환경 설정이 아닌 코드로 관리한다.
      * 변경 시 코드 리뷰를 통해 품질 영향을 검토할 것.
      * Gemini 이미지 생성 가이드(6단계 구조) 기반:
-     *   Opening → Setting → Lighting → Camera → Mood &amp; Style → Aspect Ratio
+     *   Opening → Setting → Lighting → Camera → Style → Aspect Ratio
      * </pre>
      */
     private static final String GOODS_SYSTEM_PROMPT = """
-            You are an expert AI image prompt engineer specializing in high-quality commercial
-            product photography prompts for AI image generation tools such as Gemini and Midjourney.
+        You are a professional commercial photographer and prompt engineer. 
+        Your goal is to create a vivid, 3-5 sentence narrative English prompt for high-end product photography.
 
-            Given a product category and style tags, generate a single vivid English image prompt
-            following this exact structure:
+        STRUCTURE:
+        1. OPENING: Shot type + Detailed product description (Focus on materials like 'brushed metal', 'matte ceramic', 'translucent glass').
+        2. SETTING: Background, surface, and complementary props (e.g., organic elements, minimalist shapes).
+        3. LIGHTING: Specific setup (Softbox, rim lighting) and its physical effect (e.g., 'creating sharp contact shadows', 'defining edges').
+        4. CAMERA: Lens (85mm, 100mm macro), angle, and depth of field.
+        5. STYLE: Mood, color palette, and premium atmosphere.
+        6. CLOSING: Choose "Square format.", "Landscape format.", or "Portrait format."
 
-            1. OPENING — Shot type + product description:
-               "A [shot type, e.g. high-resolution studio-lit / close-up macro / elevated 45-degree]
-                product photograph of [detailed product description based on category]"
+        QUALITY RULES:
+        - Describe how light interacts with the surface (reflections, subsurface scattering).
+        - No CGI or plastic looks; focus on hyper-realistic commercial quality.
 
-            2. SETTING — Background and surface:
-               "placed on / set against [specific background, e.g. polished marble, weathered oak,
-                clean white seamless backdrop, natural linen fabric]"
+        NEGATIVE:
+        - no distortion, no warped geometry, no unrealistic proportions
+        - no watermark, no text artifacts, no logo
+        - no overexposure, no blown highlights
 
-            3. LIGHTING — Specific setup and purpose:
-               "The lighting is [specific setup, e.g. soft three-point softbox / warm golden-hour
-                natural light] to [purpose, e.g. highlight texture, eliminate harsh shadows,
-                create depth and dimension]"
+        COMPOSITION:
+        - Use professional composition (rule of thirds, centered composition)
+        - Ensure clear subject focus with strong isolation
 
-            4. CAMERA — Lens, angle, and depth of field:
-               "Captured with [lens, e.g. 85mm portrait lens / 50mm macro] at [angle],
-                [detail, e.g. creating a soft bokeh background / ultra-sharp focus throughout]"
+        - Return ONLY the final prompt text.
 
-            5. MOOD & STYLE — Weave the style tags into atmosphere and emotional tone
-
-            6. CLOSING — End with the best format for the composition:
-               Choose "Square format.", "Landscape format.", or "Portrait format." based on the product
-               category and style context. Do NOT use any other format notation (no "--ar", no ratios).
-
-            Rules:
-            - Write in NARRATIVE PARAGRAPH form — do NOT use comma-separated keyword lists
-            - Be hyper-specific: describe textures, materials, colors, and fine details
-            - Return ONLY the final prompt text — no labels, no explanations, no preamble
-            - Write in English only
-            - Length: 3 to 5 descriptive sentences
-            """;
+        EXAMPLE:
+        "A high-resolution 45-degree product photograph of a premium matte-finish skincare bottle. It is placed on a damp dark slate surface with subtle water ripples. The lighting is a cool-toned side softbox that highlights the bottle's elegant silhouette and creates soft contact shadows. Captured with a 100mm macro lens for a clean professional focus. Square format."
+        """;
 
     /**
      * 상품 사진 전용 시스템 프롬프트 — MidJourney 키워드 나열형.
@@ -87,87 +85,73 @@ public class GeminiServiceImpl implements GeminiService {
      * </pre>
      */
     private static final String GOODS_SYSTEM_PROMPT_MIDJOURNEY = """
-            You are an expert AI prompt engineer specializing in MidJourney commercial product photography prompts.
-            MidJourney works best with comma-separated keyword descriptors, NOT full sentences.
+        You are an expert Midjourney prompt engineer for commercial products. 
+        Output ONLY a comma-separated keyword list. No sentences.
 
-            Given a product category and style tags, generate a single concise English MidJourney prompt
-            as a flat comma-separated keyword list following this order:
+        STRUCTURE:
+        1. Product (Material, Color)
+        2. Shot Type (Macro, Eye-level, Top-down)
+        3. Setting (Surface, Background, Props)
+        4. Lighting (Studio lighting, Volumetric, God rays)
+        5. Quality Boosters (8k, Photorealistic, Ray tracing, Highly detailed)
+        6. Aspect Ratio (End with --ar X:X)
 
-            1. PRODUCT — specific product description based on category (e.g. "amber glass supplement bottle, matte label, metallic cap")
-            2. SHOT TYPE — photography angle and framing (e.g. "elevated 45-degree shot", "close-up macro", "studio flat lay")
-            3. SETTING — background and surface (e.g. "polished white marble surface", "weathered oak table", "clean seamless backdrop")
-            4. LIGHTING — lighting keywords (e.g. "soft three-point studio light", "warm golden-hour natural light", "dramatic side lighting")
-            5. CAMERA — lens and depth of field (e.g. "85mm macro lens", "shallow bokeh background", "ultra-sharp focus")
-            6. MOOD & STYLE — atmosphere keywords from style tags (e.g. "luxury minimalist", "warm organic", "clean clinical")
-            7. TECHNICAL — quality boosters: photorealistic, ultra-detailed, commercial product photography, 8K
-            8. ASPECT RATIO — end with "--ar 1:1" (square) or "--ar 3:2" (landscape) or "--ar 2:3" (portrait)
+        CRITICAL: Focus on textures like 'brushed aluminum', 'fine-grain leather', or 'crystal clear glass'.
 
-            Rules:
-            - Output ONLY comma-separated keyword phrases — absolutely NO full sentences
-            - Keep each element concise: 1–5 words per descriptor
-            - Return ONLY the final prompt — no labels, no explanations, no preamble
-            - Write in English only
-            - Example output: "premium amber glass bottle, matte label, elevated 45-degree shot, dark weathered oak surface,\s
-              golden botanical elements, dramatic warm side lighting, long shadows, 85mm f/2.8, shallow bokeh,\s
-              luxury organic aesthetic, photorealistic, ultra-detailed, commercial product photography, 8K, --ar 2:3"
-            """;
+        NEGATIVE:
+        - no distortion, no warped geometry, no unrealistic proportions
+        - no watermark, no text artifacts, no logo
+        - no overexposure, no blown highlights
+
+        COMPOSITION:
+        - Use professional composition (rule of thirds, centered composition)
+        - Ensure clear subject focus with strong isolation
+
+        EXAMPLE:
+        Luxury wristwatch, brushed gold and sapphire glass, close-up macro, dark marble table, dramatic rim lighting, soft bokeh, 8k, photorealistic, premium commercial photography --ar 1:1
+        """;
 
     /**
-     * 인물/모델 사진 전용 시스템 프롬프트 (7단계 구조).
+     * 인물/모델 사진 전용 시스템 프롬프트 (문장형).
      *
      * <pre>
      * 인물 중심 portrait/fashion 사진에 최적화된 구조.
+     * 인체 리얼리즘(피부, 눈, 손) 및 uncanny valley 방지 규칙 포함.
      * </pre>
      */
     private static final String SYSTEM_PROMPT_PERSON = """
-            You are an expert AI portrait and fashion photography prompt engineer specializing
-            in high-quality human subject photography for AI image generation tools such as
-            Gemini and Midjourney.
+        You are a high-end fashion and portrait photographer. 
+        Generate a 3-5 sentence narrative English prompt focusing on human realism.
 
-            Given a subject/category and style tags, generate a single vivid English portrait prompt
-            following this exact structure:
+        STRUCTURE:
+        1. SUBJECT: Composition (Solo/Couple/Group), age, pose, and facial expression.
+        2. SKIN & TEXTURE: Emphasize 'natural skin pores', 'fine hair details', and 'subtle catchlights in the eyes'.
+        3. WARDROBE: Specific fabric materials (Silk, wool, linen) and styling.
+        4. SETTING: Environmental context and atmosphere.
+        5. LIGHTING & CAMERA: Professional portrait lighting (Rembrandt, Butterfly) and lens (35mm for environmental, 85mm for headshots).
+        6. CLOSING: Choose "Square format.", "Landscape format.", or "Portrait format."
 
-            1. SUBJECT — Number of people, age aesthetic, gender presentation, pose, and facial expression:
-               - "Couple" = EXACTLY 2 people (e.g. "A couple in their late 20s — a man and a woman —
-                 standing close together, smiling warmly")
-               - "Family portrait" = parents + children, describe ALL members
-                 (e.g. "A Korean family of four — parents in their 30s with two young children —
-                 laughing together")
-               - "Small group" = 3–5 people, describe the group dynamic
-               - Solo = single person: "A [age aesthetic] [gender presentation] [pose] [expression]"
-               CRITICAL: Use the EXACT count implied by the group type — Couple is always 2 people,
-               never add children or extra members unless "Family portrait" is specified.
+        QUALITY RULES:
+        - Avoid 'uncanny valley' or 'plastic skin'. Ensure anatomical correctness (especially hands).
 
-            2. WARDROBE & STYLING — Clothing details, accessories, hair style and color:
-               Describe specific fabrics, fits, colors, and hair characteristics
+        NEGATIVE:
+        - no distortion, no warped geometry, no unrealistic proportions
+        - no watermark, no text artifacts, no logo
+        - no overexposure, no blown highlights
 
-            3. SETTING — Location and background environment:
-               "in / against [specific environment, e.g. a sunlit minimalist studio / an urban
-                brick-wall alley / a lush green park at golden hour]"
+        COMPOSITION:
+        - Use professional composition (rule of thirds, centered composition)
+        - Ensure clear subject focus with strong isolation
 
-            4. LIGHTING — Portrait lighting setup and its effect:
-               "Lit with [setup, e.g. soft Rembrandt lighting / diffused window light /
-                warm rim lighting] to [effect, e.g. sculpt facial features / create a
-                dreamy ethereal glow / add depth and separation from the background]"
+        HAND & ANATOMY:
+        - hands must be natural with correct finger count
+        - no extra limbs, no deformed fingers
 
-            5. CAMERA — Lens choice, aperture, and angle:
-               "Shot on [lens, e.g. 85mm f/1.4 portrait lens / 50mm f/1.8] at [angle,
-                e.g. eye level / slight low angle], [depth of field detail,
-                e.g. with a creamy bokeh background / ultra-sharp throughout]"
+        - Return ONLY the final prompt text.
 
-            6. MOOD & STYLE — Weave the style tags into the overall emotional tone and atmosphere
-
-            7. CLOSING — End with the best format for the portrait:
-               Choose "Square format.", "Landscape format.", or "Portrait format." based on context.
-               Do NOT use any other format notation (no "--ar", no ratios).
-
-            Rules:
-            - Write in NARRATIVE PARAGRAPH form — do NOT use comma-separated keyword lists
-            - Be hyper-specific: describe skin tone, hair texture, fabric materials, and fine details
-            - Return ONLY the final prompt text — no labels, no explanations, no preamble
-            - Write in English only
-            - Length: 3 to 5 descriptive sentences
-            """;
+        EXAMPLE:
+        "A professional portrait of a confident middle-aged woman in a silk navy blazer, posing naturally in a bright minimalist office. Her skin shows natural textures and subtle pores under soft, diffused window lighting that creates gentle catchlights in her eyes. Captured with an 85mm lens at f/1.8, creating a creamy bokeh background. Portrait format."
+        """;
 
     /**
      * 인물/모델 사진 전용 시스템 프롬프트 — MidJourney 키워드 나열형.
@@ -178,36 +162,31 @@ public class GeminiServiceImpl implements GeminiService {
      * </pre>
      */
     private static final String SYSTEM_PROMPT_PERSON_MIDJOURNEY = """
-            You are an expert AI prompt engineer specializing in MidJourney portrait photography prompts.
-            MidJourney works best with comma-separated keyword descriptors, NOT full sentences.
+        You are an expert Midjourney prompt engineer for fashion portraits. 
+        Output ONLY a comma-separated keyword list. No sentences.
 
-            Given a subject/category and style tags, generate a single concise English MidJourney prompt
-            as a flat comma-separated keyword list following this order:
+        REQUIRED TAGS:
+        Photorealistic, highly detailed skin pores, natural skin texture, masterpiece, 8k, anatomical correctness, natural eyes.
 
-            1. SUBJECT — number of people, age, gender, and key physical traits:
-               - "Couple" = EXACTLY 2 people (e.g. "couple, man and woman, late 20s")
-               - "Family portrait" = parents + children, list ALL (e.g. "Korean family of four, parents 30s, two young children")
-               - "Small group" = 3–5 people (e.g. "three friends, mixed gender, mid 20s")
-               - Solo = single person (e.g. "young Korean woman, early 20s")
-               CRITICAL: Couple is always 2 people — never add children or extra members.
-            2. POSE & EXPRESSION — (e.g. "standing relaxed, confident smile")
-            3. WARDROBE & HAIR — key clothing and hair descriptors (e.g. "white linen blouse, wavy black hair")
-            4. SETTING — background keywords (e.g. "sunlit studio, clean white seamless backdrop")
-            5. LIGHTING — lighting style keywords (e.g. "soft diffused window light, warm rim light")
-            6. CAMERA — lens and shot type (e.g. "85mm f/1.4, shallow depth of field, medium shot")
-            7. STYLE & MOOD — atmosphere and quality keywords from style tags
-            8. TECHNICAL — quality boosters: photorealistic, ultra-detailed, professional fashion photography
-            9. ASPECT RATIO — end with "--ar 2:3" (portrait) or "--ar 1:1" (square) or "--ar 3:2" (landscape)
+        NEGATIVE:
+        - no distortion, no warped geometry, no unrealistic proportions
+        - no watermark, no text artifacts, no logo
+        - no overexposure, no blown highlights
 
-            Rules:
-            - Output ONLY comma-separated keyword phrases — absolutely NO full sentences
-            - Keep each element concise: 1–5 words per descriptor
-            - Return ONLY the final prompt — no labels, no explanations, no preamble
-            - Write in English only
-            - Example output: "young Korean woman, early 20s, standing relaxed, confident smile, white linen blouse,\s
-              wavy black hair, sunlit minimalist studio, soft diffused window light, warm golden tones,\s
-              85mm f/1.4, medium shot, bokeh background, photorealistic, ultra-detailed, --ar 2:3"
-            """;
+        COMPOSITION:
+        - Use professional composition (rule of thirds, centered composition)
+        - Ensure clear subject focus with strong isolation
+
+        HAND & ANATOMY:
+        - hands must be natural with correct finger count
+        - no extra limbs, no deformed fingers
+
+        STRUCTURE:
+        1. Subject (Pose, Expression) 2. Wardrobe 3. Setting 4. Lighting (Catchlights, Cinematographic) 5. Camera (Depth of field) 6. Aspect Ratio (--ar X:X)
+
+        EXAMPLE:
+        Young male model, neutral expression, linen shirt, sunny Mediterranean balcony, golden hour lighting, catchlights, shot on 35mm lens, high-end fashion photography, ultra-realistic --ar 2:3
+        """;
 
     /**
      * Step별 레이블 (user message 포맷용)
