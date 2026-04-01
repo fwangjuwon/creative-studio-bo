@@ -260,8 +260,7 @@ public class GeminiServiceImpl implements GeminiService {
         GeminiContent userContent = new GeminiContent("user", List.of(userPart));
         GeminiRequest requestBody = new GeminiRequest(systemInstruction, List.of(userContent));
 
-        String uri = String.format("/models/%s:generateContent?key=%s",
-                geminiProperties.getModel(), geminiProperties.getApiKey());
+        String uri = String.format("/models/%s:generateContent", geminiProperties.getModel());
 
         log.debug("Gemini 인물 사진 API 호출 — model: {}, style: {}, steps: {}",
                 geminiProperties.getModel(), promptStyle, stepOptionValues.keySet());
@@ -302,8 +301,7 @@ public class GeminiServiceImpl implements GeminiService {
         String systemPromptText = isMidJourney ? GOODS_SYSTEM_PROMPT_MIDJOURNEY : GOODS_SYSTEM_PROMPT;
         GeminiRequest requestBody = buildRequest(userMessage, systemPromptText);
 
-        String uri = String.format("/models/%s:generateContent?key=%s",
-                geminiProperties.getModel(), geminiProperties.getApiKey());
+        String uri = String.format("/models/%s:generateContent", geminiProperties.getModel());
 
         log.debug("Gemini API 호출 — model: {}, goodsCategory: {}, tags: {}, aspectRatio: {}, style: {}",
                 geminiProperties.getModel(), goodsCategoryName, tagNames, imageAspectRatio, promptStyle);
