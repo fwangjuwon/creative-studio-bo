@@ -35,6 +35,11 @@ public class HumanPromptOptionServiceImpl implements HumanPromptOptionService {
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.ATTR_NOT_FOUND,
                         "세부항목을 찾을 수 없습니다. attrId=" + dto.getAttrId()));
 
+        if (humanPromptOptionMapper.existsByNameAndAttrId(dto.getName(), dto.getAttrId(), null)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_OPTION_NAME,
+                    "이미 존재하는 선택지명입니다. name=" + dto.getName());
+        }
+
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
@@ -57,9 +62,14 @@ public class HumanPromptOptionServiceImpl implements HumanPromptOptionService {
 
     @Override
     public HumanPromptOptionSimpleRespDto updateOption(Long id, HumanPromptOptionUpdateReqDto dto) {
-        humanPromptOptionMapper.selectById(id)
+        HumanPromptOption existing = humanPromptOptionMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.OPTION_NOT_FOUND,
                         "선택지를 찾을 수 없습니다. id=" + id));
+
+        if (humanPromptOptionMapper.existsByNameAndAttrId(dto.getName(), existing.getAttrId(), id)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_OPTION_NAME,
+                    "이미 존재하는 선택지명입니다. name=" + dto.getName());
+        }
 
         String requesterId = SecurityUtil.getCurrentLoginId();
 

@@ -39,6 +39,24 @@
         WHERE id = #{id}
     </select>
 
+    <select id="existsByName" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM human_prompt_step
+        WHERE name = #{name}
+        <if test="excludeId != null">
+            AND id <![CDATA[ <> ]]> #{excludeId}
+        </if>
+    </select>
+
+    <select id="existsByStepCode" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM human_prompt_step
+        WHERE step_code = #{stepCode}
+        <if test="excludeId != null">
+            AND id <![CDATA[ <> ]]> #{excludeId}
+        </if>
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO human_prompt_step (
             step_number, step_code, name,

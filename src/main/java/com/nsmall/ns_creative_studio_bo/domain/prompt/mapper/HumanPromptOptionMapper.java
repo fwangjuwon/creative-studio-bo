@@ -27,6 +27,8 @@ public interface HumanPromptOptionMapper {
 
     boolean existsByAttrId(@Param("attrId") Long attrId);
 
+    boolean existsByNameAndAttrId(@Param("name") String name, @Param("attrId") Long attrId, @Param("excludeId") Long excludeId);
+
     void insert(HumanPromptOption option);
 
     void update(HumanPromptOption option);

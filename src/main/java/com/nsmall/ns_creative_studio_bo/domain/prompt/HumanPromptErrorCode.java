@@ -25,7 +25,12 @@ public enum HumanPromptErrorCode implements ErrorCode {
     ATTR_HAS_OPTIONS("HP013", "하위 선택지가 존재하여 삭제할 수 없습니다.", 400),
 
     OPTION_NOT_FOUND("HP014", "존재하지 않는 선택지입니다.", 400),
-    OPTION_IN_USE("HP015", "프롬프트 이력에서 사용 중인 선택지는 삭제할 수 없습니다.", 400);
+    OPTION_IN_USE("HP015", "프롬프트 이력에서 사용 중인 선택지는 삭제할 수 없습니다.", 400),
+
+    DUPLICATE_STEP_NAME("HP016", "이미 존재하는 단계명입니다.", 400),
+    DUPLICATE_STEP_CODE("HP017", "이미 존재하는 단계 코드입니다.", 400),
+    DUPLICATE_ATTR_NAME("HP018", "이미 존재하는 세부항목명입니다.", 400),
+    DUPLICATE_OPTION_NAME("HP019", "이미 존재하는 선택지명입니다.", 400);
 
     private final String code;
     private final String message;

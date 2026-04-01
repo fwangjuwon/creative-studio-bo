@@ -134,6 +134,19 @@
                     AND parent_id = #{parentId}
                 </otherwise>
             </choose>
+            )
+    </select>
+    <select id="existsByNameAndParentId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM category
+            WHERE name = #{name}
+              AND <choose>
+                    <when test="parentId == null">parent_id IS NULL</when>
+                    <otherwise>parent_id = #{parentId}</otherwise>
+                  </choose>
+              <if test="excludeId != null">
+              AND id <![CDATA[<>]]> #{excludeId}
+          </if>
         )
     </select>
 

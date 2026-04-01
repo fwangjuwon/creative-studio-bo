@@ -32,6 +32,8 @@ public interface TagMapper {
 
     boolean existsByTagGroupId(@Param("tagGroupId") Long tagGroupId);
 
+    boolean existsByNameAndTagGroupId(@Param("name") String name, @Param("tagGroupId") Long tagGroupId, @Param("excludeId") Long excludeId);
+
     void update(Tag tag);
 
     void deleteById(@Param("id") Long id);
