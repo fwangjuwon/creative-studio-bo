@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClient;
 
+import java.util.Objects;
+
 /**
  * Gemini API RestClient Bean 설정
  *
@@ -24,9 +26,14 @@ public class GeminiConfig {
     @Bean
     public RestClient geminiRestClient(@Value("${gemini.base-url}") String baseUrl,
                                        GeminiProperties geminiProperties) {
+        String apiKey = Objects.requireNonNull(geminiProperties.getApiKey(),
+                "GEMINI_API_KEY가 설정되지 않았습니다. .env 파일을 확인하세요.").trim();
+        if (apiKey.isBlank()) {
+            throw new IllegalStateException("GEMINI_API_KEY가 비어 있습니다. .env 파일을 확인하세요.");
+        }
         return RestClient.builder()
                 .baseUrl(baseUrl)
-                .defaultHeader("x-goog-api-key", geminiProperties.getApiKey())
+                .defaultHeader("x-goog-api-key", apiKey)
                 .build();
     }
 }
