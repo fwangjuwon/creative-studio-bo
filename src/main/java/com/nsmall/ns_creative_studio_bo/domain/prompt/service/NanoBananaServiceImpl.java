@@ -82,8 +82,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
      * Gemini 이미지 생성 API를 호출하고 응답에서 이미지를 추출·저장한 뒤 URL을 반환한다.
      */
     private String callAndSave(NbRequest requestBody) {
-        String uri = String.format("/models/%s:generateContent?key=%s",
-                geminiProperties.getImageModel(), geminiProperties.getApiKey());
+        String uri = String.format("/models/%s:generateContent", geminiProperties.getImageModel());
 
         NbResponse response = geminiRestClient.post()
                 .uri(uri)
