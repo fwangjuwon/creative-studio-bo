@@ -213,10 +213,12 @@ Mapper → Service 등 **내부 계층 간 전달 전용 DTO**는 이 규칙을 
 /**
  * 클래스 설명
  *
- * @author jjhoo8936
- * @since 2026-02-26
+ * @author {작성자ID}
+ * @since yyyy-MM-dd
  */
 ```
+
+> `@author`는 해당 파일의 최초 작성자 ID를 기입한다 (예: `jjhoo8936`, `gaeddo`).
 
 ### Swagger API 문서화
 
