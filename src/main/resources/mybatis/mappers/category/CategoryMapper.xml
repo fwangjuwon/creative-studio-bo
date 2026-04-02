@@ -145,7 +145,7 @@
                     <otherwise>parent_id = #{parentId}</otherwise>
                   </choose>
               <if test="excludeId != null">
-              AND id <![CDATA[<>]]> #{excludeId}
+              AND id <![CDATA[ <> ]]> #{excludeId}
           </if>
         )
     </select>

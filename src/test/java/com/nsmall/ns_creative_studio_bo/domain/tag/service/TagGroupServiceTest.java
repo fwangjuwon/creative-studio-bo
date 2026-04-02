@@ -240,6 +240,67 @@ public class TagGroupServiceTest {
     }
 
     // ============================================================
+    // TagGroup name 중복 검증
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 그룹 생성 - name 중복 (전역 스코프)")
+    void 예외_태그그룹_생성_name_중복() {
+        tagGroupService.createTagGroup(단일선택_그룹_DTO("중복그룹명")); // sortOrder=1000
+
+        TagGroupCreateReqDto dto = TagGroupCreateReqDto.builder()
+                .name("중복그룹명")
+                .isMultiSelect(false)
+                .sortOrder(1001) // sortOrder는 다르게
+                .build();
+
+        assertThatThrownBy(() -> tagGroupService.createTagGroup(dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagGroupErrorCode.DUPLICATE_TAG_GROUP_NAME));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 그룹 수정 - name 중복")
+    void 예외_태그그룹_수정_name_중복() {
+        tagGroupService.createTagGroup(단일선택_그룹_DTO("그룹A")); // sortOrder=1000
+        TagGroupRespDto groupB = tagGroupService.createTagGroup(복수선택_그룹_DTO("그룹B")); // sortOrder=1001
+
+        TagGroupUpdateReqDto updateDto = TagGroupUpdateReqDto.builder()
+                .name("그룹A") // 그룹A와 name 중복
+                .isMultiSelect(false)
+                .sortOrder(1001)
+                .build();
+
+        assertThatThrownBy(() -> tagGroupService.updateTagGroup(groupB.getId(), updateDto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagGroupErrorCode.DUPLICATE_TAG_GROUP_NAME));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 그룹 수정 - 자신의 name으로 수정 (중복 허용)")
+    void 성공_태그그룹_수정_자신의_name() {
+        TagGroupRespDto created = tagGroupService.createTagGroup(단일선택_그룹_DTO("그룹A")); // sortOrder=1000
+
+        TagGroupUpdateReqDto updateDto = TagGroupUpdateReqDto.builder()
+                .name("그룹A") // 자신의 name
+                .isMultiSelect(false)
+                .sortOrder(1000)
+                .build();
+
+        TagGroupRespDto updated = tagGroupService.updateTagGroup(created.getId(), updateDto);
+
+        assertThat(updated.getName()).isEqualTo("그룹A");
+    }
+
+    // ============================================================
     // TagGroup 삭제
     // ============================================================
 

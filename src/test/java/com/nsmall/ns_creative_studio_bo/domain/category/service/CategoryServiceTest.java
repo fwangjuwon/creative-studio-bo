@@ -387,6 +387,105 @@ public class CategoryServiceTest {
     }
 
     // ============================================================
+    // 카테고리 name 중복 검증
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 카테고리 생성 - name 중복 (LCS 스코프)")
+    void 예외_카테고리_생성_name_중복_LCS() {
+        categoryService.createCategory(LCS_생성_DTO("대분류A")); // sortOrder=1000
+
+        CategoryCreateReqDto dto = CategoryCreateReqDto.builder()
+                .name("대분류A")
+                .categoryType(CategoryType.LCS)
+                .parentId(null)
+                .sortOrder(1001) // sortOrder는 다르게
+                .build();
+
+        assertThatThrownBy(() -> categoryService.createCategory(dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(CategoryErrorCode.DUPLICATE_CATEGORY_NAME));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 카테고리 생성 - name 중복 (하위 카테고리 스코프)")
+    void 예외_카테고리_생성_name_중복_하위() {
+        CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("대분류"));
+        categoryService.createCategory(하위_생성_DTO("중분류A", CategoryType.MCS, lcs.getId())); // sortOrder=1000
+
+        CategoryCreateReqDto dto = CategoryCreateReqDto.builder()
+                .name("중분류A")
+                .categoryType(CategoryType.MCS)
+                .parentId(lcs.getId())
+                .sortOrder(1001) // sortOrder는 다르게
+                .build();
+
+        assertThatThrownBy(() -> categoryService.createCategory(dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(CategoryErrorCode.DUPLICATE_CATEGORY_NAME));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 카테고리 수정 - name 중복")
+    void 예외_카테고리_수정_name_중복() {
+        categoryService.createCategory(LCS_생성_DTO("대분류A")); // sortOrder=1000
+        CategoryRespDto second = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("대분류B").categoryType(CategoryType.LCS).parentId(null).sortOrder(1001).build());
+
+        CategoryUpdateReqDto updateDto = CategoryUpdateReqDto.builder()
+                .name("대분류A") // 대분류A와 name 중복
+                .sortOrder(1001)
+                .build();
+
+        assertThatThrownBy(() -> categoryService.updateCategory(second.getId(), updateDto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(CategoryErrorCode.DUPLICATE_CATEGORY_NAME));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 카테고리 수정 - 자신의 name으로 수정 (중복 허용)")
+    void 성공_카테고리_수정_자신의_name() {
+        CategoryRespDto created = categoryService.createCategory(LCS_생성_DTO("대분류A")); // sortOrder=1000
+
+        CategoryUpdateReqDto updateDto = CategoryUpdateReqDto.builder()
+                .name("대분류A") // 자신의 name
+                .sortOrder(1000)
+                .build();
+
+        CategoryRespDto updated = categoryService.updateCategory(created.getId(), updateDto);
+
+        assertThat(updated.getName()).isEqualTo("대분류A");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 카테고리 생성 - 다른 parentId에 같은 name 허용")
+    void 성공_카테고리_생성_다른부모_같은_name() {
+        CategoryRespDto lcs1 = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("대분류1").categoryType(CategoryType.LCS).parentId(null).sortOrder(1000).build());
+        CategoryRespDto lcs2 = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("대분류2").categoryType(CategoryType.LCS).parentId(null).sortOrder(1001).build());
+
+        categoryService.createCategory(하위_생성_DTO("동일name중분류", CategoryType.MCS, lcs1.getId())); // sortOrder=1000
+        CategoryRespDto result = categoryService.createCategory(하위_생성_DTO("동일name중분류", CategoryType.MCS, lcs2.getId())); // 다른 부모 허용
+
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getName()).isEqualTo("동일name중분류");
+    }
+
+    // ============================================================
     // 카테고리 삭제
     // ============================================================
 
