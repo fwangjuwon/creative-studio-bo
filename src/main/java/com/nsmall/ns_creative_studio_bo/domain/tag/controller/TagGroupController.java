@@ -10,8 +10,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.List;
  * @since 2026-02-27
  */
 @Tag(name = "TagGroup", description = "태그 그룹 관리 API")
+@Validated
 @RestController
 @RequestMapping("/api/tag-groups")
 @RequiredArgsConstructor
@@ -45,7 +48,7 @@ public class TagGroupController {
     @ApiResponse(responseCode = "200", description = "조회 성공 (미존재 시 data: null)")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
-    public CommonResponse<TagGroupRespDto> getTagGroup(@PathVariable Long id) {
+    public CommonResponse<TagGroupRespDto> getTagGroup(@PathVariable @Positive Long id) {
         return CommonResponse.success(tagGroupService.getTagGroup(id).orElse(null));
     }
 
@@ -65,8 +68,8 @@ public class TagGroupController {
     @PreAuthorize("hasRole('MANAGER')")
     @PutMapping("/{id}")
     public CommonResponse<TagGroupRespDto> updateTagGroup(
-            @PathVariable Long id,
-            @RequestBody TagGroupUpdateReqDto dto) {
+            @PathVariable @Positive Long id,
+            @RequestBody @Valid TagGroupUpdateReqDto dto) {
         return CommonResponse.success(tagGroupService.updateTagGroup(id, dto));
     }
 
@@ -76,7 +79,7 @@ public class TagGroupController {
     @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
     @PreAuthorize("hasRole('MANAGER')")
     @DeleteMapping("/{id}")
-    public CommonResponse<Void> deleteTagGroup(@PathVariable Long id) {
+    public CommonResponse<Void> deleteTagGroup(@PathVariable @Positive Long id) {
         tagGroupService.deleteTagGroup(id);
         return CommonResponse.success();
     }
