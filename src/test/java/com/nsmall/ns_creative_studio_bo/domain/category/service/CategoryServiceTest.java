@@ -239,10 +239,10 @@ public class CategoryServiceTest {
     @Rollback
     @DisplayName("[성공] 카테고리 목록 조회 - 3단계 전체 드릴다운 (LCS→MCS→SCS)")
     void 성공_카테고리_목록_조회_3단계_드릴다운() {
-        CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("식품"));
-        CategoryRespDto mcs = categoryService.createCategory(하위_생성_DTO("건강식품", CategoryType.MCS, lcs.getId()));
-        CategoryRespDto scs = categoryService.createCategory(하위_생성_DTO("인삼", CategoryType.SCS, mcs.getId()));
-
+        CategoryRespDto lcs = categoryService.createCategory(LCS_생성_DTO("가공"));
+        CategoryRespDto mcs = categoryService.createCategory(하위_생성_DTO("가공식품", CategoryType.MCS, lcs.getId()));
+        CategoryRespDto scs = categoryService.createCategory(하위_생성_DTO("통조림", CategoryType.SCS, mcs.getId()));
+        
         assertThat(categoryService.getCategories(null))
                 .anyMatch(c -> c.getId().equals(lcs.getId()));
         assertThat(categoryService.getCategories(lcs.getId()))

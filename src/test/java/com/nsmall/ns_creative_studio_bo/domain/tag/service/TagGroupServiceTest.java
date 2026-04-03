@@ -61,7 +61,7 @@ public class TagGroupServiceTest {
     @ParameterizedTest
     @CsvSource({
             "인물, false",
-            "분위기, true"
+            "색감 , true"
     })
     @Transactional
     @Rollback
