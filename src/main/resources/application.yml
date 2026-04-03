@@ -43,5 +43,5 @@ cors:
     - http://localhost:3000
 
 jwt:
-  secret: ${JWT_SECRET:ns-creative-studio-bo-default-secret-key-for-local-dev-only}
+  secret: ${JWT_SECRET}
   expiration: 3600
