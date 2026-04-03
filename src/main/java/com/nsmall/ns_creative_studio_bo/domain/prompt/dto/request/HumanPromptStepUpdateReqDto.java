@@ -1,5 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,6 +24,9 @@ import lombok.NoArgsConstructor;
 @Builder
 public class HumanPromptStepUpdateReqDto {
 
+    @NotNull(message = "단계 번호는 필수입니다.")
     private Integer stepNumber;
+
+    @NotBlank(message = "단계명은 필수입니다.")
     private String name;
 }

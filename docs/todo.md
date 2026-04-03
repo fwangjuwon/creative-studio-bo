@@ -1,7 +1,7 @@
 # TODO
 
 > 상태: ✅ refactor/controller-validation 완료
-> 최종 업데이트: 2026-04-03 (@RestController Validation 누락 보정)
+> 최종 업데이트: 2026-04-03 (@RestController Validation 누락 보정 + Update DTO 필드 제약 추가)
 
 ---
 
@@ -18,7 +18,7 @@
 > `@PathVariable Long id`에 `@Positive` 적용, `@RequestBody` 누락 `@Valid` 보정, 클래스 레벨 `@Validated` 추가.
 > `@Validated` 없이는 `@Positive` 등 파라미터 제약 어노테이션이 AOP로 동작하지 않음.
 
-#### 변경 파일
+#### 변경 파일 — Controller
 - `CategoryController` — `@Validated`, `@Positive`(3곳), `@Valid` 추가(updateCategory)
 - `TagController` — `@Validated`, `@Positive`(3곳), `@Valid` 추가(updateTag)
 - `TagGroupController` — `@Validated`, `@Positive`(3곳), `@Valid` 추가(updateTagGroup)
@@ -26,6 +26,12 @@
 - `HumanPromptOptionController` — `@Validated`, `@Positive`(2곳)
 - `HumanPromptController` — `@Validated`, `@Positive`(2곳), `@Valid` 추가(updateStep)
 - `UserController` — `@Validated`, `@Positive`(4곳)
+
+#### 변경 파일 — Update ReqDto (`@Valid` 추가로 인한 후속 작업)
+- `CategoryUpdateReqDto` — `name` `@NotBlank`, `sortOrder` `@NotNull`
+- `TagUpdateReqDto` — `name` `@NotBlank`, `sortOrder` `@NotNull`
+- `TagGroupUpdateReqDto` — `name` `@NotBlank`, `isMultiSelect` `@NotNull` (sortOrder는 화면 미지원으로 null 허용)
+- `HumanPromptStepUpdateReqDto` — `stepNumber` `@NotNull`, `name` `@NotBlank`
 
 ---
 
