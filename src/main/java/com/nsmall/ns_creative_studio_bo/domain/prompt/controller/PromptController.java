@@ -94,4 +94,22 @@ public class PromptController {
             @ModelAttribute @Valid PromptHistorySearchReqDto searchReqDto) {
         return CommonResponse.success(promptService.getPromptHistories(searchReqDto));
     }
+
+    @Operation(
+            summary = "프롬프트 이력 삭제",
+            description = "지정한 프롬프트 이력을 삭제한다. ADMIN 전용. " +
+                          "매핑 테이블(goods_prompt_history_tag 또는 human_prompt_history_option) 삭제 후 " +
+                          "prompt_history를 삭제하며, 연결된 이미지 파일도 함께 삭제한다.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponse(responseCode = "200", description = "이력 삭제 성공")
+    @ApiResponse(responseCode = "400", description = "존재하지 않는 이력 ID")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @ApiResponse(responseCode = "403", description = "ADMIN 권한 필요")
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public CommonResponse<Void> deleteHistory(@PathVariable Long id) {
+        promptService.deleteHistory(id);
+        return CommonResponse.success();
+    }
 }

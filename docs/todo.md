@@ -1,55 +1,56 @@
 # TODO
 
-> 상태: 🚧 feat/admin-delete-history 진행 중
-> 최종 업데이트: 2026-04-07 (관리자 프롬프트 이력 삭제 API 구현 시작)
+> 상태: ✅ feat/admin-delete-history 완료
+> 최종 업데이트: 2026-04-07 (관리자 프롬프트 이력 삭제 API 구현 완료)
 
 ---
 
 ## 진행 중
 
+없음
+
+---
+
+## 완료
+
 ### feat/admin-delete-history. 관리자 프롬프트 이력 삭제
 
 > 관리자(ADMIN)가 특정 프롬프트 이력을 삭제할 수 있는 API 구현.
 > DB 자식 레코드(매핑 테이블) → 부모 레코드(`prompt_history`) 순서로 삭제하며,
-> 트랜잭션 커밋 후 디스크에 저장된 이미지 파일도 함께 삭제한다.
+> `imageUrl` 파싱 후 디스크에 저장된 이미지 파일도 함께 삭제한다.
 
 #### ErrorCode
-- [ ] `PromptErrorCode` — `HISTORY_NOT_FOUND (P007)` 추가
+- [x] `PromptErrorCode` — `HISTORY_NOT_FOUND (P007)` 추가
 
 #### Mapper 인터페이스 + XML
-- [ ] `GoodsPromptHistoryTagMapper` — `deleteByPromptHistoryId(@Param("promptHistoryId") Long promptHistoryId)` 추가
-- [ ] `GoodsPromptHistoryTagMapper.xml` — DELETE SQL 추가
-- [ ] `HumanPromptHistoryOptionMapper` — `deleteByPromptHistoryId(@Param("promptHistoryId") Long promptHistoryId)` 추가
-- [ ] `HumanPromptHistoryOptionMapper.xml` — DELETE SQL 추가
-- [ ] `PromptHistoryMapper` — `deleteById(@Param("id") Long id)` 추가
-- [ ] `PromptHistoryMapper.xml` — DELETE SQL 추가
+- [x] `GoodsPromptHistoryTagMapper` — `deleteByPromptHistoryId` 추가
+- [x] `GoodsPromptHistoryTagMapper.xml` — DELETE SQL 추가
+- [x] `HumanPromptHistoryOptionMapper` — `deleteByPromptHistoryId` 추가
+- [x] `HumanPromptHistoryOptionMapper.xml` — DELETE SQL 추가
+- [x] `PromptHistoryMapper` — `deleteById` 추가
+- [x] `PromptHistoryMapper.xml` — DELETE SQL 추가
 
 #### Service
-- [ ] `PromptService` — `deleteHistory(Long id)` 시그니처 추가
-- [ ] `PromptServiceImpl` — 구현 (`@Transactional` DB 삭제) + 이미지 파일 삭제 (커밋 후)
+- [x] `PromptService` — `deleteHistory(Long id)` 시그니처 추가
+- [x] `PromptServiceImpl` — 구현 (`@Transactional`)
   - `selectById` → 미존재 시 `HISTORY_NOT_FOUND (P007)` 예외
   - `PRODUCT` → `goods_prompt_history_tag` 삭제
   - `PERSON`  → `human_prompt_history_option` 삭제
-  - `prompt_history` 삭제 (`@Transactional` 커밋)
-  - `imageUrl` 파싱 후 디스크 이미지 파일 삭제
-    - null / blank → 스킵
-    - `[...]` JSON 배열 → 다수 파일 삭제 (NanoBanana 3개)
+  - `prompt_history` 삭제
+  - `imageUrl` 파싱 후 디스크 이미지 파일 삭제 (`image.storage-path` 활용, null/빈값 스킵)
+    - JSON 배열 → 다수 파일 삭제 (NanoBanana 3개)
     - 단일 상대 경로 → 파일 1개 삭제
-    - `image.storage-path` 설정값 + 파일명으로 절대 경로 조합 (`@Value` 주입)
 
 #### Controller
-- [ ] `PromptController` — `DELETE /api/prompts/{id}` 추가 (ADMIN 전용)
-  - `@PreAuthorize("hasRole('ADMIN')")`
+- [x] `PromptController` — `DELETE /api/prompts/{id}` 추가 (ADMIN 전용, `@PreAuthorize("hasRole('ADMIN')")`)
 
 #### 테스트
-- [ ] `PromptServiceTest` — 삭제 케이스 추가
+- [x] `PromptServiceTest` — 삭제 케이스 3개 추가
   - `[성공] 이력 삭제 - PRODUCT 타입 (goods_prompt_history_tag → prompt_history 순 삭제)`
   - `[성공] 이력 삭제 - PERSON 타입 (human_prompt_history_option → prompt_history 순 삭제)`
   - `[예외] 이력 삭제 - 존재하지 않는 id`
 
 ---
-
-## 완료
 
 ### perf/optimize-prompt-history-batch-query. 프롬프트 이력 목록 조회 N+1 쿼리 최적화
 

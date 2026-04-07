@@ -45,4 +45,9 @@ public interface GoodsPromptHistoryTagMapper {
      * 해당 태그가 상품 프롬프트 히스토리에서 사용 중인지 여부 조회 (삭제 방어용)
      */
     boolean existsByTagId(@Param("tagId") Long tagId);
+
+    /**
+     * 특정 프롬프트 히스토리에 매핑된 태그 레코드 전체 삭제 (이력 삭제 시 자식 삭제용)
+     */
+    void deleteByPromptHistoryId(@Param("promptHistoryId") Long promptHistoryId);
 }

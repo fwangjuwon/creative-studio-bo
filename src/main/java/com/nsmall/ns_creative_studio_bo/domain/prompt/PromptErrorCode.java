@@ -19,7 +19,8 @@ public enum PromptErrorCode implements ErrorCode {
     CATEGORY_NOT_FOUND("P003", "카테고리를 찾을 수 없습니다.", 400),
     TAG_NOT_FOUND("P004", "태그를 찾을 수 없습니다.", 400),
     INVALID_CATEGORY_TYPE("P005", "프롬프트 생성에는 소분류(SCS) 카테고리를 선택해야 합니다.", 400),
-    GEMINI_EMPTY_RESPONSE("P006", "Gemini API로부터 유효한 응답을 받지 못했습니다.", 500);
+    GEMINI_EMPTY_RESPONSE("P006", "Gemini API로부터 유효한 응답을 받지 못했습니다.", 500),
+    HISTORY_NOT_FOUND("P007", "프롬프트 이력을 찾을 수 없습니다.", 400);
 
     private final String code;
     private final String message;

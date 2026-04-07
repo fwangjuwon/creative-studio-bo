@@ -64,4 +64,9 @@
         ORDER BY hpho.prompt_history_id ASC, hps.step_number ASC, hpa.sort_order ASC, hpo.sort_order ASC
     </select>
 
+    <delete id="deleteByPromptHistoryId">
+        DELETE FROM human_prompt_history_option
+        WHERE prompt_history_id = #{promptHistoryId}
+    </delete>
+
 </mapper>

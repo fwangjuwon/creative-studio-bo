@@ -63,4 +63,9 @@
         WHERE tag_id = #{tagId}
     </select>
 
+    <delete id="deleteByPromptHistoryId">
+        DELETE FROM goods_prompt_history_tag
+        WHERE prompt_history_id = #{promptHistoryId}
+    </delete>
+
 </mapper>

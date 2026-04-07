@@ -765,4 +765,62 @@ public class PromptServiceTest {
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_TOO_LARGE));
     }
+
+    // ================================================================
+    // 이력 삭제 (ADMIN 전용)
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 이력 삭제 - PRODUCT 타입 (goods_prompt_history_tag → prompt_history 순 삭제)")
+    void 성공_이력_삭제_PRODUCT타입() {
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("delete_product_user", "USER", "팀A", 10);
+        CategoryRespDto scs = SCS_카테고리_생성("삭제_상품");
+        TagRespDto tag = 태그_생성("분위기_삭제상품", "화사한", 2000);
+
+        PromptHistoryRespDto created = promptService.createGoodsPrompt(user.getId(),
+                GoodsPromptCreateReqDto.builder()
+                        .goodsCategoryId(scs.getId())
+                        .tagIds(List.of(tag.getId()))
+                        .build());
+
+        Long historyId = created.getId();
+        assertThat(promptHistoryMapper.selectById(historyId)).isPresent();
+
+        promptService.deleteHistory(historyId);
+
+        assertThat(promptHistoryMapper.selectById(historyId)).isEmpty();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 이력 삭제 - PERSON 타입 (human_prompt_history_option → prompt_history 순 삭제)")
+    void 성공_이력_삭제_PERSON타입() {
+        UserRespDto user = 유저_생성("delete_person_user", "USER", "팀B", 10);
+
+        히스토리_직접_삽입_상세(user.getId(), null, "delete_person_user", "PERSON", "NANO_BANANA");
+
+        List<PromptHistory> list = promptHistoryMapper.selectList(검색조건(1, 100));
+        PromptHistory personHistory = list.stream()
+                .filter(h -> "PERSON".equals(h.getPromptType()) && user.getId().equals(h.getUserId()))
+                .findFirst()
+                .orElseThrow();
+
+        promptService.deleteHistory(personHistory.getId());
+
+        assertThat(promptHistoryMapper.selectById(personHistory.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("[예외] 이력 삭제 - 존재하지 않는 id")
+    void 예외_이력_삭제_존재하지않는_id() {
+        assertThatThrownBy(() -> promptService.deleteHistory(999_999_999L))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(PromptErrorCode.HISTORY_NOT_FOUND));
+    }
 }
