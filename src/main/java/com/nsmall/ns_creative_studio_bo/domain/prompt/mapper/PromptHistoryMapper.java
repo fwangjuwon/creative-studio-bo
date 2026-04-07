@@ -37,4 +37,9 @@ public interface PromptHistoryMapper {
      * 해당 카테고리가 프롬프트 히스토리에서 사용 중인지 여부 조회 (삭제 방어용)
      */
     boolean existsByCategoryId(@Param("categoryId") Long categoryId);
+
+    /**
+     * 프롬프트 이력 단건 삭제 (ADMIN 전용)
+     */
+    void deleteById(@Param("id") Long id);
 }

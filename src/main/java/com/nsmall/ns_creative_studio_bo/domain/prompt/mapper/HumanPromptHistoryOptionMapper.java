@@ -37,4 +37,9 @@ public interface HumanPromptHistoryOptionMapper {
      * </pre>
      */
     List<HumanOptionDetailDto> selectOptionDetailsByHistoryIds(@Param("ids") List<Long> ids);
+
+    /**
+     * 특정 프롬프트 히스토리에 매핑된 옵션 레코드 전체 삭제 (이력 삭제 시 자식 삭제용)
+     */
+    void deleteByPromptHistoryId(@Param("promptHistoryId") Long promptHistoryId);
 }

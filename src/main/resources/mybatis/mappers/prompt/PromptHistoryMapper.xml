@@ -115,4 +115,9 @@
         WHERE category_id = #{categoryId}
     </select>
 
+    <delete id="deleteById">
+        DELETE FROM prompt_history
+        WHERE id = #{id}
+    </delete>
+
 </mapper>

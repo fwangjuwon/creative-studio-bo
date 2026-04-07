@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ refactor/controller-validation 완료
-> 최종 업데이트: 2026-04-03 (@RestController Validation 누락 보정 + Update DTO 필드 제약 추가)
+> 상태: ✅ feat/admin-delete-history 완료
+> 최종 업데이트: 2026-04-07 (관리자 프롬프트 이력 삭제 API 구현 완료)
 
 ---
 
@@ -12,6 +12,45 @@
 ---
 
 ## 완료
+
+### feat/admin-delete-history. 관리자 프롬프트 이력 삭제
+
+> 관리자(ADMIN)가 특정 프롬프트 이력을 삭제할 수 있는 API 구현.
+> DB 자식 레코드(매핑 테이블) → 부모 레코드(`prompt_history`) 순서로 삭제하며,
+> `imageUrl` 파싱 후 디스크에 저장된 이미지 파일도 함께 삭제한다.
+
+#### ErrorCode
+- [x] `PromptErrorCode` — `HISTORY_NOT_FOUND (P007)` 추가
+
+#### Mapper 인터페이스 + XML
+- [x] `GoodsPromptHistoryTagMapper` — `deleteByPromptHistoryId` 추가
+- [x] `GoodsPromptHistoryTagMapper.xml` — DELETE SQL 추가
+- [x] `HumanPromptHistoryOptionMapper` — `deleteByPromptHistoryId` 추가
+- [x] `HumanPromptHistoryOptionMapper.xml` — DELETE SQL 추가
+- [x] `PromptHistoryMapper` — `deleteById` 추가
+- [x] `PromptHistoryMapper.xml` — DELETE SQL 추가
+
+#### Service
+- [x] `PromptService` — `deleteHistory(Long id)` 시그니처 추가
+- [x] `PromptServiceImpl` — 구현 (`@Transactional`)
+  - `selectById` → 미존재 시 `HISTORY_NOT_FOUND (P007)` 예외
+  - `PRODUCT` → `goods_prompt_history_tag` 삭제
+  - `PERSON`  → `human_prompt_history_option` 삭제
+  - `prompt_history` 삭제
+  - `imageUrl` 파싱 후 디스크 이미지 파일 삭제 (`image.storage-path` 활용, null/빈값 스킵)
+    - JSON 배열 → 다수 파일 삭제 (NanoBanana 3개)
+    - 단일 상대 경로 → 파일 1개 삭제
+
+#### Controller
+- [x] `PromptController` — `DELETE /api/prompts/{id}` 추가 (ADMIN 전용, `@PreAuthorize("hasRole('ADMIN')")`)
+
+#### 테스트
+- [x] `PromptServiceTest` — 삭제 케이스 3개 추가
+  - `[성공] 이력 삭제 - PRODUCT 타입 (goods_prompt_history_tag → prompt_history 순 삭제)`
+  - `[성공] 이력 삭제 - PERSON 타입 (human_prompt_history_option → prompt_history 순 삭제)`
+  - `[예외] 이력 삭제 - 존재하지 않는 id`
+
+---
 
 ### refactor/controller-validation. @RestController Validation 누락 보정
 

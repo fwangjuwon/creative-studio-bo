@@ -35,7 +35,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,6 +85,9 @@ public class PromptServiceImpl implements PromptService {
 
     @Value("${image.base-url}")
     private String imageBaseUrl;
+
+    @Value("${image.storage-path}")
+    private String storagePath;
 
     @Override
     @Transactional
@@ -313,5 +320,70 @@ public class PromptServiceImpl implements PromptService {
         return imageUrls.stream()
                 .map(path -> imageBaseUrl + path)
                 .toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteHistory(Long id) {
+        PromptHistory history = promptHistoryMapper.selectById(id)
+                .orElseThrow(() -> new BizException(PromptErrorCode.HISTORY_NOT_FOUND,
+                        "프롬프트 이력을 찾을 수 없습니다. id=" + id));
+
+        // 1. 자식 레코드 먼저 삭제 (매핑 테이블)
+        if ("PRODUCT".equals(history.getPromptType())) {
+            goodsPromptHistoryTagMapper.deleteByPromptHistoryId(id);
+        } else {
+            humanPromptHistoryOptionMapper.deleteByPromptHistoryId(id);
+        }
+
+        // 2. 부모 레코드 삭제
+        promptHistoryMapper.deleteById(id);
+
+        // 3. 디스크 이미지 파일 삭제 (롤백 불가 — DB 작업과 동일 트랜잭션 내 실행)
+        deleteImageFiles(history.getImageUrl());
+    }
+
+    /**
+     * imageUrl 컬럼값을 파싱하여 디스크에 저장된 이미지 파일을 삭제한다.
+     *
+     * <pre>
+     * - null / blank        → 스킵
+     * - "[...]" (JSON 배열) → 다수 파일 삭제 (NanoBanana 3개)
+     * - 단일 상대 경로      → 파일 1개 삭제
+     * </pre>
+     */
+    private void deleteImageFiles(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return;
+        }
+
+        List<String> relativePaths = new ArrayList<>();
+        if (imageUrl.startsWith("[")) {
+            try {
+                relativePaths = objectMapper.readValue(imageUrl,
+                        objectMapper.getTypeFactory().constructCollectionType(List.class, String.class));
+            } catch (Exception e) {
+                log.warn("이미지 URL JSON 파싱 실패 — 단일 경로로 처리. imageUrl={}", imageUrl, e);
+                relativePaths.add(imageUrl);
+            }
+        } else {
+            relativePaths.add(imageUrl);
+        }
+
+        for (String relativePath : relativePaths) {
+            // "/images/uuid.jpg" → storagePath + "/uuid.jpg"
+            String filename = Paths.get(relativePath).getFileName().toString();
+            Path filePath = Paths.get(storagePath, filename);
+            try {
+                boolean deleted = Files.deleteIfExists(filePath);
+                if (deleted) {
+                    log.info("이미지 파일 삭제 완료 — path={}", filePath);
+                } else {
+                    log.warn("이미지 파일이 존재하지 않습니다 — path={}", filePath);
+                }
+            } catch (IOException e) {
+                log.error("이미지 파일 삭제 실패 — path={}", filePath, e);
+            }
+        }
     }
 }
