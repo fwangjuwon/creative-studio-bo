@@ -17,9 +17,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,6 +33,7 @@ import java.util.List;
  * @since 2026-03-03
  */
 @Tag(name = "HumanPrompt", description = "인간 이미지 전용 프롬프트 생성 API")
+@Validated
 @RestController
 @RequestMapping("/api/human-prompts")
 @RequiredArgsConstructor
@@ -90,8 +93,8 @@ public class HumanPromptController {
     @PreAuthorize("hasRole('MANAGER')")
     @PutMapping("/steps/{id}")
     public CommonResponse<HumanPromptStepSimpleRespDto> updateStep(
-            @PathVariable Long id,
-            @RequestBody HumanPromptStepUpdateReqDto dto) {
+            @PathVariable @Positive Long id,
+            @RequestBody @Valid HumanPromptStepUpdateReqDto dto) {
         return CommonResponse.success(humanPromptStepService.updateStep(id, dto));
     }
 
@@ -103,7 +106,7 @@ public class HumanPromptController {
     @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
     @PreAuthorize("hasRole('MANAGER')")
     @DeleteMapping("/steps/{id}")
-    public CommonResponse<Void> deleteStep(@PathVariable Long id) {
+    public CommonResponse<Void> deleteStep(@PathVariable @Positive Long id) {
         humanPromptStepService.deleteStep(id);
         return CommonResponse.success();
     }

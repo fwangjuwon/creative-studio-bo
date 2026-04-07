@@ -1,5 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.tag.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,7 +19,11 @@ import lombok.NoArgsConstructor;
 @Builder
 public class TagGroupUpdateReqDto {
 
+    @NotBlank(message = "태그 그룹명은 필수입니다.")
     private String name;
+
+    @NotNull(message = "복수 선택 허용 여부는 필수입니다.")
     private Boolean isMultiSelect;
+
     private Integer sortOrder;
 }

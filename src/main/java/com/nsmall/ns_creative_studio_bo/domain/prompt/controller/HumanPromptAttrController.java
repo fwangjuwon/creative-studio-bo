@@ -10,8 +10,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
  * @since 2026-03-11
  */
 @Tag(name = "HumanPromptAttr", description = "인간 이미지 프롬프트 세부항목 관리 API")
+@Validated
 @RestController
 @RequestMapping("/api/human-prompts/attrs")
 @RequiredArgsConstructor
@@ -50,7 +53,7 @@ public class HumanPromptAttrController {
     @PreAuthorize("hasRole('MANAGER')")
     @PutMapping("/{id}")
     public CommonResponse<HumanPromptAttrSimpleRespDto> updateAttr(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestBody @Valid HumanPromptAttrUpdateReqDto dto) {
         return CommonResponse.success(humanPromptAttrService.updateAttr(id, dto));
     }
@@ -63,7 +66,7 @@ public class HumanPromptAttrController {
     @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
     @PreAuthorize("hasRole('MANAGER')")
     @DeleteMapping("/{id}")
-    public CommonResponse<Void> deleteAttr(@PathVariable Long id) {
+    public CommonResponse<Void> deleteAttr(@PathVariable @Positive Long id) {
         humanPromptAttrService.deleteAttr(id);
         return CommonResponse.success();
     }

@@ -13,9 +13,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,6 +30,7 @@ import java.util.Optional;
  * @since 2026-02-26
  */
 @Tag(name = "User", description = "회원 관리 API")
+@Validated
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -52,7 +55,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}")
-    public CommonResponse<UserRespDto> getUser(@PathVariable Long id) {
+    public CommonResponse<UserRespDto> getUser(@PathVariable @Positive Long id) {
         Optional<UserRespDto> result = userService.getUser(id);
         return CommonResponse.success(result.orElse(null));
     }
@@ -74,7 +77,7 @@ public class UserController {
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
     public CommonResponse<UserRespDto> updateUser(
-            @PathVariable Long id,
+            @PathVariable @Positive Long id,
             @RequestBody @Valid UserUpdateReqDto dto) {
         return CommonResponse.success(userService.updateUser(id, dto));
     }
@@ -85,7 +88,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public CommonResponse<Void> deleteUser(@PathVariable Long id) {
+    public CommonResponse<Void> deleteUser(@PathVariable @Positive Long id) {
         userService.deleteUser(id);
         return CommonResponse.success();
     }
@@ -107,7 +110,7 @@ public class UserController {
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/{id}/usage")
-    public CommonResponse<UserUsageRespDto> getUserUsage(@PathVariable Long id) {
+    public CommonResponse<UserUsageRespDto> getUserUsage(@PathVariable @Positive Long id) {
         return CommonResponse.success(userService.getUserUsage(id));
     }
 

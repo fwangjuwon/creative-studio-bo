@@ -10,8 +10,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +25,7 @@ import java.util.List;
  * @since 2026-02-27
  */
 @Tag(name = "Category", description = "카테고리 관리 API")
+@Validated
 @RestController
 @RequestMapping("/api/categories")
 @RequiredArgsConstructor
@@ -45,7 +48,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "200", description = "조회 성공 (미존재 시 data: null)")
     @PreAuthorize("hasRole('USER')")
     @GetMapping("/{id}")
-    public CommonResponse<CategoryRespDto> getCategory(@PathVariable Long id) {
+    public CommonResponse<CategoryRespDto> getCategory(@PathVariable @Positive Long id) {
         return CommonResponse.success(categoryService.getCategory(id).orElse(null));
     }
 
@@ -69,8 +72,8 @@ public class CategoryController {
     @PreAuthorize("hasRole('MANAGER')")
     @PutMapping("/{id}")
     public CommonResponse<CategoryRespDto> updateCategory(
-            @PathVariable Long id,
-            @RequestBody CategoryUpdateReqDto dto) {
+            @PathVariable @Positive Long id,
+            @RequestBody @Valid CategoryUpdateReqDto dto) {
         return CommonResponse.success(categoryService.updateCategory(id, dto));
     }
 
@@ -80,7 +83,7 @@ public class CategoryController {
     @ApiResponse(responseCode = "403", description = "권한 없음 (MANAGER 이상)")
     @PreAuthorize("hasRole('MANAGER')")
     @DeleteMapping("/{id}")
-    public CommonResponse<Void> deleteCategory(@PathVariable Long id) {
+    public CommonResponse<Void> deleteCategory(@PathVariable @Positive Long id) {
         categoryService.deleteCategory(id);
         return CommonResponse.success();
     }
