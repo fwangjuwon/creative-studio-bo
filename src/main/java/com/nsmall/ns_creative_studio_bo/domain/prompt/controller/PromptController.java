@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.http.MediaType;
@@ -108,7 +109,7 @@ public class PromptController {
     @ApiResponse(responseCode = "403", description = "ADMIN 권한 필요")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
-    public CommonResponse<Void> deleteHistory(@PathVariable Long id) {
+    public CommonResponse<Void> deleteHistory(@PathVariable @Positive Long id) {
         promptService.deleteHistory(id);
         return CommonResponse.success();
     }
