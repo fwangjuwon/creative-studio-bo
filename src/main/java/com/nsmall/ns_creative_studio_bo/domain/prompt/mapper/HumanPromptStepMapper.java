@@ -32,6 +32,10 @@ public interface HumanPromptStepMapper {
 
     Optional<HumanPromptStep> selectById(@Param("id") Long id);
 
+    boolean existsByName(@Param("name") String name, @Param("excludeId") Long excludeId);
+
+    boolean existsByStepCode(@Param("stepCode") String stepCode, @Param("excludeId") Long excludeId);
+
     void insert(HumanPromptStep step);
 
     void update(HumanPromptStep step);

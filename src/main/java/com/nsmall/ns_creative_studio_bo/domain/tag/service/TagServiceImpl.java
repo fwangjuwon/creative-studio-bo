@@ -42,6 +42,11 @@ public class TagServiceImpl implements TagService {
             throw new BizException(TagErrorCode.DUPLICATE_SORT_ORDER,
                     "동일 그룹 내에 정렬순서 " + dto.getSortOrder() + "이(가) 이미 존재합니다.");
         }
+        
+        if (tagMapper.existsByNameAndTagGroupId(dto.getName(), dto.getTagGroupId(), null)) {
+            throw new BizException(TagErrorCode.DUPLICATE_TAG_NAME,
+                    "이미 존재하는 태그명입니다. name=" + dto.getName());
+        }
 
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
@@ -85,6 +90,10 @@ public class TagServiceImpl implements TagService {
                 && tagMapper.existsBySortOrderExcludingId(id, existing.getTagGroupId(), dto.getSortOrder())) {
             throw new BizException(TagErrorCode.DUPLICATE_SORT_ORDER,
                     "동일 그룹 내에 정렬순서 " + dto.getSortOrder() + "이(가) 이미 존재합니다.");
+        }
+        if (tagMapper.existsByNameAndTagGroupId(dto.getName(), existing.getTagGroupId(), id)) {
+            throw new BizException(TagErrorCode.DUPLICATE_TAG_NAME,
+                    "이미 존재하는 태그명입니다. name=" + dto.getName());
         }
 
         String requesterId = SecurityUtil.getCurrentLoginId();

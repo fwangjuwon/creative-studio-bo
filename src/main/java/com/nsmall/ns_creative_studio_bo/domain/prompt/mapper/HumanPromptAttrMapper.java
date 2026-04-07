@@ -34,6 +34,8 @@ public interface HumanPromptAttrMapper {
 
     boolean existsByStepId(@Param("stepId") Long stepId);
 
+    boolean existsByNameAndStepId(@Param("name") String name, @Param("stepId") Long stepId, @Param("excludeId") Long excludeId);
+
     void insert(HumanPromptAttr attr);
 
     void update(HumanPromptAttr attr);

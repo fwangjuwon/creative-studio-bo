@@ -302,6 +302,86 @@ public class TagServiceTest {
     }
 
     // ============================================================
+    // Tag name 중복 검증
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 생성 - name 중복 (같은 TagGroup 스코프)")
+    void 예외_태그_생성_name_중복() {
+        TagGroupRespDto group = 태그그룹_생성("name중복테스트그룹");
+        tagService.createTag(태그_생성_DTO(group.getId(), "중복태그")); // sortOrder=1
+
+        TagCreateReqDto dto = TagCreateReqDto.builder()
+                .tagGroupId(group.getId())
+                .name("중복태그")
+                .sortOrder(2) // sortOrder는 다르게
+                .build();
+
+        assertThatThrownBy(() -> tagService.createTag(dto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagErrorCode.DUPLICATE_TAG_NAME));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 태그 수정 - name 중복")
+    void 예외_태그_수정_name_중복() {
+        TagGroupRespDto group = 태그그룹_생성("name수정중복테스트그룹");
+        tagService.createTag(태그_생성_DTO(group.getId(), "태그A")); // sortOrder=1
+        TagRespDto tagB = tagService.createTag(TagCreateReqDto.builder()
+                .tagGroupId(group.getId()).name("태그B").sortOrder(2).build());
+
+        TagUpdateReqDto updateDto = TagUpdateReqDto.builder()
+                .name("태그A") // 태그A와 name 중복
+                .sortOrder(2)
+                .build();
+
+        assertThatThrownBy(() -> tagService.updateTag(tagB.getId(), updateDto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(TagErrorCode.DUPLICATE_TAG_NAME));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 수정 - 자신의 name으로 수정 (중복 허용)")
+    void 성공_태그_수정_자신의_name() {
+        TagGroupRespDto group = 태그그룹_생성("자신name테스트그룹");
+        TagRespDto tag = tagService.createTag(태그_생성_DTO(group.getId(), "태그A")); // sortOrder=1
+
+        TagUpdateReqDto updateDto = TagUpdateReqDto.builder()
+                .name("태그A") // 자신의 name
+                .sortOrder(1)
+                .build();
+
+        TagRespDto updated = tagService.updateTag(tag.getId(), updateDto);
+
+        assertThat(updated.getName()).isEqualTo("태그A");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 생성 - 다른 TagGroup에 같은 name 허용")
+    void 성공_태그_생성_다른그룹_같은_name() {
+        TagGroupRespDto group1 = tagGroupService.createTagGroup(
+                TagGroupCreateReqDto.builder().name("name허용그룹1").isMultiSelect(false).sortOrder(1000).build());
+        TagGroupRespDto group2 = tagGroupService.createTagGroup(
+                TagGroupCreateReqDto.builder().name("name허용그룹2").isMultiSelect(false).sortOrder(1001).build());
+
+        tagService.createTag(태그_생성_DTO(group1.getId(), "동일name태그")); // sortOrder=1
+        TagRespDto result = tagService.createTag(태그_생성_DTO(group2.getId(), "동일name태그")); // 다른 그룹 허용
+
+        assertThat(result.getId()).isNotNull();
+        assertThat(result.getName()).isEqualTo("동일name태그");
+    }
+
+    // ============================================================
     // Tag 삭제
     // ============================================================
 

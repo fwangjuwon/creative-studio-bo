@@ -28,6 +28,16 @@
         WHERE attr_id = #{attrId}
     </select>
 
+    <select id="existsByNameAndAttrId" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM human_prompt_option
+        WHERE name = #{name}
+          AND attr_id = #{attrId}
+        <if test="excludeId != null">
+            AND id <![CDATA[ <> ]]> #{excludeId}
+        </if>
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO human_prompt_option (
             attr_id, name, prompt_value, sort_order,

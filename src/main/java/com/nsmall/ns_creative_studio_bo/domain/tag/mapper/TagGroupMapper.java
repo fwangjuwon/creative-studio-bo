@@ -22,6 +22,8 @@ public interface TagGroupMapper {
 
     List<TagGroup> selectList();
 
+    boolean existsByName(@Param("name") String name, @Param("excludeId") Long excludeId);
+
     void update(TagGroup tagGroup);
 
     void deleteById(@Param("id") Long id);

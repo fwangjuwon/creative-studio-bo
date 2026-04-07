@@ -29,6 +29,15 @@ public class HumanPromptStepServiceImpl implements HumanPromptStepService {
 
     @Override
     public HumanPromptStepSimpleRespDto createStep(HumanPromptStepCreateReqDto dto) {
+        if (humanPromptStepMapper.existsByStepCode(dto.getStepCode(), null)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_CODE,
+                    "이미 존재하는 단계 코드입니다. stepCode=" + dto.getStepCode());
+        }
+        if (humanPromptStepMapper.existsByName(dto.getName(), null)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_NAME,
+                    "이미 존재하는 단계명입니다. name=" + dto.getName());
+        }
+
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
@@ -54,6 +63,11 @@ public class HumanPromptStepServiceImpl implements HumanPromptStepService {
         humanPromptStepMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.STEP_NOT_FOUND,
                         "단계를 찾을 수 없습니다. id=" + id));
+
+        if (humanPromptStepMapper.existsByName(dto.getName(), id)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_NAME,
+                    "이미 존재하는 단계명입니다. name=" + dto.getName());
+        }
 
         String requesterId = SecurityUtil.getCurrentLoginId();
 
