@@ -60,6 +60,16 @@
         )
     </select>
 
+    <select id="existsByNameAndTagGroupId" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM tag
+        WHERE name = #{name}
+          AND tag_group_id = #{tagGroupId}
+        <if test="excludeId != null">
+            AND id <![CDATA[ <> ]]> #{excludeId}
+        </if>
+    </select>
+
     <update id="update">
         UPDATE tag
         <set>

@@ -51,6 +51,15 @@
         ORDER BY sort_order ASC NULLS LAST, id ASC
     </select>
 
+    <select id="existsByName" resultType="boolean">
+        SELECT COUNT(*) <![CDATA[ > ]]> 0
+        FROM tag_group
+        WHERE name = #{name}
+        <if test="excludeId != null">
+            AND id <![CDATA[ <> ]]> #{excludeId}
+        </if>
+    </select>
+
     <update id="update">
         UPDATE tag_group
         <set>

@@ -31,10 +31,15 @@ public class TagGroupServiceImpl implements TagGroupService {
 
     @Override
     public TagGroupRespDto createTagGroup(TagGroupCreateReqDto dto) {
+
         if (dto.getSortOrder() != null
                 && tagGroupMapper.existsBySortOrder(dto.getSortOrder())) {
             throw new BizException(TagGroupErrorCode.DUPLICATE_SORT_ORDER,
                     "이미 정렬순서 " + dto.getSortOrder() + "을(를) 가진 태그 그룹이 존재합니다.");
+        }
+        if (tagGroupMapper.existsByName(dto.getName(), null)) {
+            throw new BizException(TagGroupErrorCode.DUPLICATE_TAG_GROUP_NAME,
+                    "이미 존재하는 태그 그룹명입니다. name=" + dto.getName());
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -75,10 +80,15 @@ public class TagGroupServiceImpl implements TagGroupService {
                 .orElseThrow(() -> new BizException(TagGroupErrorCode.TAG_GROUP_NOT_FOUND,
                         "태그 그룹을 찾을 수 없습니다. id=" + id));
 
+
         if (dto.getSortOrder() != null
                 && tagGroupMapper.existsBySortOrderExcludingId(id, dto.getSortOrder())) {
             throw new BizException(TagGroupErrorCode.DUPLICATE_SORT_ORDER,
                     "이미 정렬순서 " + dto.getSortOrder() + "을(를) 가진 태그 그룹이 존재합니다.");
+        }
+        if (tagGroupMapper.existsByName(dto.getName(), id)) {
+            throw new BizException(TagGroupErrorCode.DUPLICATE_TAG_GROUP_NAME,
+                    "이미 존재하는 태그 그룹명입니다. name=" + dto.getName());
         }
 
         String requesterId = SecurityUtil.getCurrentLoginId();

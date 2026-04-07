@@ -201,11 +201,11 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("prompt_user_path", "USER", "팀A", 5);
 
         CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("식품").categoryType(CategoryType.LCS).sortOrder(1000).build());
+                .name("가공").categoryType(CategoryType.LCS).sortOrder(1000).build());
         CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("건강식품").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
+                .name("가공식품").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
         CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("인삼").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
+                .name("통조림").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
 
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())
@@ -218,7 +218,7 @@ public class PromptServiceTest {
         verify(geminiService).generateGoodsPrompt(categoryNameCaptor.capture(), any(), any(), any(), any(), any());
 
         String capturedCategoryName = categoryNameCaptor.getValue();
-        assertThat(capturedCategoryName).isEqualTo("식품 > 건강식품 > 인삼");
+        assertThat(capturedCategoryName).isEqualTo("가공 > 가공식품 > 통조림");
     }
 
     @Test
@@ -351,11 +351,11 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("path_resp_user", "USER", "팀A", 5);
 
         CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("식품").categoryType(CategoryType.LCS).sortOrder(1000).build());
+                .name("가공").categoryType(CategoryType.LCS).sortOrder(1000).build());
         CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("건강식품").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
+                .name("가공식품").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
         CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
-                .name("인삼").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
+                .name("통조림").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
 
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())
@@ -364,7 +364,7 @@ public class PromptServiceTest {
 
         PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
 
-        assertThat(result.getCategoryPath()).isEqualTo("식품 > 건강식품 > 인삼");
+        assertThat(result.getCategoryPath()).isEqualTo("가공 > 가공식품 > 통조림");
     }
 
     @Test

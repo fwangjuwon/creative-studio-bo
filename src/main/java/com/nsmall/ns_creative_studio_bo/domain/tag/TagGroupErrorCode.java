@@ -16,7 +16,8 @@ public enum TagGroupErrorCode implements ErrorCode {
 
     TAG_GROUP_NOT_FOUND("TG001", "태그 그룹을 찾을 수 없습니다.", 400),
     TAG_GROUP_HAS_TAGS("TG002", "소속 태그가 존재하여 태그 그룹을 삭제할 수 없습니다.", 400),
-    DUPLICATE_SORT_ORDER("TG003", "이미 같은 정렬순서를 가진 태그 그룹이 존재합니다.", 400);
+    DUPLICATE_SORT_ORDER("TG003", "이미 같은 정렬순서를 가진 태그 그룹이 존재합니다.", 400),
+    DUPLICATE_TAG_GROUP_NAME("TG004", "이미 존재하는 태그 그룹명입니다.", 400);
 
     private final String code;
     private final String message;

@@ -33,6 +33,8 @@ public interface CategoryMapper {
 
     boolean existsByParentId(@Param("parentId") Long parentId);
 
+    boolean existsByNameAndParentId(@Param("name") String name, @Param("parentId") Long parentId, @Param("excludeId") Long excludeId);
+
     /**
      * 동일 parent_id 스코프에서 sortOrder 중복 여부 확인
      *

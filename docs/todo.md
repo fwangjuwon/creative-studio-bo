@@ -52,6 +52,28 @@
 
 ---
 
+### refactor/controller-validation. @RestController Validation 누락 보정
+
+> `@PathVariable Long id`에 `@Positive` 적용, `@RequestBody` 누락 `@Valid` 보정, 클래스 레벨 `@Validated` 추가.
+> `@Validated` 없이는 `@Positive` 등 파라미터 제약 어노테이션이 AOP로 동작하지 않음.
+
+#### 변경 파일 — Controller
+- `CategoryController` — `@Validated`, `@Positive`(3곳), `@Valid` 추가(updateCategory)
+- `TagController` — `@Validated`, `@Positive`(3곳), `@Valid` 추가(updateTag)
+- `TagGroupController` — `@Validated`, `@Positive`(3곳), `@Valid` 추가(updateTagGroup)
+- `HumanPromptAttrController` — `@Validated`, `@Positive`(2곳)
+- `HumanPromptOptionController` — `@Validated`, `@Positive`(2곳)
+- `HumanPromptController` — `@Validated`, `@Positive`(2곳), `@Valid` 추가(updateStep)
+- `UserController` — `@Validated`, `@Positive`(4곳)
+
+#### 변경 파일 — Update ReqDto (`@Valid` 추가로 인한 후속 작업)
+- `CategoryUpdateReqDto` — `name` `@NotBlank`, `sortOrder` `@NotNull`
+- `TagUpdateReqDto` — `name` `@NotBlank`, `sortOrder` `@NotNull`
+- `TagGroupUpdateReqDto` — `name` `@NotBlank`, `isMultiSelect` `@NotNull` (sortOrder는 화면 미지원으로 null 허용)
+- `HumanPromptStepUpdateReqDto` — `stepNumber` `@NotNull`, `name` `@NotBlank`
+
+---
+
 ### perf/optimize-prompt-history-batch-query. 프롬프트 이력 목록 조회 N+1 쿼리 최적화
 
 > `GET /api/prompts` 이력 목록 조회 시 페이지 크기 N에 비례하여 1+3N 쿼리가 발생하던 문제를 최대 4쿼리(flat)로 개선.

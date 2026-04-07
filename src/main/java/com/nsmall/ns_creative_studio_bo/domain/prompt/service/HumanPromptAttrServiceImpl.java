@@ -35,6 +35,11 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.STEP_NOT_FOUND,
                         "단계를 찾을 수 없습니다. stepId=" + dto.getStepId()));
 
+        if (humanPromptAttrMapper.existsByNameAndStepId(dto.getName(), dto.getStepId(), null)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_ATTR_NAME,
+                    "이미 존재하는 세부항목명입니다. name=" + dto.getName());
+        }
+
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
@@ -59,9 +64,14 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
 
     @Override
     public HumanPromptAttrSimpleRespDto updateAttr(Long id, HumanPromptAttrUpdateReqDto dto) {
-        humanPromptAttrMapper.selectById(id)
+        HumanPromptAttr existing = humanPromptAttrMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.ATTR_NOT_FOUND,
                         "세부항목을 찾을 수 없습니다. id=" + id));
+
+        if (humanPromptAttrMapper.existsByNameAndStepId(dto.getName(), existing.getStepId(), id)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_ATTR_NAME,
+                    "이미 존재하는 세부항목명입니다. name=" + dto.getName());
+        }
 
         String requesterId = SecurityUtil.getCurrentLoginId();
 
