@@ -75,7 +75,7 @@ public class AuthServiceImpl implements AuthService {
         String referer = request.getHeader("Referer");
         if (!StringUtils.hasText(referer) || !referer.startsWith(nsistProperties.getRefererPrefix())) {
             log.warn("nsist SSO 로그인 거부 — 허용되지 않는 Referer: {}", referer);
-            throw new BizException(AuthErrorCode.INVALID_CREDENTIALS);
+            throw new BizException(AuthErrorCode.NSIST_SSO_UNAUTHORIZED);
         }
     }
 }

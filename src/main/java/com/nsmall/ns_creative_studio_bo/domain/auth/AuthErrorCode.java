@@ -15,7 +15,8 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum AuthErrorCode implements ErrorCode {
 
-    INVALID_CREDENTIALS("A001", "아이디 또는 비밀번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED.value());
+    INVALID_CREDENTIALS("A001", "아이디 또는 비밀번호가 올바르지 않습니다.", HttpStatus.UNAUTHORIZED.value()),
+    NSIST_SSO_UNAUTHORIZED("A002", "허용되지 않는 접근입니다.", HttpStatus.UNAUTHORIZED.value());
 
     private final String code;
     private final String message;

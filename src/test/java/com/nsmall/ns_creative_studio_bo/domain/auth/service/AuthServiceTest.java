@@ -162,7 +162,7 @@ public class AuthServiceTest {
         assertThatThrownBy(() -> authService.nsistLogin("12496", "ORG01", nsist_요청(null)))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(AuthErrorCode.INVALID_CREDENTIALS));
+                        .isEqualTo(AuthErrorCode.NSIST_SSO_UNAUTHORIZED));
     }
 
     @Test
@@ -172,7 +172,7 @@ public class AuthServiceTest {
                 nsist_요청("https://evil.com/attack")))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(AuthErrorCode.INVALID_CREDENTIALS));
+                        .isEqualTo(AuthErrorCode.NSIST_SSO_UNAUTHORIZED));
     }
 
     @Test
