@@ -8,3 +8,10 @@ spring:
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
+
+nsist:
+  referer-prefix: "https://nsist-dev.nsmall.com"
+  emp-cd-map:
+    "12496": "admin"
+    "12450": "admin"
+    "12474": "admin"

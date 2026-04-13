@@ -13,10 +13,10 @@
 
 ## 기술 부채 (TODO)
 
-- [ ] **nsist SSO 로그인 — empCd→loginId 매핑 하드코딩 개선**
-  - 현재 `AuthServiceImpl.NSIST_EMP_CD_MAP` 에 `empCd → loginId` 를 하드코딩으로 관리 중
+- [ ] **nsist SSO 로그인 — empCd→loginId 매핑을 DB 기반으로 교체**
+  - 현재 `application-{profile}.yml`의 `nsist.emp-cd-map` 으로 관리 중 (코드 하드코딩에서 개선 완료)
   - `user` 테이블에 `emp_cd VARCHAR` 컬럼 추가 후 `UserMapper.selectByEmpCd(empCd)` 기반으로 교체 필요
-  - 관련 파일: `AuthServiceImpl.java`, `User.java`, `UserMapper.java`, `UserMapper.xml`
+  - 관련 파일: `NsistProperties.java`, `AuthServiceImpl.java`, `User.java`, `UserMapper.java`, `UserMapper.xml`
 
 ---
 
