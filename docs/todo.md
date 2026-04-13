@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ feat/admin-delete-history 완료
-> 최종 업데이트: 2026-04-07 (관리자 프롬프트 이력 삭제 API 구현 완료)
+> 상태: ✅ test/human-prompt-db-independence 완료
+> 최종 업데이트: 2026-04-14 (HumanPrompt 테스트 DB 의존성 약화)
 
 ---
 
@@ -21,6 +21,22 @@
 ---
 
 ## 완료
+
+### test/human-prompt-db-independence. HumanPrompt 테스트 DB 의존성 약화
+
+> DB 상태(수동 insert 등)에 따라 간헐적으로 실패하던 테스트 4건을 개선.
+> 시드 데이터 기반 어서션으로 전환하고, 동적 식별자를 도입하여 DB 잔류 데이터의 영향을 제거.
+
+#### HumanPromptServiceTest
+- [x] `성공_단계_구조_조회_5단계_반환` — `hasSize(5)` → `size() >= 5` + `containsSequence(A~E tuple)`
+- [x] `성공_단계_구조_조회_세부항목_선택지_포함` — 전체 step 순회 → A~E 시드 step 필터링 후 검증
+
+#### HumanPromptStepServiceTest
+- [x] `성공_Step_생성` / `성공_Step_수정_stepNumber_name_변경` / `성공_Step_삭제_하위Attr_없음`
+  — 고정 stepCode(`F`/`G`/`H`) → `CODE_SUFFIX`(UUID 1자 hex) 기반 동적 값으로 교체
+  — step name도 `RUN_ID` suffix로 고유화
+
+---
 
 ### feat/admin-delete-history. 관리자 프롬프트 이력 삭제
 

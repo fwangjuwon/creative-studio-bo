@@ -13,6 +13,8 @@ import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -30,6 +32,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 @SpringBootTest
 @ActiveProfiles("local")
 public class HumanPromptStepServiceTest {
+
+    /** 테스트 실행마다 고유한 접미사 — step_code는 VARCHAR(2) 제약으로 1자리 hex char만 사용 */
+    private static final String RUN_ID = UUID.randomUUID().toString().substring(0, 6);
+    private static final String CODE_SUFFIX = UUID.randomUUID().toString().substring(0, 1);
 
     @Autowired
     private HumanPromptStepService humanPromptStepService;
@@ -51,14 +57,17 @@ public class HumanPromptStepServiceTest {
     @Rollback
     @DisplayName("[성공] Step 생성")
     void 성공_Step_생성() {
+        String code = "F" + CODE_SUFFIX;
+        String name = "테스트 단계_" + RUN_ID;
+
         HumanPromptStepSimpleRespDto result =
-                humanPromptStepService.createStep(단계_생성_DTO(6, "F", "테스트 단계"));
+                humanPromptStepService.createStep(단계_생성_DTO(6, code, name));
 
         assertThat(result).isNotNull();
         assertThat(result.getId()).isNotNull();
         assertThat(result.getStepNumber()).isEqualTo(6);
-        assertThat(result.getStepCode()).isEqualTo("F");
-        assertThat(result.getName()).isEqualTo("테스트 단계");
+        assertThat(result.getStepCode()).isEqualTo(code);
+        assertThat(result.getName()).isEqualTo(name);
     }
 
     // ================================================================
@@ -70,20 +79,24 @@ public class HumanPromptStepServiceTest {
     @Rollback
     @DisplayName("[성공] Step 수정 - stepNumber / name 변경")
     void 성공_Step_수정_stepNumber_name_변경() {
+        String code = "G" + CODE_SUFFIX;
+        String beforeName = "수정전 단계_" + RUN_ID;
+        String afterName = "수정후 단계_" + RUN_ID;
+
         HumanPromptStepSimpleRespDto created =
-                humanPromptStepService.createStep(단계_생성_DTO(7, "G", "수정전 단계"));
+                humanPromptStepService.createStep(단계_생성_DTO(7, code, beforeName));
 
         HumanPromptStepUpdateReqDto updateDto = HumanPromptStepUpdateReqDto.builder()
                 .stepNumber(99)
-                .name("수정후 단계")
+                .name(afterName)
                 .build();
 
         HumanPromptStepSimpleRespDto updated =
                 humanPromptStepService.updateStep(created.getId(), updateDto);
 
         assertThat(updated.getStepNumber()).isEqualTo(99);
-        assertThat(updated.getName()).isEqualTo("수정후 단계");
-        assertThat(updated.getStepCode()).isEqualTo("G");
+        assertThat(updated.getName()).isEqualTo(afterName);
+        assertThat(updated.getStepCode()).isEqualTo(code);
     }
 
     @Test
@@ -108,8 +121,11 @@ public class HumanPromptStepServiceTest {
     @Rollback
     @DisplayName("[성공] Step 삭제 - 하위 Attr 없을 때")
     void 성공_Step_삭제_하위Attr_없음() {
+        String code = "H" + CODE_SUFFIX;
+        String name = "삭제가능 단계_" + RUN_ID;
+
         HumanPromptStepSimpleRespDto created =
-                humanPromptStepService.createStep(단계_생성_DTO(8, "H", "삭제가능 단계"));
+                humanPromptStepService.createStep(단계_생성_DTO(8, code, name));
 
         humanPromptStepService.deleteStep(created.getId());
     }
