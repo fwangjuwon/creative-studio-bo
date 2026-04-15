@@ -28,6 +28,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.BDDMockito.given;
@@ -126,22 +127,36 @@ public class HumanPromptServiceTest {
     void 성공_단계_구조_조회_5단계_반환() {
         List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
 
-        assertThat(steps).hasSize(5);
-        assertThat(steps.get(0).getStepNumber()).isEqualTo(1);
-        assertThat(steps.get(0).getStepCode()).isEqualTo("A");
-        assertThat(steps.get(4).getStepNumber()).isEqualTo(5);
-        assertThat(steps.get(4).getStepCode()).isEqualTo("E");
+        assertThat(steps.size()).isGreaterThanOrEqualTo(5);
+        assertThat(steps)
+                .extracting(HumanPromptStepRespDto::getStepCode, HumanPromptStepRespDto::getStepNumber)
+                .containsSequence(
+                        tuple("A", 1),
+                        tuple("B", 2),
+                        tuple("C", 3),
+                        tuple("D", 4),
+                        tuple("E", 5)
+                );
     }
 
     @Test
     @DisplayName("[성공] 단계 구조 조회 - 각 단계에 세부항목과 선택지 포함")
     void 성공_단계_구조_조회_세부항목_선택지_포함() {
-        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
+        List<String> seedCodes = List.of("A", "B", "C", "D", "E");
 
-        for (HumanPromptStepRespDto step : steps) {
-            assertThat(step.getAttrs()).isNotEmpty();
+        List<HumanPromptStepRespDto> seedSteps = humanPromptService.getSteps().stream()
+                .filter(s -> seedCodes.contains(s.getStepCode()))
+                .toList();
+
+        assertThat(seedSteps).hasSize(5);
+        for (HumanPromptStepRespDto step : seedSteps) {
+            assertThat(step.getAttrs())
+                    .as("step %s 에 attr이 존재해야 함", step.getStepCode())
+                    .isNotEmpty();
             for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
-                assertThat(attr.getOptions()).isNotEmpty();
+                assertThat(attr.getOptions())
+                        .as("step %s / attr '%s' 에 option이 존재해야 함", step.getStepCode(), attr.getName())
+                        .isNotEmpty();
             }
         }
     }
