@@ -404,7 +404,7 @@ private final UserService userService;  // ✅ 인터페이스
 
 의존성: `springdoc-openapi-starter-webmvc-ui:2.8.14`
 
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html` (`local`/`dev` 프로필 전용 — `prd` 비활성화)
 - OpenAPI JSON: `http://localhost:8080/v3/api-docs`
 
 ### 어노테이션 규칙
