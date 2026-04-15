@@ -61,7 +61,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginRespDto nsistLogin(String empCd, String orgCd, HttpServletRequest request) {
-        validateNsistReferer(request);
+        // TODO: Referer 검증 임시 비활성화
+        // nsist iframe 구조상 실제 Referer는 nsm-dev-creative-fo.nsmall.com으로 전달됨.
+        // NSIST_REFERER_PREFIX를 https://nsm-dev-creative-fo.nsmall.com으로 변경 후 복원 필요.
+        // validateNsistReferer(request);
 
         String loginId = NSIST_EMP_CD_MAP.get(empCd);
         if (!StringUtils.hasText(loginId)) {
