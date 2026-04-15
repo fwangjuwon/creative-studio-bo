@@ -22,6 +22,8 @@ logging:
     org.apache.coyote.http11: INFO
     # MyBatis 프레임워크 내부
     org.mybatis.spring.SqlSessionUtils: INFO
+    # Spring RestClient — NanoBanana(이미지 생성) 요청 시 바디 전체가 DEBUG로 찍히는 노이즈 억제
+    org.springframework.web.client.DefaultRestClient: INFO
 
 mybatis:
   config-location: classpath:mybatis-config.xml

@@ -7,7 +7,6 @@ import com.nsmall.ns_creative_studio_bo.domain.auth.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -44,16 +43,14 @@ public class AuthController {
 
     @Operation(
             summary = "nsist SSO 로그인",
-            description = "nsist 서비스에서 전달된 empCd로 사용자를 식별하여 JWT Access Token 발급. " +
-                    "Referer 헤더가 https://nsist.nsmall.com 으로 시작해야 한다."
+            description = "nsist 서비스에서 전달된 empCd로 사용자를 식별하여 JWT Access Token 발급."
     )
     @ApiResponse(responseCode = "200", description = "로그인 성공 — accessToken 반환")
-    @ApiResponse(responseCode = "401", description = "허용되지 않는 Referer 또는 매핑되지 않은 empCd")
+    @ApiResponse(responseCode = "401", description = "매핑되지 않은 empCd 또는 존재하지 않는 사용자")
     @GetMapping("/nsist-login")
     public CommonResponse<LoginRespDto> nsistLogin(
             @RequestParam String empCd,
-            @RequestParam String orgCd,
-            HttpServletRequest request) {
-        return CommonResponse.success(authService.nsistLogin(empCd, orgCd, request));
+            @RequestParam String orgCd) {
+        return CommonResponse.success(authService.nsistLogin(empCd, orgCd));
     }
 }

@@ -13,14 +13,33 @@
 
 ## 기술 부채 (TODO)
 
+- [ ] **nsist SSO 로그인 — empCd→loginId 매핑을 DB 기반으로 교체**
+  - 현재 `application-{profile}.yml`의 `nsist.emp-cd-map` 으로 관리 중 (코드 하드코딩에서 개선 완료)
+  - `user` 테이블에 `emp_cd VARCHAR` 컬럼 추가 후 `UserMapper.selectByEmpCd(empCd)` 기반으로 교체 필요
+  - 관련 파일: `NsistProperties.java`, `AuthServiceImpl.java`, `User.java`, `UserMapper.java`, `UserMapper.xml`
+
 - [ ] **nsist SSO 로그인 — empCd→loginId 매핑 하드코딩 개선**
   - 현재 `AuthServiceImpl.NSIST_EMP_CD_MAP` 에 `empCd → loginId` 를 하드코딩으로 관리 중
-  - `user` 테이블에 `emp_cd VARCHAR` 컬럼 추가 후 `UserMapper.selectByEmpCd(empCd)` 기반으로 교체 필요
-  - 관련 파일: `AuthServiceImpl.java`, `User.java`, `UserMapper.java`, `UserMapper.xml`
 
 ---
 
 ## 완료
+
+### test/human-prompt-db-independence. HumanPrompt 테스트 DB 의존성 약화
+
+> DB 상태(수동 insert 등)에 따라 간헐적으로 실패하던 테스트 4건을 개선.
+> 시드 데이터 기반 어서션으로 전환하고, 동적 식별자를 도입하여 DB 잔류 데이터의 영향을 제거.
+
+#### HumanPromptServiceTest
+- [x] `성공_단계_구조_조회_5단계_반환` — `hasSize(5)` → `size() >= 5` + `containsSequence(A~E tuple)`
+- [x] `성공_단계_구조_조회_세부항목_선택지_포함` — 전체 step 순회 → A~E 시드 step 필터링 후 검증
+
+#### HumanPromptStepServiceTest
+- [x] `성공_Step_생성` / `성공_Step_수정_stepNumber_name_변경` / `성공_Step_삭제_하위Attr_없음`
+  — 고정 stepCode(`F`/`G`/`H`) → `CODE_SUFFIX`(UUID 1자 hex) 기반 동적 값으로 교체
+  — step name도 `RUN_ID` suffix로 고유화
+
+---
 
 ### feat/admin-delete-history. 관리자 프롬프트 이력 삭제
 

@@ -111,6 +111,44 @@ public class AuthServiceTest {
     }
 
     // ================================================================
+    // nsist SSO 로그인 성공
+    // ================================================================
+
+    @Test
+    @DisplayName("[성공] nsist SSO 로그인 - 정상 empCd → JWT 발급")
+    void 성공_nsist_SSO_로그인_정상() {
+        // local 프로필 기준: empCd "12496" → loginId "admin" (시드 데이터)
+        LoginRespDto result = authService.nsistLogin("12496", "ORG01");
+
+        assertThat(result.getAccessToken()).isNotBlank();
+        assertThat(result.getTokenType()).isEqualTo("Bearer");
+        assertThat(result.getExpiresIn()).isEqualTo(3600L);
+    }
+
+    @Test
+    @DisplayName("[성공] nsist SSO 로그인 - 발급 토큰 loginId 검증")
+    void 성공_nsist_SSO_로그인_토큰_loginId_검증() {
+        LoginRespDto result = authService.nsistLogin("12496", "ORG01");
+
+        String token = result.getAccessToken();
+        assertThat(jwtTokenProvider.validateToken(token)).isTrue();
+        assertThat(jwtTokenProvider.getLoginId(token)).isEqualTo("admin");
+    }
+
+    // ================================================================
+    // nsist SSO 로그인 예외
+    // ================================================================
+
+    @Test
+    @DisplayName("[예외] nsist SSO 로그인 - 매핑되지 않은 empCd")
+    void 예외_nsist_SSO_로그인_매핑되지않은_empCd() {
+        assertThatThrownBy(() -> authService.nsistLogin("99999", "ORG01"))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(AuthErrorCode.INVALID_CREDENTIALS));
+    }
+
+    // ================================================================
     // 로그인 예외
     // ================================================================
 
