@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.auth.service;
 
 import com.nsmall.ns_creative_studio_bo.common.config.JwtProperties;
+import com.nsmall.ns_creative_studio_bo.common.config.NsistProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtTokenProvider;
 import com.nsmall.ns_creative_studio_bo.domain.auth.AuthErrorCode;
@@ -8,14 +9,11 @@ import com.nsmall.ns_creative_studio_bo.domain.auth.dto.request.LoginReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.response.LoginRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
-import java.util.Map;
 
 /**
  * Auth 서비스 구현체 — 로그인 및 JWT 토큰 발급
@@ -28,20 +26,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
-    private static final String NSIST_REFERER_PREFIX = "https://nsist.nsmall.com";
-
-    /**
-     * nsist empCd → NCS loginId 매핑 (임시 하드코딩).
-     * 추후 user 테이블의 emp_cd 컬럼 기반으로 교체 예정.
-     */
-    private static final Map<String, String> NSIST_EMP_CD_MAP = Map.of(
-        "12496", "jjhoo8936"
-    );
-
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
+    private final NsistProperties nsistProperties;
 
     @Override
     public LoginRespDto login(LoginReqDto dto) {
@@ -60,13 +49,8 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginRespDto nsistLogin(String empCd, String orgCd, HttpServletRequest request) {
-        // TODO: Referer 검증 임시 비활성화
-        // nsist iframe 구조상 실제 Referer는 nsm-dev-creative-fo.nsmall.com으로 전달됨.
-        // NSIST_REFERER_PREFIX를 https://nsm-dev-creative-fo.nsmall.com으로 변경 후 복원 필요.
-        // validateNsistReferer(request);
-
-        String loginId = NSIST_EMP_CD_MAP.get(empCd);
+    public LoginRespDto nsistLogin(String empCd, String orgCd) {
+        String loginId = nsistProperties.getEmpCdMap().get(empCd);
         if (!StringUtils.hasText(loginId)) {
             log.warn("nsist SSO 로그인 실패 — 매핑되지 않은 empCd={}", empCd);
             throw new BizException(AuthErrorCode.INVALID_CREDENTIALS);
@@ -82,13 +66,5 @@ public class AuthServiceImpl implements AuthService {
         log.info("nsist SSO 로그인 성공 — empCd={}, loginId={}, role={}", empCd, user.getLoginId(), user.getRole());
 
         return LoginRespDto.of(token, jwtProperties.getExpiration());
-    }
-
-    private void validateNsistReferer(HttpServletRequest request) {
-        String referer = request.getHeader("Referer");
-        if (!StringUtils.hasText(referer) || !referer.startsWith(NSIST_REFERER_PREFIX)) {
-            log.warn("nsist SSO 로그인 거부 — 허용되지 않는 Referer: {}", referer);
-            throw new BizException(AuthErrorCode.INVALID_CREDENTIALS);
-        }
     }
 }
