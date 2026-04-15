@@ -9,7 +9,6 @@ import com.nsmall.ns_creative_studio_bo.domain.auth.dto.request.LoginReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.response.LoginRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -50,12 +49,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginRespDto nsistLogin(String empCd, String orgCd, HttpServletRequest request) {
-        // TODO: Referer 검증 임시 비활성화
-        // nsist iframe 구조상 실제 Referer는 nsm-dev-creative-fo.nsmall.com으로 전달됨.
-        // NSIST_REFERER_PREFIX를 https://nsm-dev-creative-fo.nsmall.com으로 변경 후 복원 필요.
-        // validateNsistReferer(request);
-
+    public LoginRespDto nsistLogin(String empCd, String orgCd) {
         String loginId = nsistProperties.getEmpCdMap().get(empCd);
         if (!StringUtils.hasText(loginId)) {
             log.warn("nsist SSO 로그인 실패 — 매핑되지 않은 empCd={}", empCd);
@@ -72,13 +66,5 @@ public class AuthServiceImpl implements AuthService {
         log.info("nsist SSO 로그인 성공 — empCd={}, loginId={}, role={}", empCd, user.getLoginId(), user.getRole());
 
         return LoginRespDto.of(token, jwtProperties.getExpiration());
-    }
-
-    private void validateNsistReferer(HttpServletRequest request) {
-        String referer = request.getHeader("Referer");
-        if (!StringUtils.hasText(referer) || !referer.startsWith(nsistProperties.getRefererPrefix())) {
-            log.warn("nsist SSO 로그인 거부 — 허용되지 않는 Referer: {}", referer);
-            throw new BizException(AuthErrorCode.NSIST_SSO_UNAUTHORIZED);
-        }
     }
 }

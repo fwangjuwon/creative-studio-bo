@@ -18,12 +18,6 @@
   - `user` 테이블에 `emp_cd VARCHAR` 컬럼 추가 후 `UserMapper.selectByEmpCd(empCd)` 기반으로 교체 필요
   - 관련 파일: `NsistProperties.java`, `AuthServiceImpl.java`, `User.java`, `UserMapper.java`, `UserMapper.xml`
 
-- [ ] **nsist SSO 로그인 — Referer 검증 복원 (임시 비활성화 중 ⚠️)**
-  - `AuthServiceImpl.nsistLogin()` 내 `validateNsistReferer(request)` 호출이 현재 주석 처리 상태
-  - 원인: nsist iframe 안에서 NCS FO가 NCS BO를 호출하는 구조상, Referer가 `nsist.nsmall.com`이 아닌 `nsm-dev-creative-fo.nsmall.com`으로 전달됨
-  - 복원 방법: `NSIST_REFERER_PREFIX`를 `https://nsm-dev-creative-fo.nsmall.com`으로 변경 후 주석 제거
-  - 관련 파일: `AuthServiceImpl.java` (64번 줄)
-
 - [ ] **nsist SSO 로그인 — empCd→loginId 매핑 하드코딩 개선**
   - 현재 `AuthServiceImpl.NSIST_EMP_CD_MAP` 에 `empCd → loginId` 를 하드코딩으로 관리 중
 

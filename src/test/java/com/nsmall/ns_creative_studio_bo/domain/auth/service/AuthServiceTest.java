@@ -13,7 +13,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
@@ -67,18 +66,6 @@ public class AuthServiceTest {
                 .build();
     }
 
-    /**
-     * nsist SSO 로그인용 MockHttpServletRequest 생성.
-     * referer가 null이면 Referer 헤더를 추가하지 않는다.
-     */
-    private MockHttpServletRequest nsist_요청(String referer) {
-        MockHttpServletRequest request = new MockHttpServletRequest();
-        if (referer != null) {
-            request.addHeader("Referer", referer);
-        }
-        return request;
-    }
-
     // ================================================================
     // 로그인 성공
     // ================================================================
@@ -128,12 +115,10 @@ public class AuthServiceTest {
     // ================================================================
 
     @Test
-    @DisplayName("[성공] nsist SSO 로그인 - 정상 empCd + 유효한 Referer → JWT 발급")
+    @DisplayName("[성공] nsist SSO 로그인 - 정상 empCd → JWT 발급")
     void 성공_nsist_SSO_로그인_정상() {
         // local 프로필 기준: empCd "12496" → loginId "admin" (시드 데이터)
-        LoginRespDto result = authService.nsistLogin(
-                "12496", "ORG01",
-                nsist_요청("https://nsist-dev.nsmall.com/some/path"));
+        LoginRespDto result = authService.nsistLogin("12496", "ORG01");
 
         assertThat(result.getAccessToken()).isNotBlank();
         assertThat(result.getTokenType()).isEqualTo("Bearer");
@@ -143,9 +128,7 @@ public class AuthServiceTest {
     @Test
     @DisplayName("[성공] nsist SSO 로그인 - 발급 토큰 loginId 검증")
     void 성공_nsist_SSO_로그인_토큰_loginId_검증() {
-        LoginRespDto result = authService.nsistLogin(
-                "12496", "ORG01",
-                nsist_요청("https://nsist-dev.nsmall.com/"));
+        LoginRespDto result = authService.nsistLogin("12496", "ORG01");
 
         String token = result.getAccessToken();
         assertThat(jwtTokenProvider.validateToken(token)).isTrue();
@@ -157,29 +140,9 @@ public class AuthServiceTest {
     // ================================================================
 
     @Test
-    @DisplayName("[예외] nsist SSO 로그인 - Referer 헤더 없음")
-    void 예외_nsist_SSO_로그인_Referer_없음() {
-        assertThatThrownBy(() -> authService.nsistLogin("12496", "ORG01", nsist_요청(null)))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(AuthErrorCode.NSIST_SSO_UNAUTHORIZED));
-    }
-
-    @Test
-    @DisplayName("[예외] nsist SSO 로그인 - Referer 불일치 (허용되지 않는 도메인)")
-    void 예외_nsist_SSO_로그인_Referer_불일치() {
-        assertThatThrownBy(() -> authService.nsistLogin("12496", "ORG01",
-                nsist_요청("https://evil.com/attack")))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(AuthErrorCode.NSIST_SSO_UNAUTHORIZED));
-    }
-
-    @Test
     @DisplayName("[예외] nsist SSO 로그인 - 매핑되지 않은 empCd")
     void 예외_nsist_SSO_로그인_매핑되지않은_empCd() {
-        assertThatThrownBy(() -> authService.nsistLogin("99999", "ORG01",
-                nsist_요청("https://nsist-dev.nsmall.com/")))
+        assertThatThrownBy(() -> authService.nsistLogin("99999", "ORG01"))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(AuthErrorCode.INVALID_CREDENTIALS));
