@@ -29,7 +29,7 @@ Gemini API를 통해 최적화된 **영문 이미지 생성 프롬프트**를 �
 | ORM | MyBatis |
 | 인증 | Spring Security + JWT (Stateless, 완료) |
 | AI | Gemini API (`gemini-3-flash-preview` 기본) + NanoBanana (`gemini-3-pro-image-preview`, 인물 이미지 생성) |
-| API 문서 | Swagger UI (`springdoc-openapi-starter-webmvc-ui:2.8.14`) |
+| API 문서 | Swagger UI (`springdoc-openapi-starter-webmvc-ui:2.8.14`) — `local`/`dev` 프로필에서만 활성화 (`@Profile({"local", "dev"})`) |
 
 ---
 
@@ -233,7 +233,7 @@ Mapper → Service 등 **내부 계층 간 전달 전용 DTO**는 이 규칙을 
 @ApiResponse(responseCode = "201", description = "...")
 ```
 
-- Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+- Swagger UI: `http://localhost:8080/swagger-ui/index.html` (`local`/`dev` 프로필 전용 — prd 비활성화)
 
 ### MyBatis Type Alias
 

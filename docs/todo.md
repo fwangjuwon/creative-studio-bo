@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ test/human-prompt-db-independence 완료
-> 최종 업데이트: 2026-04-14 (HumanPrompt 테스트 DB 의존성 약화)
+> 상태: ✅ chore/swagger-profile-restriction 완료
+> 최종 업데이트: 2026-04-15 (Swagger local/dev 프로필 전용 제한)
 
 ---
 
@@ -240,6 +240,19 @@ HUMAN 1건당:
   - `[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (application/x-sh)`
   - `[예외] 상품 이미지 생성 - Content-Type null`
   - `[예외] 상품 이미지 생성 - 파일 크기 10MB 초과`
+
+---
+
+### chore/swagger-profile-restriction. Swagger local/dev 프로필 전용으로 제한
+
+> prd 환경에서 Swagger UI 노출을 차단하기 위해 프로필 제한 적용.
+> SwaggerConfig Bean 등록 차단 + springdoc 엔드포인트 비활성화 이중 방어(Defense in Depth).
+
+#### 변경 사항
+- [x] `SwaggerConfig.java` — `@Profile({"local", "dev"})` 추가 (prd에서 OpenAPI Bean 미등록)
+- [x] `application-prd.yml` 신규 생성
+  - `springdoc.api-docs.enabled: false`
+  - `springdoc.swagger-ui.enabled: false`
 
 ---
 
