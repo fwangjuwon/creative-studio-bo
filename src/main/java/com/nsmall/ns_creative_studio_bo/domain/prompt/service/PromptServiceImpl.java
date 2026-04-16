@@ -68,7 +68,7 @@ import java.util.stream.IntStream;
 public class PromptServiceImpl implements PromptService {
 
     private static final int IMAGE_GENERATE_COUNT = 3;
-    private static final long MAX_REFERENCE_IMAGE_BYTES = 10 * 1024 * 1024L; // 10MB
+    private static final long MAX_REFERENCE_IMAGE_BYTES = 15 * 1024 * 1024L; // 15MB
     private static final Set<String> ALLOWED_IMAGE_MIME_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp"
     );

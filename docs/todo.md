@@ -243,6 +243,23 @@ HUMAN 1건당:
 
 ---
 
+### feat/increase-multipart-file-size-limit. 참조 이미지 업로드 최대 용량 15MB로 상향
+
+> 요구사항 변경: 참조 이미지 파일 크기 제한을 10MB → 15MB로 확대.
+
+#### 변경 사항
+- [x] `application.yml` — `spring.servlet.multipart.max-file-size/max-request-size: 15MB`
+- [x] `PromptServiceImpl` — `MAX_REFERENCE_IMAGE_BYTES` 상수 `10MB → 15MB`
+- [x] `ImageGenerationErrorCode` — `IMAGE_TOO_LARGE` (IG006) 에러 메시지 `최대 10MB → 최대 15MB`
+- [x] `GlobalExceptionHandler` — `MaxUploadSizeExceededException` 핸들러 메시지 `최대 10MB → 최대 15MB`
+- [x] `PromptController` — `@ApiResponse(400)` 설명 파일 크기 조건 `10MB → 15MB`
+
+#### 테스트
+- [x] `PromptServiceTest` — `[예외] 상품 이미지 생성 - 파일 크기 10MB 초과` → `15MB 초과` 로 수정
+  - 초과 케이스 파일 크기 `11MB → 16MB` 로 수정
+
+---
+
 ### chore/swagger-profile-restriction. Swagger local/dev 프로필 전용으로 제한
 
 > prd 환경에서 Swagger UI 노출을 차단하기 위해 프로필 제한 적용.

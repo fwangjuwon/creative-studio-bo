@@ -229,7 +229,7 @@ public class GlobalExceptionHandler {
         log.warn("파일 업로드 크기 초과 [API: {} {}]: {}", request.getMethod(), request.getRequestURI(), e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(CommonResponse.fail(HttpStatus.BAD_REQUEST.value(), "파일 크기가 허용 범위를 초과합니다. (최대 10MB)"));
+                .body(CommonResponse.fail(HttpStatus.BAD_REQUEST.value(), "파일 크기가 허용 범위를 초과합니다. (최대 15MB)"));
     }
 
     /** 예상하지 못한 예외 (최종 방어선) */
