@@ -77,10 +77,10 @@
             <if test="loginId != null and loginId != ''">
                 AND init_regi_pic = #{loginId}
             </if>
-            <if test="promptType != null and promptType != ''">
+            <if test="promptType != null">
                 AND prompt_type = #{promptType}
             </if>
-            <if test="promptStyle != null and promptStyle != ''">
+            <if test="promptStyle != null">
                 AND prompt_style = #{promptStyle}
             </if>
             <if test="dateFrom != null">

@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -46,7 +47,7 @@ public class HumanPromptCreateReqDto {
      *   <li>{@code MID_JOURNEY} — 키워드 나열형 (MidJourney 최적화)</li>
      * </ul>
      */
-    private String promptStyle;
+    private PromptStyle promptStyle;
 
     /** 이미지 비율 (선택, 예: "1:1", "4:3", "16:9", "9:16") */
     private String imageAspectRatio;

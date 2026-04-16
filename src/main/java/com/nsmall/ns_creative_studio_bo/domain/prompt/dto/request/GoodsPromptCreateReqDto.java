@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -37,7 +38,7 @@ public class GoodsPromptCreateReqDto {
     private List<Long> tagIds = List.of();
 
     /** 프롬프트 스타일 (선택, 미입력 시 NANO_BANANA 기본값 적용) */
-    private String promptStyle;
+    private PromptStyle promptStyle;
 
     /** 이미지 비율 (선택, 예: "1:1", "4:3", "16:9", "9:16") — 이미지 사이즈 태그와 연동 */
     private String imageAspectRatio;

@@ -3,8 +3,9 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
@@ -348,7 +349,7 @@ public class HumanPromptServiceTest {
 
         HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
                 .selections(최소_선택지_구성())
-                .promptStyle("MID_JOURNEY")
+                .promptStyle(PromptStyle.MID_JOURNEY)
                 .build();
 
         PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
@@ -373,7 +374,7 @@ public class HumanPromptServiceTest {
                 .selections(최소_선택지_구성())
                 .purpose("SNS 광고")
                 .additionalNotes("밝은 배경")
-                .promptStyle("MID_JOURNEY")
+                .promptStyle(PromptStyle.MID_JOURNEY)
                 .build();
 
         humanPromptService.createPrompt(user.getId(), dto);

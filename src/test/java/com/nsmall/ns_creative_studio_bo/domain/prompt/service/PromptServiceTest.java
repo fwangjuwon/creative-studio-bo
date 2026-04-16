@@ -8,6 +8,8 @@ import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRes
 import com.nsmall.ns_creative_studio_bo.domain.category.service.CategoryService;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
@@ -313,7 +315,7 @@ public class PromptServiceTest {
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())
                 .tagIds(List.of())
-                .promptStyle("MID_JOURNEY")
+                .promptStyle(PromptStyle.MID_JOURNEY)
                 .build();
 
         PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
@@ -451,7 +453,7 @@ public class PromptServiceTest {
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())
                 .tagIds(List.of(tag.getId()))
-                .promptStyle("MID_JOURNEY")
+                .promptStyle(PromptStyle.MID_JOURNEY)
                 .build();
 
         promptService.createGoodsPrompt(user.getId(), dto);
@@ -568,7 +570,7 @@ public class PromptServiceTest {
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_type_usr");
-        searchReqDto.setPromptType("PRODUCT");
+        searchReqDto.setPromptType(PromptType.PRODUCT);
 
         PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
 
@@ -589,7 +591,7 @@ public class PromptServiceTest {
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_person_usr");
-        searchReqDto.setPromptType("PERSON");
+        searchReqDto.setPromptType(PromptType.PERSON);
 
         PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
 
@@ -610,7 +612,7 @@ public class PromptServiceTest {
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_style_usr");
-        searchReqDto.setPromptStyle("MID_JOURNEY");
+        searchReqDto.setPromptStyle(PromptStyle.MID_JOURNEY);
 
         PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
 
@@ -678,8 +680,8 @@ public class PromptServiceTest {
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_multi_usr");
-        searchReqDto.setPromptType("PRODUCT");
-        searchReqDto.setPromptStyle("MID_JOURNEY");
+        searchReqDto.setPromptType(PromptType.PRODUCT);
+        searchReqDto.setPromptStyle(PromptStyle.MID_JOURNEY);
 
         PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
 
