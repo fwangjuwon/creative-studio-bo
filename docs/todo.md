@@ -41,17 +41,24 @@
 - [x] `PromptHistorySearchReqDto.promptType` `String` → `PromptType`
 - [x] `PromptHistorySearchReqDto.promptStyle` `String` → `PromptStyle`
 
-#### Service — `.name()` 참조로 교체
-- [x] `PromptServiceImpl` — `"PRODUCT"`, `"PERSON"`, `"NANO_BANANA"` → `PromptType/PromptStyle.*.name()`
-- [x] `HumanPromptServiceImpl` — `"PERSON"`, `"NANO_BANANA"` → `PromptType/PromptStyle.*.name()`
+#### GeminiService / GeminiServiceImpl — 내부 서비스 파라미터 enum 적용
+- [x] `GeminiService` — `generateGoodsPrompt`, `generateHumanPrompt` 파라미터 `String promptStyle` → `PromptStyle promptStyle`
+- [x] `GeminiServiceImpl` — 동일 시그니처 변경 + `"MID_JOURNEY".equalsIgnoreCase(promptStyle)` → `PromptStyle.MID_JOURNEY == promptStyle`
+
+#### Service — enum 직접 참조 + entity builder `.name()` 호출
+- [x] `PromptServiceImpl` — 로컬 변수 `String promptStyle` → `PromptStyle promptStyle`, Gemini 호출 시 enum 직접 전달, entity builder `.promptStyle(promptStyle.name())`
+- [x] `HumanPromptServiceImpl` — 동일 (`style` 변수)
 
 #### Mapper XML
 - [x] `PromptHistoryMapper.xml` — `<if test="promptType != null and promptType != ''">` → `<if test="promptType != null">` (enum과 빈 문자열 비교 제거)
 - [x] `PromptHistoryMapper.xml` — `<if test="promptStyle != null and promptStyle != ''">` → `<if test="promptStyle != null">` (동일)
 
 #### 테스트
-- [x] `PromptServiceTest` — enum 타입으로 변경 (`.promptStyle`, `setPromptType`, `setPromptStyle` 7곳)
-- [x] `HumanPromptServiceTest` — enum 타입으로 변경 (`.promptStyle` 2곳)
+- [x] `PromptServiceTest` — 헬퍼 `히스토리_직접_삽입_상세` 시그니처 `PromptType/PromptStyle` enum으로 교체, 13개 호출부 enum 상수로, 6개 어설션/필터 `.name()` 비교로
+- [x] `HumanPromptServiceTest` — `PromptType` import 추가, entity builder 2곳 `.name()` 호출, 어설션 3곳 enum `.name()` 비교로
+- [x] `CategoryServiceTest` — `PromptType/PromptStyle` import 추가, entity builder `.name()` 호출
+- [x] `UserServiceTest` — `PromptType/PromptStyle` import 추가, entity builder `.name()` 호출
+- [x] `TagServiceTest` — `PromptType/PromptStyle` import 추가, entity builder `.name()` 호출
 
 ---
 
