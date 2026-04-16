@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nsmall.ns_creative_studio_bo.common.config.GeminiProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -223,7 +224,7 @@ public class GeminiServiceImpl implements GeminiService {
 
     @Override
     public String generateHumanPrompt(Map<Integer, List<String>> stepOptionValues,
-                                      String purpose, String additionalNotes, String promptStyle,
+                                      String purpose, String additionalNotes, PromptStyle promptStyle,
                                       String imageAspectRatio) {
         StringBuilder sb = new StringBuilder();
 
@@ -249,7 +250,7 @@ public class GeminiServiceImpl implements GeminiService {
         String userMessage = sb.toString();
 
         // promptStyle에 따라 시스템 프롬프트 선택
-        boolean isMidJourney = "MID_JOURNEY".equalsIgnoreCase(promptStyle);
+        boolean isMidJourney = PromptStyle.MID_JOURNEY == promptStyle;
         String systemPromptText = isMidJourney ? SYSTEM_PROMPT_PERSON_MIDJOURNEY : SYSTEM_PROMPT_PERSON;
 
         GeminiPart systemPart = new GeminiPart(systemPromptText);
@@ -292,10 +293,10 @@ public class GeminiServiceImpl implements GeminiService {
     @Override
     public String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames,
                                       String imageAspectRatio, String purpose, String additionalNotes,
-                                      String promptStyle) {
+                                      PromptStyle promptStyle) {
         String userMessage = buildGoodsUserMessage(goodsCategoryName, tagNames, purpose, additionalNotes);
 
-        boolean isMidJourney = "MID_JOURNEY".equalsIgnoreCase(promptStyle);
+        boolean isMidJourney = PromptStyle.MID_JOURNEY == promptStyle;
         String systemPromptText = isMidJourney ? GOODS_SYSTEM_PROMPT_MIDJOURNEY : GOODS_SYSTEM_PROMPT;
         GeminiRequest requestBody = buildRequest(userMessage, systemPromptText);
 

@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ chore/swagger-profile-restriction 완료
-> 최종 업데이트: 2026-04-15 (Swagger local/dev 프로필 전용 제한)
+> 상태: ✅ refactor/prompt-type-style-enum 완료
+> 최종 업데이트: 2026-04-16 (PromptType/PromptStyle enum 도입)
 
 ---
 
@@ -24,6 +24,43 @@
 ---
 
 ## 완료
+
+### refactor/prompt-type-style-enum. PromptType/PromptStyle enum 도입
+
+> `prompt_history` 테이블의 `prompt_type`, `prompt_style` 컬럼 값을 하드코딩 문자열 대신 enum 타입으로 관리.
+> Request DTO에서 Jackson/Spring MVC 자동 변환 + 잘못된 값 입력 시 400 자동 반환.
+> `PromptHistory` 엔티티, 응답 DTO는 `String` 유지 (MyBatis 호환).
+
+#### 신규 파일
+- [x] `PromptType.java` — `PRODUCT` | `PERSON` enum (domain/prompt 패키지)
+- [x] `PromptStyle.java` — `NANO_BANANA` | `MID_JOURNEY` enum (domain/prompt 패키지)
+
+#### Request DTO — enum 타입으로 교체
+- [x] `GoodsPromptCreateReqDto.promptStyle` `String` → `PromptStyle`
+- [x] `HumanPromptCreateReqDto.promptStyle` `String` → `PromptStyle`
+- [x] `PromptHistorySearchReqDto.promptType` `String` → `PromptType`
+- [x] `PromptHistorySearchReqDto.promptStyle` `String` → `PromptStyle`
+
+#### GeminiService / GeminiServiceImpl — 내부 서비스 파라미터 enum 적용
+- [x] `GeminiService` — `generateGoodsPrompt`, `generateHumanPrompt` 파라미터 `String promptStyle` → `PromptStyle promptStyle`
+- [x] `GeminiServiceImpl` — 동일 시그니처 변경 + `"MID_JOURNEY".equalsIgnoreCase(promptStyle)` → `PromptStyle.MID_JOURNEY == promptStyle`
+
+#### Service — enum 직접 참조 + entity builder `.name()` 호출
+- [x] `PromptServiceImpl` — 로컬 변수 `String promptStyle` → `PromptStyle promptStyle`, Gemini 호출 시 enum 직접 전달, entity builder `.promptStyle(promptStyle.name())`
+- [x] `HumanPromptServiceImpl` — 동일 (`style` 변수)
+
+#### Mapper XML
+- [x] `PromptHistoryMapper.xml` — `<if test="promptType != null and promptType != ''">` → `<if test="promptType != null">` (enum과 빈 문자열 비교 제거)
+- [x] `PromptHistoryMapper.xml` — `<if test="promptStyle != null and promptStyle != ''">` → `<if test="promptStyle != null">` (동일)
+
+#### 테스트
+- [x] `PromptServiceTest` — 헬퍼 `히스토리_직접_삽입_상세` 시그니처 `PromptType/PromptStyle` enum으로 교체, 13개 호출부 enum 상수로, 6개 어설션/필터 `.name()` 비교로
+- [x] `HumanPromptServiceTest` — `PromptType` import 추가, entity builder 2곳 `.name()` 호출, 어설션 3곳 enum `.name()` 비교로
+- [x] `CategoryServiceTest` — `PromptType/PromptStyle` import 추가, entity builder `.name()` 호출
+- [x] `UserServiceTest` — `PromptType/PromptStyle` import 추가, entity builder `.name()` 호출
+- [x] `TagServiceTest` — `PromptType/PromptStyle` import 추가, entity builder `.name()` 호출
+
+---
 
 ### test/human-prompt-db-independence. HumanPrompt 테스트 DB 의존성 약화
 

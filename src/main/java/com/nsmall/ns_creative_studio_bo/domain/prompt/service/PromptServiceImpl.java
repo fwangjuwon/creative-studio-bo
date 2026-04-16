@@ -9,6 +9,8 @@ import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
@@ -127,8 +129,7 @@ public class PromptServiceImpl implements PromptService {
                 .toList();
 
         // 4. Gemini API 호출
-        String promptStyle = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
-                ? dto.getPromptStyle() : "NANO_BANANA";
+        PromptStyle promptStyle = dto.getPromptStyle() != null ? dto.getPromptStyle() : PromptStyle.NANO_BANANA;
         String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames,
                 dto.getImageAspectRatio(), dto.getPurpose(), dto.getAdditionalNotes(), promptStyle);
 
@@ -139,8 +140,8 @@ public class PromptServiceImpl implements PromptService {
         PromptHistory history = PromptHistory.builder()
                 .userId(currentUserId)
                 .categoryId(dto.getGoodsCategoryId())
-                .promptType("PRODUCT")
-                .promptStyle(promptStyle)
+                .promptType(PromptType.PRODUCT.name())
+                .promptStyle(promptStyle.name())
                 .promptText(promptText)
                 .imageAspectRatio(dto.getImageAspectRatio())
                 .purpose(dto.getPurpose())
@@ -185,12 +186,12 @@ public class PromptServiceImpl implements PromptService {
         List<PromptHistory> list = pageInfo.getList();
 
         List<Long> productHistoryIds = list.stream()
-                .filter(h -> "PRODUCT".equals(h.getPromptType()))
+                .filter(h -> PromptType.PRODUCT.name().equals(h.getPromptType()))
                 .map(PromptHistory::getId)
                 .toList();
 
         List<Long> humanHistoryIds = list.stream()
-                .filter(h -> "PERSON".equals(h.getPromptType()))
+                .filter(h -> PromptType.PERSON.name().equals(h.getPromptType()))
                 .map(PromptHistory::getId)
                 .toList();
 
@@ -202,7 +203,7 @@ public class PromptServiceImpl implements PromptService {
 
         if (!productHistoryIds.isEmpty()) {
             List<Long> categoryIds = list.stream()
-                    .filter(h -> "PRODUCT".equals(h.getPromptType()) && h.getCategoryId() != null)
+                    .filter(h -> PromptType.PRODUCT.name().equals(h.getPromptType()) && h.getCategoryId() != null)
                     .map(PromptHistory::getCategoryId)
                     .distinct()
                     .toList();
@@ -244,7 +245,7 @@ public class PromptServiceImpl implements PromptService {
 
         List<PromptHistoryRespDto> items = list.stream()
                 .map(history -> {
-                    if ("PRODUCT".equals(history.getPromptType())) {
+                    if (PromptType.PRODUCT.name().equals(history.getPromptType())) {
                         String categoryPath = history.getCategoryId() != null
                                 ? finalCategoryPathMap.get(history.getCategoryId())
                                 : null;
@@ -330,7 +331,7 @@ public class PromptServiceImpl implements PromptService {
                         "프롬프트 이력을 찾을 수 없습니다. id=" + id));
 
         // 1. 자식 레코드 먼저 삭제 (매핑 테이블)
-        if ("PRODUCT".equals(history.getPromptType())) {
+        if (PromptType.PRODUCT.name().equals(history.getPromptType())) {
             goodsPromptHistoryTagMapper.deleteByPromptHistoryId(id);
         } else {
             humanPromptHistoryOptionMapper.deleteByPromptHistoryId(id);

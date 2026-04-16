@@ -6,6 +6,8 @@ import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
@@ -124,8 +126,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
         log.debug("인간 이미지 프롬프트 생성 — stepOptionValues: {}", stepOptionValues);
 
         // 6. Gemini 호출 (promptStyle 기본값: NANO_BANANA)
-        String style = (dto.getPromptStyle() != null && !dto.getPromptStyle().isBlank())
-                ? dto.getPromptStyle() : "NANO_BANANA";
+        PromptStyle style = dto.getPromptStyle() != null ? dto.getPromptStyle() : PromptStyle.NANO_BANANA;
         String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio());
 
         // 7. PromptHistory 저장 (PERSON 타입, categoryId=null)
@@ -135,8 +136,8 @@ public class HumanPromptServiceImpl implements HumanPromptService {
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
                 .categoryId(null)
-                .promptType("PERSON")
-                .promptStyle(style)
+                .promptType(PromptType.PERSON.name())
+                .promptStyle(style.name())
                 .promptText(promptText)
                 .imageAspectRatio(dto.getImageAspectRatio())
                 .imageUrl(null)

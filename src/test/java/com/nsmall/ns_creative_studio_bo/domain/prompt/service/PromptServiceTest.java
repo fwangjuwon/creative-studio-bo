@@ -8,6 +8,8 @@ import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRes
 import com.nsmall.ns_creative_studio_bo.domain.category.service.CategoryService;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
@@ -114,16 +116,16 @@ public class PromptServiceTest {
     }
 
     private void 히스토리_직접_삽입(Long userId, Long goodsCategoryId) {
-        히스토리_직접_삽입_상세(userId, goodsCategoryId, "test", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(userId, goodsCategoryId, "test", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
     }
 
     private void 히스토리_직접_삽입_상세(Long userId, Long categoryId, String loginId,
-                                      String promptType, String promptStyle) {
+                                      PromptType promptType, PromptStyle promptStyle) {
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
                 .categoryId(categoryId)
-                .promptType(promptType)
-                .promptStyle(promptStyle)
+                .promptType(promptType.name())
+                .promptStyle(promptStyle.name())
                 .promptText("direct insert prompt")
                 .initRegiPic(loginId)
                 .initRegiDttm(LocalDateTime.now())
@@ -313,12 +315,12 @@ public class PromptServiceTest {
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())
                 .tagIds(List.of())
-                .promptStyle("MID_JOURNEY")
+                .promptStyle(PromptStyle.MID_JOURNEY)
                 .build();
 
         PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
 
-        assertThat(result.getPromptStyle()).isEqualTo("MID_JOURNEY");
+        assertThat(result.getPromptStyle()).isEqualTo(PromptStyle.MID_JOURNEY.name());
     }
 
     @Test
@@ -338,7 +340,7 @@ public class PromptServiceTest {
 
         PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
 
-        assertThat(result.getPromptStyle()).isEqualTo("NANO_BANANA");
+        assertThat(result.getPromptStyle()).isEqualTo(PromptStyle.NANO_BANANA.name());
     }
 
     @Test
@@ -451,20 +453,20 @@ public class PromptServiceTest {
         GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
                 .goodsCategoryId(scs.getId())
                 .tagIds(List.of(tag.getId()))
-                .promptStyle("MID_JOURNEY")
+                .promptStyle(PromptStyle.MID_JOURNEY)
                 .build();
 
         promptService.createGoodsPrompt(user.getId(), dto);
 
         PageRespDto<PromptHistoryRespDto> page = promptService.getPromptHistories(검색조건(1, 100));
         PromptHistoryRespDto found = page.items().stream()
-                .filter(h -> "PRODUCT".equals(h.getPromptType()))
+                .filter(h -> PromptType.PRODUCT.name().equals(h.getPromptType()))
                 .findFirst()
                 .orElseThrow();
 
         assertThat(found.getCategoryPath()).isEqualTo("의류 > 상의 > 반팔");
         assertThat(found.getTagNames()).containsExactly("야외");
-        assertThat(found.getPromptStyle()).isEqualTo("MID_JOURNEY");
+        assertThat(found.getPromptStyle()).isEqualTo(PromptStyle.MID_JOURNEY.name());
     }
 
     // ================================================================
@@ -543,8 +545,8 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("filter_login_usr", "USER", "팀A", 10);
         CategoryRespDto scs = SCS_카테고리_생성("loginId필터");
 
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_login_usr", "PRODUCT", "NANO_BANANA");
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "other_login_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_login_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "other_login_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_login_usr");
@@ -563,17 +565,17 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("filter_type_usr", "USER", "팀A", 10);
         CategoryRespDto scs = SCS_카테고리_생성("타입필터");
 
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_type_usr", "PRODUCT", "NANO_BANANA");
-        히스토리_직접_삽입_상세(user.getId(), null, "filter_type_usr", "PERSON", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_type_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
+        히스토리_직접_삽입_상세(user.getId(), null, "filter_type_usr", PromptType.PERSON, PromptStyle.NANO_BANANA);
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_type_usr");
-        searchReqDto.setPromptType("PRODUCT");
+        searchReqDto.setPromptType(PromptType.PRODUCT);
 
         PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
 
         assertThat(result.items()).isNotEmpty();
-        assertThat(result.items()).allMatch(h -> "PRODUCT".equals(h.getPromptType()));
+        assertThat(result.items()).allMatch(h -> PromptType.PRODUCT.name().equals(h.getPromptType()));
     }
 
     @Test
@@ -584,17 +586,17 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("filter_person_usr", "USER", "팀A", 10);
         CategoryRespDto scs = SCS_카테고리_생성("인물타입필터");
 
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_person_usr", "PRODUCT", "NANO_BANANA");
-        히스토리_직접_삽입_상세(user.getId(), null, "filter_person_usr", "PERSON", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_person_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
+        히스토리_직접_삽입_상세(user.getId(), null, "filter_person_usr", PromptType.PERSON, PromptStyle.NANO_BANANA);
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_person_usr");
-        searchReqDto.setPromptType("PERSON");
+        searchReqDto.setPromptType(PromptType.PERSON);
 
         PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
 
         assertThat(result.items()).isNotEmpty();
-        assertThat(result.items()).allMatch(h -> "PERSON".equals(h.getPromptType()));
+        assertThat(result.items()).allMatch(h -> PromptType.PERSON.name().equals(h.getPromptType()));
     }
 
     @Test
@@ -605,17 +607,17 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("filter_style_usr", "USER", "팀A", 10);
         CategoryRespDto scs = SCS_카테고리_생성("스타일필터");
 
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_style_usr", "PRODUCT", "MID_JOURNEY");
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_style_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_style_usr", PromptType.PRODUCT, PromptStyle.MID_JOURNEY);
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_style_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_style_usr");
-        searchReqDto.setPromptStyle("MID_JOURNEY");
+        searchReqDto.setPromptStyle(PromptStyle.MID_JOURNEY);
 
         PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
 
         assertThat(result.items()).isNotEmpty();
-        assertThat(result.items()).allMatch(h -> "MID_JOURNEY".equals(h.getPromptStyle()));
+        assertThat(result.items()).allMatch(h -> PromptStyle.MID_JOURNEY.name().equals(h.getPromptStyle()));
     }
 
     @Test
@@ -626,7 +628,7 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("filter_date_usr", "USER", "팀A", 10);
         CategoryRespDto scs = SCS_카테고리_생성("날짜필터");
 
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_date_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_date_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
 
         LocalDate today = LocalDate.now();
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
@@ -650,7 +652,7 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("filter_future_usr", "USER", "팀A", 10);
         CategoryRespDto scs = SCS_카테고리_생성("미래날짜필터");
 
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_future_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_future_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
 
         LocalDate tomorrow = LocalDate.now().plusDays(1);
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
@@ -672,20 +674,20 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("filter_multi_usr", "USER", "팀A", 10);
         CategoryRespDto scs = SCS_카테고리_생성("복합필터");
 
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_multi_usr", "PRODUCT", "MID_JOURNEY");
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_multi_usr", "PRODUCT", "NANO_BANANA");
-        히스토리_직접_삽입_상세(user.getId(), null, "filter_multi_usr", "PERSON", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_multi_usr", PromptType.PRODUCT, PromptStyle.MID_JOURNEY);
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_multi_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
+        히스토리_직접_삽입_상세(user.getId(), null, "filter_multi_usr", PromptType.PERSON, PromptStyle.NANO_BANANA);
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("filter_multi_usr");
-        searchReqDto.setPromptType("PRODUCT");
-        searchReqDto.setPromptStyle("MID_JOURNEY");
+        searchReqDto.setPromptType(PromptType.PRODUCT);
+        searchReqDto.setPromptStyle(PromptStyle.MID_JOURNEY);
 
         PageRespDto<PromptHistoryRespDto> result = promptService.getPromptHistories(searchReqDto);
 
         assertThat(result.items()).hasSize(1);
-        assertThat(result.items().get(0).getPromptType()).isEqualTo("PRODUCT");
-        assertThat(result.items().get(0).getPromptStyle()).isEqualTo("MID_JOURNEY");
+        assertThat(result.items().get(0).getPromptType()).isEqualTo(PromptType.PRODUCT.name());
+        assertThat(result.items().get(0).getPromptStyle()).isEqualTo(PromptStyle.MID_JOURNEY.name());
     }
 
     @Test
@@ -696,7 +698,7 @@ public class PromptServiceTest {
         UserRespDto user = 유저_생성("filter_noexist_usr", "USER", "팀A", 10);
         CategoryRespDto scs = SCS_카테고리_생성("없는loginId");
 
-        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_noexist_usr", "PRODUCT", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), scs.getId(), "filter_noexist_usr", PromptType.PRODUCT, PromptStyle.NANO_BANANA);
 
         PromptHistorySearchReqDto searchReqDto = 검색조건(1, 100);
         searchReqDto.setLoginId("nonexistent_user_xyz");
@@ -802,11 +804,11 @@ public class PromptServiceTest {
     void 성공_이력_삭제_PERSON타입() {
         UserRespDto user = 유저_생성("delete_person_user", "USER", "팀B", 10);
 
-        히스토리_직접_삽입_상세(user.getId(), null, "delete_person_user", "PERSON", "NANO_BANANA");
+        히스토리_직접_삽입_상세(user.getId(), null, "delete_person_user", PromptType.PERSON, PromptStyle.NANO_BANANA);
 
         List<PromptHistory> list = promptHistoryMapper.selectList(검색조건(1, 100));
         PromptHistory personHistory = list.stream()
-                .filter(h -> "PERSON".equals(h.getPromptType()) && user.getId().equals(h.getUserId()))
+                .filter(h -> PromptType.PERSON.name().equals(h.getPromptType()) && user.getId().equals(h.getUserId()))
                 .findFirst()
                 .orElseThrow();
 

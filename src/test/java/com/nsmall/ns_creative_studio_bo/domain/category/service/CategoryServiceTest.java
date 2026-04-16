@@ -6,6 +6,8 @@ import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import org.junit.jupiter.api.DisplayName;
@@ -538,8 +540,8 @@ public class CategoryServiceTest {
         promptHistoryMapper.insert(PromptHistory.builder()
                 .userId(0L)
                 .categoryId(scs.getId())
-                .promptType("PRODUCT")
-                .promptStyle("NANO_BANANA")
+                .promptType(PromptType.PRODUCT.name())
+                .promptStyle(PromptStyle.NANO_BANANA.name())
                 .promptText("테스트 프롬프트")
                 .initRegiPic("test_user")
                 .initRegiDttm(now)
