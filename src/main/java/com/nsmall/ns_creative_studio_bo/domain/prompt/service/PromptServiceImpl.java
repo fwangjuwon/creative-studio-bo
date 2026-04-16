@@ -129,8 +129,7 @@ public class PromptServiceImpl implements PromptService {
                 .toList();
 
         // 4. Gemini API 호출
-        String promptStyle = dto.getPromptStyle() != null
-                ? dto.getPromptStyle().name() : PromptStyle.NANO_BANANA.name();
+        PromptStyle promptStyle = dto.getPromptStyle() != null ? dto.getPromptStyle() : PromptStyle.NANO_BANANA;
         String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames,
                 dto.getImageAspectRatio(), dto.getPurpose(), dto.getAdditionalNotes(), promptStyle);
 
@@ -142,7 +141,7 @@ public class PromptServiceImpl implements PromptService {
                 .userId(currentUserId)
                 .categoryId(dto.getGoodsCategoryId())
                 .promptType(PromptType.PRODUCT.name())
-                .promptStyle(promptStyle)
+                .promptStyle(promptStyle.name())
                 .promptText(promptText)
                 .imageAspectRatio(dto.getImageAspectRatio())
                 .purpose(dto.getPurpose())

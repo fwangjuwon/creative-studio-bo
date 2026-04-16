@@ -1,6 +1,8 @@
 package com.nsmall.ns_creative_studio_bo.domain.user.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
@@ -56,8 +58,8 @@ public class UserServiceTest {
     private void 히스토리_직접_삽입(Long userId) {
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
-                .promptType("PRODUCT")
-                .promptStyle("NANO_BANANA")
+                .promptType(PromptType.PRODUCT.name())
+                .promptStyle(PromptStyle.NANO_BANANA.name())
                 .promptText("test prompt")
                 .initRegiPic("test")
                 .initRegiDttm(LocalDateTime.now())

@@ -6,6 +6,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistoryS
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
@@ -107,8 +108,8 @@ public class HumanPromptServiceTest {
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
                 .categoryId(null)
-                .promptType("PERSON")
-                .promptStyle("NANO_BANANA")
+                .promptType(PromptType.PERSON.name())
+                .promptStyle(PromptStyle.NANO_BANANA.name())
                 .promptText("direct insert person prompt")
                 .initRegiPic("test")
                 .initRegiDttm(LocalDateTime.now())
@@ -185,7 +186,7 @@ public class HumanPromptServiceTest {
         assertThat(result.getId()).isNotNull();
         assertThat(result.getPromptText()).isEqualTo(MOCK_PROMPT);
         assertThat(result.getUserId()).isEqualTo(user.getId());
-        assertThat(result.getPromptType()).isEqualTo("PERSON");
+        assertThat(result.getPromptType()).isEqualTo(PromptType.PERSON.name());
         assertThat(result.getCategoryId()).isNull();
     }
 
@@ -244,8 +245,8 @@ public class HumanPromptServiceTest {
         PromptHistory productHistory = PromptHistory.builder()
                 .userId(user.getId())
                 .categoryId(null)
-                .promptType("PRODUCT")
-                .promptStyle("NANO_BANANA")
+                .promptType(PromptType.PRODUCT.name())
+                .promptStyle(PromptStyle.NANO_BANANA.name())
                 .promptText("product prompt")
                 .initRegiPic("test")
                 .initRegiDttm(LocalDateTime.now())
@@ -354,7 +355,7 @@ public class HumanPromptServiceTest {
 
         PromptHistoryRespDto result = humanPromptService.createPrompt(user.getId(), dto);
 
-        assertThat(result.getPromptStyle()).isEqualTo("MID_JOURNEY");
+        assertThat(result.getPromptStyle()).isEqualTo(PromptStyle.MID_JOURNEY.name());
     }
 
     // ================================================================
@@ -384,14 +385,14 @@ public class HumanPromptServiceTest {
         searchReqDto.setPageSize(100);
         PageRespDto<PromptHistoryRespDto> page = promptService.getPromptHistories(searchReqDto);
         PromptHistoryRespDto found = page.items().stream()
-                .filter(h -> "PERSON".equals(h.getPromptType()))
+                .filter(h -> PromptType.PERSON.name().equals(h.getPromptType()))
                 .findFirst()
                 .orElseThrow();
 
         assertThat(found.getOptionNames()).isNotEmpty();
         assertThat(found.getPurpose()).isEqualTo("SNS 광고");
         assertThat(found.getAdditionalNotes()).isEqualTo("밝은 배경");
-        assertThat(found.getPromptStyle()).isEqualTo("MID_JOURNEY");
+        assertThat(found.getPromptStyle()).isEqualTo(PromptStyle.MID_JOURNEY.name());
     }
 
     // ================================================================

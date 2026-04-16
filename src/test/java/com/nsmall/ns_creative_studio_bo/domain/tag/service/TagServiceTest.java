@@ -1,6 +1,8 @@
 package com.nsmall.ns_creative_studio_bo.domain.tag.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.GoodsPromptHistoryTag;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
@@ -420,8 +422,8 @@ public class TagServiceTest {
         PromptHistory history = PromptHistory.builder()
                 .userId(0L)
                 .categoryId(null)
-                .promptType("PERSON")
-                .promptStyle("NANO_BANANA")
+                .promptType(PromptType.PERSON.name())
+                .promptStyle(PromptStyle.NANO_BANANA.name())
                 .promptText("테스트 프롬프트")
                 .initRegiPic("test_user")
                 .initRegiDttm(now)
