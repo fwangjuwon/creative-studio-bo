@@ -754,11 +754,11 @@ public class PromptServiceTest {
     }
 
     @Test
-    @DisplayName("[예외] 상품 이미지 생성 - 파일 크기 10MB 초과")
+    @DisplayName("[예외] 상품 이미지 생성 - 파일 크기 15MB 초과")
     void 예외_상품_이미지_생성_파일크기_초과() {
         MultipartFile file = mock(MultipartFile.class);
         given(file.isEmpty()).willReturn(false);
-        given(file.getSize()).willReturn(11 * 1024 * 1024L); // 11MB
+        given(file.getSize()).willReturn(16 * 1024 * 1024L); // 16MB
 
         assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
                 .isInstanceOf(BizException.class)

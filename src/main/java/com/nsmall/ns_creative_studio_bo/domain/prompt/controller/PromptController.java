@@ -65,7 +65,7 @@ public class PromptController {
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "이미지 생성 성공")
-    @ApiResponse(responseCode = "400", description = "promptText 누락 또는 빈 문자열 / 허용되지 않는 MIME 타입 (jpeg, png, webp만 허용) / 파일 크기 10MB 초과")
+    @ApiResponse(responseCode = "400", description = "promptText 누락 또는 빈 문자열 / 허용되지 않는 MIME 타입 (jpeg, png, webp만 허용) / 파일 크기 15MB 초과")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PreAuthorize("hasRole('USER')")
     @PostMapping(value = "/goods/generate-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
