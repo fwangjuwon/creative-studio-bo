@@ -18,8 +18,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @Suite
 @SuiteDisplayName("전체 레이어 테스트")
 @SelectClasses({
-        AllServiceTests.class
-        // AllControllerTests.class — 추가 예정
+        AllServiceTests.class,
+        AllControllerTests.class
 })
 public class AllLayersTests {
 }
