@@ -24,6 +24,7 @@ CREATE TABLE "user" (
     role            VARCHAR(20)     NOT NULL,           -- ADMIN / MANAGER / USER
     team_name       VARCHAR(100),
     daily_limit     INT             NOT NULL DEFAULT 3,
+    use_yn          CHAR(1)         NOT NULL DEFAULT 'Y', -- 계정 활성화 여부 (Y: 활성, N: 비활성/ban)
     init_regi_pic   VARCHAR(50),
     init_regi_dttm  TIMESTAMP,
     final_rvis_pic  VARCHAR(50),

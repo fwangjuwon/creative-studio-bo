@@ -30,4 +30,7 @@ public class UserUpdateReqDto {
 
     @Min(value = 0, message = "일일 생성 한도는 0 이상이어야 합니다.")
     private Integer dailyLimit;
+
+    @Pattern(regexp = "^(Y|N)$", message = "계정 활성화 여부는 Y 또는 N 이어야 합니다.")
+    private String useYn;
 }

@@ -276,6 +276,46 @@ public class UserServiceTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 회원 수정 - use_yn N으로 비활성화(ban)")
+    void 성공_회원_수정_use_yn_비활성화() {
+        UserRespDto created = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "ban"));
+
+        UserRespDto updated = userService.updateUser(created.getId(),
+                UserUpdateReqDto.builder().useYn("N").build());
+
+        assertThat(updated.getUseYn()).isEqualTo("N");
+
+        User user = userMapper.selectById(created.getId()).orElseThrow();
+        assertThat(user.getUseYn()).isEqualTo("N");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 회원 수정 - use_yn Y로 재활성화(unban)")
+    void 성공_회원_수정_use_yn_재활성화() {
+        UserRespDto created = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "unban"));
+        userService.updateUser(created.getId(), UserUpdateReqDto.builder().useYn("N").build());
+
+        UserRespDto updated = userService.updateUser(created.getId(),
+                UserUpdateReqDto.builder().useYn("Y").build());
+
+        assertThat(updated.getUseYn()).isEqualTo("Y");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 회원 생성 - use_yn 기본값 Y")
+    void 성공_회원_생성_use_yn_기본값_Y() {
+        UserRespDto created = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "useyn_default"));
+
+        assertThat(created.getUseYn()).isEqualTo("Y");
+    }
+
+    @Test
     @DisplayName("[예외] 회원 수정 - 미존재 회원")
     void 예외_회원_수정_미존재() {
         UserUpdateReqDto updateDto = UserUpdateReqDto.builder().name("수정요청").build();

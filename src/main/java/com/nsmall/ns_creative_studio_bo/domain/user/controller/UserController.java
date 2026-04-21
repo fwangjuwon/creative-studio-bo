@@ -70,7 +70,7 @@ public class UserController {
         return CommonResponse.success(userService.getUsers(searchDto));
     }
 
-    @Operation(summary = "회원 수정", description = "ADMIN 전용",
+    @Operation(summary = "회원 수정", description = "ADMIN 전용 — useYn(Y/N)으로 계정 활성화/비활성화(ban) 가능",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "수정 성공")
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")

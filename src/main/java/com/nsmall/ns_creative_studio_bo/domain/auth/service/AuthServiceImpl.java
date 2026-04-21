@@ -7,6 +7,7 @@ import com.nsmall.ns_creative_studio_bo.common.security.JwtTokenProvider;
 import com.nsmall.ns_creative_studio_bo.domain.auth.AuthErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.request.LoginReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.response.LoginRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +43,11 @@ public class AuthServiceImpl implements AuthService {
             throw new BizException(AuthErrorCode.INVALID_CREDENTIALS);
         }
 
+        if (!"Y".equals(user.getUseYn())) {
+            log.warn("비활성화된 계정 로그인 시도 — loginId={}", dto.getLoginId());
+            throw new BizException(UserErrorCode.USER_BANNED);
+        }
+
         String token = jwtTokenProvider.generateToken(user.getLoginId(), user.getRole());
         log.info("로그인 성공 — loginId={}, role={}", user.getLoginId(), user.getRole());
 
@@ -61,6 +67,11 @@ public class AuthServiceImpl implements AuthService {
                     log.warn("nsist SSO 로그인 실패 — 사용자 미존재 loginId={}", loginId);
                     return new BizException(AuthErrorCode.INVALID_CREDENTIALS);
                 });
+
+        if (!"Y".equals(user.getUseYn())) {
+            log.warn("비활성화된 계정 nsist SSO 로그인 시도 — empCd={}, loginId={}", empCd, loginId);
+            throw new BizException(UserErrorCode.USER_BANNED);
+        }
 
         String token = jwtTokenProvider.generateToken(user.getLoginId(), user.getRole());
         log.info("nsist SSO 로그인 성공 — empCd={}, loginId={}, role={}", empCd, user.getLoginId(), user.getRole());

@@ -92,6 +92,7 @@ public class UserServiceImpl implements UserService {
                 .role(dto.getRole())
                 .teamName(dto.getTeamName())
                 .dailyLimit(dto.getDailyLimit())
+                .useYn(dto.getUseYn())
                 .finalRvisPic(requesterId)
                 .finalRvisDttm(LocalDateTime.now())
                 .build();

@@ -26,6 +26,7 @@ public class User {
     private String role;
     private String teamName;
     private Integer dailyLimit;
+    private String useYn;
 
     // 감사(Audit) 컬럼 — DB: snake_case → Java: camelCase (MyBatis mapUnderscoreToCamelCase 자동 매핑)
     private String initRegiPic;

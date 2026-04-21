@@ -49,6 +49,7 @@
 | `role` | VARCHAR | NOT NULL | 권한 (`ADMIN` / `MANAGER` / `USER`) |
 | `team_name` | VARCHAR | | 팀명 (논리적 팀 구분, 별도 Team 테이블 없음) |
 | `daily_limit` | INT | NOT NULL | 하루 프롬프트 생성 허용 횟수 |
+| `use_yn` | CHAR(1) | NOT NULL, DEFAULT 'Y' | 계정 활성화 여부 (`Y`: 활성, `N`: 비활성/ban) |
 | `init_regi_pic` | VARCHAR | | 등록자 |
 | `init_regi_dttm` | TIMESTAMP | | 등록일시 |
 | `final_rvis_pic` | VARCHAR | | 최종수정자 |

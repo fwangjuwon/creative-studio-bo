@@ -51,6 +51,12 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             String loginId = jwtTokenProvider.getLoginId(token);
             UserDetails userDetails = userDetailsService.loadUserByUsername(loginId);
 
+            if (!userDetails.isEnabled()) {
+                log.warn("비활성화된 계정 접근 차단 — loginId={}", loginId);
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
