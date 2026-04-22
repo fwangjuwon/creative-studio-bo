@@ -7,6 +7,7 @@ import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthFilter;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptService;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptStepService;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -31,8 +32,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 /**
  * HumanPrompt 컨트롤러 — Validation 실패 케이스
  *
- * <p>createPrompt는 {@code @AuthenticationPrincipal CustomUserDetails}를 사용하나,
- * Validation 400은 메서드 진입 전 발생하므로 {@code @WithMockUser}로 충분하다.
+ * <pre>createPrompt는 {@code @AuthenticationPrincipal CustomUserDetails}를 사용하나,
+ * Validation 400은 메서드 진입 전 발생하므로 {@code @WithMockUser}로 충분하다.</pre>
  *
  * @author iamjy
  * @since 2026-04-17
@@ -57,6 +58,12 @@ public class HumanPromptControllerTest {
             ((FilterChain) inv.getArgument(2)).doFilter(inv.getArgument(0), inv.getArgument(1));
             return null;
         }).when(jwtAuthFilter).doFilter(any(), any(), any());
+
+        doAnswer(inv -> {
+            HttpServletResponse response = inv.getArgument(1);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return null;
+        }).when(jwtAuthEntryPoint).commence(any(), any(), any());
     }
 
     private static final String BASE_URL = "/api/human-prompts";
@@ -228,5 +235,36 @@ public class HumanPromptControllerTest {
                                 {"stepNumber": 1, "stepCode": "A", "name": "인물 유형"}
                                 """))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 단계 수정 - USER 권한")
+    void 단계_수정_USER권한_403() throws Exception {
+        mockMvc.perform(put(BASE_URL + "/steps/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"stepNumber": 1, "name": "인물 유형"}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 단계 삭제 - USER 권한")
+    void 단계_삭제_USER권한_403() throws Exception {
+        mockMvc.perform(delete(BASE_URL + "/steps/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    // ============================================================
+    // 401 비로그인
+    // ============================================================
+
+    @Test
+    @DisplayName("[401] 인물 프롬프트 생성 - 비로그인")
+    void 인물프롬프트_생성_비로그인_401() throws Exception {
+        mockMvc.perform(post(BASE_URL))
+                .andExpect(status().isUnauthorized());
     }
 }

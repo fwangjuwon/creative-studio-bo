@@ -1,11 +1,11 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nsmall.ns_creative_studio_bo.common.config.SecurityConfig;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthEntryPoint;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthFilter;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptAttrService;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,7 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class HumanPromptAttrControllerTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
 
     @MockitoBean JwtAuthFilter jwtAuthFilter;
     @MockitoBean UserDetailsService userDetailsService;
@@ -52,6 +51,12 @@ public class HumanPromptAttrControllerTest {
             ((FilterChain) inv.getArgument(2)).doFilter(inv.getArgument(0), inv.getArgument(1));
             return null;
         }).when(jwtAuthFilter).doFilter(any(), any(), any());
+
+        doAnswer(inv -> {
+            HttpServletResponse response = inv.getArgument(1);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return null;
+        }).when(jwtAuthEntryPoint).commence(any(), any(), any());
     }
 
     private static final String BASE_URL = "/api/human-prompts/attrs";
@@ -209,5 +214,36 @@ public class HumanPromptAttrControllerTest {
                                 {"stepId": 1, "name": "연령대", "isMultiSelect": false, "isRequired": true, "sortOrder": 1}
                                 """))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 세부항목 수정 - USER 권한")
+    void 세부항목_수정_USER권한_403() throws Exception {
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "연령대", "isMultiSelect": false, "isRequired": true, "sortOrder": 1}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 세부항목 삭제 - USER 권한")
+    void 세부항목_삭제_USER권한_403() throws Exception {
+        mockMvc.perform(delete(BASE_URL + "/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    // ============================================================
+    // 401 비로그인
+    // ============================================================
+
+    @Test
+    @DisplayName("[401] 세부항목 생성 - 비로그인")
+    void 세부항목_생성_비로그인_401() throws Exception {
+        mockMvc.perform(post(BASE_URL))
+                .andExpect(status().isUnauthorized());
     }
 }

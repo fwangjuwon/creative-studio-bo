@@ -6,6 +6,7 @@ import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthEntryPoint;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthFilter;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.PromptService;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,12 @@ public class PromptControllerTest {
             ((FilterChain) inv.getArgument(2)).doFilter(inv.getArgument(0), inv.getArgument(1));
             return null;
         }).when(jwtAuthFilter).doFilter(any(), any(), any());
+
+        doAnswer(inv -> {
+            HttpServletResponse response = inv.getArgument(1);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return null;
+        }).when(jwtAuthEntryPoint).commence(any(), any(), any());
     }
 
     private static final String BASE_URL = "/api/prompts";
@@ -128,5 +135,24 @@ public class PromptControllerTest {
     void 프롬프트이력_삭제_USER권한_403() throws Exception {
         mockMvc.perform(delete(BASE_URL + "/{id}", 1L))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[403] 프롬프트 이력 삭제 - MANAGER 권한")
+    void 프롬프트이력_삭제_MANAGER권한_403() throws Exception {
+        mockMvc.perform(delete(BASE_URL + "/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    // ============================================================
+    // 401 비로그인
+    // ============================================================
+
+    @Test
+    @DisplayName("[401] 프롬프트 이력 조회 - 비로그인")
+    void 프롬프트이력_조회_비로그인_401() throws Exception {
+        mockMvc.perform(get(BASE_URL))
+                .andExpect(status().isUnauthorized());
     }
 }

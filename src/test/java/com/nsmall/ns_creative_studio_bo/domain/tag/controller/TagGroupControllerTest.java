@@ -6,6 +6,7 @@ import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthEntryPoint;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthFilter;
 import com.nsmall.ns_creative_studio_bo.domain.tag.service.TagGroupService;
 import jakarta.servlet.FilterChain;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -52,6 +53,12 @@ public class TagGroupControllerTest {
             ((FilterChain) inv.getArgument(2)).doFilter(inv.getArgument(0), inv.getArgument(1));
             return null;
         }).when(jwtAuthFilter).doFilter(any(), any(), any());
+
+        doAnswer(inv -> {
+            HttpServletResponse response = inv.getArgument(1);
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            return null;
+        }).when(jwtAuthEntryPoint).commence(any(), any(), any());
     }
 
     private static final String BASE_URL = "/api/tag-groups";
@@ -162,5 +169,36 @@ public class TagGroupControllerTest {
                                 {"name": "인물", "isMultiSelect": false}
                                 """))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 태그 그룹 수정 - USER 권한")
+    void 태그그룹_수정_USER권한_403() throws Exception {
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "인물", "isMultiSelect": false}
+                                """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 태그 그룹 삭제 - USER 권한")
+    void 태그그룹_삭제_USER권한_403() throws Exception {
+        mockMvc.perform(delete(BASE_URL + "/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    // ============================================================
+    // 401 비로그인
+    // ============================================================
+
+    @Test
+    @DisplayName("[401] 태그 그룹 목록 조회 - 비로그인")
+    void 태그그룹_목록조회_비로그인_401() throws Exception {
+        mockMvc.perform(get(BASE_URL))
+                .andExpect(status().isUnauthorized());
     }
 }
