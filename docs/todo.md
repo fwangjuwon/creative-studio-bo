@@ -1007,6 +1007,20 @@ HUMAN 1건당:
 
 ---
 
+---
+
+### chore/gemini-model. NanoBanana 이미지 생성 모델 교체 (2026-04-22)
+
+> Gemini AI Studio 요청 폭증 대응 — `gemini-3-pro-image-preview` → `gemini-3.1-flash-image-preview`
+> `NanoBananaServiceImpl`이 상품·인물 이미지 생성을 공통으로 담당하므로 두 기능 모두 영향.
+> 안정화 후 모델 재검토 예정.
+
+- [x] `application.yml` — `gemini.image-model` 값 변경 (상품·인물 이미지 생성 공통 적용)
+- [x] 연관 문서 모델명 일괄 업데이트 (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/project-context.mdc`, `docs/nsm-aimage-architecture.md`)
+- [x] 소스 내 주석/JavaDoc/Swagger description 모델명 업데이트 (`GeminiProperties`, `NanoBananaServiceImpl`, `PromptController`, `HumanPromptController`)
+
+---
+
 ## 참고 문서
 
 - 전체 요구사항: [`docs/requirements.md`](requirements.md)

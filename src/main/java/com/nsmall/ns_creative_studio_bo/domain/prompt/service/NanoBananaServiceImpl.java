@@ -26,7 +26,7 @@ import java.util.stream.IntStream;
  * NanoBanana 이미지 생성 서비스 구현체
  *
  * <pre>
- * Gemini 이미지 생성 모델(gemini-3-pro-image-preview)을 사용하여 이미지를 생성한다.
+ * Gemini 이미지 생성 모델(gemini-3.1-flash-image-preview)을 사용하여 이미지를 생성한다.
  * 기존 geminiRestClient Bean을 재사용하며, 모델명만 image-model로 변경한다.
  *
  * 처리 흐름:
