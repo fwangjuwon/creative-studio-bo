@@ -28,6 +28,7 @@ public class UserUsageRespDto {
     private String loginId;
     private String name;
     private int    dailyLimit;
+    private String useYn;
     private int    todayUsedCount;
     private int    remainingCount;
 
@@ -41,6 +42,7 @@ public class UserUsageRespDto {
                 .loginId(user.getLoginId())
                 .name(user.getName())
                 .dailyLimit(user.getDailyLimit())
+                .useYn(user.getUseYn())
                 .todayUsedCount(todayUsedCount)
                 .remainingCount(Math.max(0, user.getDailyLimit() - todayUsedCount))
                 .build();

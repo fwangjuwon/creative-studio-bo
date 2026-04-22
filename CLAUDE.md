@@ -164,7 +164,7 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 최종 선택
 
 | 엔티티 | 테이블명 | 설명 |
 |--------|---------|------|
-| User | `user` | 회원 정보, 권한, 팀명, 일일 한도 |
+| User | `user` | 회원 정보, 권한, 팀명, 일일 한도, 계정 활성화 여부(`use_yn`) |
 | Category | `category` | 상품 카테고리 계층 (LCS~SCS) |
 | TagGroup | `tag_group` | 태그 묶음 (인물, 분위기 등) |
 | Tag | `tag` | 태그 값 (남자, 화사한 등) |

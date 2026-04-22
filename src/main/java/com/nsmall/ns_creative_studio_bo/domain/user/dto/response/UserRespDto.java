@@ -26,6 +26,7 @@ public class UserRespDto {
     private String role;
     private String teamName;
     private Integer dailyLimit;
+    private String useYn;
     private LocalDateTime initRegiDttm;
     private LocalDateTime finalRvisDttm;
 
@@ -37,6 +38,7 @@ public class UserRespDto {
                 .role(user.getRole())
                 .teamName(user.getTeamName())
                 .dailyLimit(user.getDailyLimit())
+                .useYn(user.getUseYn())
                 .initRegiDttm(user.getInitRegiDttm())
                 .finalRvisDttm(user.getFinalRvisDttm())
                 .build();

@@ -5,7 +5,10 @@ import com.nsmall.ns_creative_studio_bo.common.security.JwtTokenProvider;
 import com.nsmall.ns_creative_studio_bo.domain.auth.AuthErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.request.LoginReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.response.LoginRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserUpdateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -172,5 +175,30 @@ public class AuthServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(AuthErrorCode.INVALID_CREDENTIALS));
+    }
+
+    // ================================================================
+    // 계정 ban — 로그인 차단
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 로그인 - 비활성화된 계정(use_yn=N) 로그인 차단")
+    void 예외_로그인_비활성화_계정() {
+        UserRespDto created = userService.createUser(UserCreateReqDto.builder()
+                .loginId("auth_banned_user")
+                .password("TestPass1!")
+                .name("밴테스트유저")
+                .role("USER")
+                .teamName("테스트팀")
+                .dailyLimit(10)
+                .build());
+        userService.updateUser(created.getId(), UserUpdateReqDto.builder().useYn("N").build());
+
+        assertThatThrownBy(() -> authService.login(로그인_요청("auth_banned_user", "TestPass1!")))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(UserErrorCode.USER_BANNED));
     }
 }

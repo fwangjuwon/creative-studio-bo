@@ -38,6 +38,7 @@
             role,
             team_name,
             daily_limit,
+            use_yn,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -55,6 +56,7 @@
             role,
             team_name,
             daily_limit,
+            use_yn,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -72,6 +74,7 @@
             role,
             team_name,
             daily_limit,
+            use_yn,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -109,6 +112,9 @@
             <if test="dailyLimit != null">
                 daily_limit = #{dailyLimit},
             </if>
+            <if test="useYn != null">
+                use_yn = #{useYn},
+            </if>
             final_rvis_pic = #{finalRvisPic},
             final_rvis_dttm = #{finalRvisDttm}
         </set>
@@ -132,6 +138,7 @@
             u.login_id,
             u.name,
             u.daily_limit,
+            u.use_yn,
             COUNT(ph.id)                                    AS today_used_count,
             GREATEST(0, u.daily_limit - COUNT(ph.id))       AS remaining_count
         FROM "user" u
@@ -139,7 +146,7 @@
             ON  ph.user_id        = u.id
             AND ph.init_regi_dttm <![CDATA[ >= ]]> CURRENT_DATE
             AND ph.init_regi_dttm <![CDATA[ < ]]>  CURRENT_DATE + INTERVAL '1 day'
-        GROUP BY u.id, u.login_id, u.name, u.daily_limit
+        GROUP BY u.id, u.login_id, u.name, u.daily_limit, u.use_yn
         ORDER BY u.id ASC
     </select>
 
