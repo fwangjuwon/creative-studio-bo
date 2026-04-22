@@ -50,7 +50,7 @@
 │            │               │  Cloud API / Gemini API (*.googleapis.com)             │
 │            │               │  - gemini-3-flash-preview  (텍스트 프롬프트 생성)       │
 │            │               │  - gemini-3-pro-preview    (텍스트 고품질)             │
-│            │               │  - gemini-3-pro-image-preview  (NanaBanana 이미지)    │
+│            │               │  - gemini-3.1-flash-image-preview  (NanaBanana 이미지)│
 │            │               │  응답(base64 이미지) ◄────────────────────────────     │
 │            │               │                                                        │
 │            │           ④ Internet Egress ──────────────────────────────────────►   │
@@ -154,7 +154,7 @@ ns-aimage-bo는 두 가지 프롬프트 생성 기능을 제공한다.
 
   [선택] 이미지 직접 생성 버튼 클릭
   → POST /api/human-prompts/generate-image
-  → Gemini Image API (gemini-3-pro-image-preview) 호출  ← NanaBanana
+  → Gemini Image API (gemini-3.1-flash-image-preview) 호출  ← NanaBanana
   → base64 이미지 응답 수신
   → Cloud Storage (이미지 버킷) 저장 → /images/{uuid}.jpg|png
   → PromptHistory.image_url 업데이트
@@ -334,7 +334,7 @@ Secret Manager (GCP)
   └─ Cloud Run 컨테이너 기동 시 환경변수로 주입
        └─ CI/CD (Cloud Build) 에는 Key 전혀 노출되지 않음
        └─ 텍스트 프롬프트 생성 (gemini-3-flash-preview, gemini-3-pro-preview)
-       └─ 이미지 생성 (gemini-3-pro-image-preview) — 동일 Key, 모델명으로 구분
+       └─ 이미지 생성 (gemini-3.1-flash-image-preview) — 동일 Key, 모델명으로 구분
 ```
 
 ---
@@ -473,7 +473,7 @@ Secret Manager (GCP)
 | Secret Manager | gitea-access-token, API Key, JWT | ~$0 |
 | 인터넷 이그레스 | Cloud Run → Gemini API (직접 Egress) | ~$27 |
 | Gemini API (텍스트, Flash) | gemini-3-flash-preview | ~$5 |
-| Gemini API (이미지, NanaBanana) | gemini-3-pro-image-preview | ~$230 |
+| Gemini API (이미지, NanaBanana) | gemini-3.1-flash-image-preview | ~$230 |
 | **합계** | | **~$361 / 월** |
 
 > Cloud Function 미사용 → GCS Lifecycle Policy로 대체, 추가 비용 없음
