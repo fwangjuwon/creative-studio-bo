@@ -59,7 +59,7 @@ public class PromptController {
 
     @Operation(
             summary = "상품 이미지 생성 (NanoBanana)",
-            description = "영문 프롬프트 텍스트를 NanoBanana(gemini-3.1-flash-image-preview)에 전달하여 이미지를 생성하고 " +
+            description = "영문 프롬프트 텍스트를 NanoBanana(gemini-3-pro-image-preview)에 전달하여 이미지를 생성하고 " +
                           "서버에 저장 후 접근 URL을 반환한다. historyId를 전달하면 이력의 imageUrl도 업데이트된다.",
 
             security = @SecurityRequirement(name = "bearerAuth")
