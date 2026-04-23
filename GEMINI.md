@@ -13,7 +13,7 @@
 Gemini API를 통해 최적화된 **영문 이미지 생성 프롬프트**를 자동 생성한다.
 생성된 프롬프트는 팀 내에서 공유되어 재사용할 수 있다.
 
-> 상품·인물 프롬프트 모두 NanoBanana(`gemini-3.1-flash-image-preview`)를 통한 이미지 직접 생성을 지원한다.
+> 상품·인물 프롬프트 모두 NanoBanana(`gemini-3-pro-image-preview`)를 통한 이미지 직접 생성을 지원한다.
 
 ---
 
@@ -28,7 +28,7 @@ Gemini API를 통해 최적화된 **영문 이미지 생성 프롬프트**를 �
 | DB | PostgreSQL |
 | ORM | MyBatis |
 | 인증 | Spring Security + JWT (Stateless, 완료) |
-| AI | Gemini API (`gemini-3-flash-preview` 기본) + NanoBanana (`gemini-3.1-flash-image-preview`, 상품·인물 이미지 생성) |
+| AI | Gemini API (`gemini-3-flash-preview` 기본) + NanoBanana (`gemini-3-pro-image-preview`, 상품·인물 이미지 생성) |
 | API 문서 | Swagger UI (`springdoc-openapi-starter-webmvc-ui:2.8.14`) — `local`/`dev` 프로필에서만 활성화 (`@Profile({"local", "dev"})`) |
 
 ---

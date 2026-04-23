@@ -1021,6 +1021,18 @@ HUMAN 1건당:
 
 ---
 
+### chore/change-image-model-3-pro. NanoBanana 이미지 생성 모델 롤백 (2026-04-22)
+
+> Gemini AI Studio 상황 변경에 따라 `gemini-3.1-flash-image-preview` → `gemini-3-pro-image-preview` 원복.
+> 이번 작업에서 "상품 이미지 생성도 NanoBanana 지원" 문서 누락 오류도 함께 수정.
+
+- [x] `application.yml` — `gemini.image-model` 값 롤백
+- [x] 연관 문서 모델명 롤백 (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/project-context.mdc`, `docs/nsm-aimage-architecture.md`)
+- [x] 소스 내 주석/JavaDoc/Swagger description 모델명 롤백 (`GeminiProperties`, `NanoBananaServiceImpl`, `PromptController`, `HumanPromptController`)
+- [x] 문서 누락 수정 — "인물만 NanoBanana 지원" → "상품·인물 모두 지원" (`CLAUDE.md`, `GEMINI.md`, `.cursor/rules/project-context.mdc`)
+
+---
+
 ## 참고 문서
 
 - 전체 요구사항: [`docs/requirements.md`](requirements.md)
