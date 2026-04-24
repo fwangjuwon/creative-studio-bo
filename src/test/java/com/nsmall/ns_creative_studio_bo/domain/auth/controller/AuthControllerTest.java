@@ -1,23 +1,12 @@
 package com.nsmall.ns_creative_studio_bo.domain.auth.controller;
 
-import com.nsmall.ns_creative_studio_bo.common.config.SecurityConfig;
-import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthEntryPoint;
-import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthFilter;
+import com.nsmall.ns_creative_studio_bo.common.SecuritySetupTest;
 import com.nsmall.ns_creative_studio_bo.domain.auth.service.AuthService;
-import jakarta.servlet.FilterChain;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -29,24 +18,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 2026-04-16
  */
 @WebMvcTest(AuthController.class)
-@Import(SecurityConfig.class)
-@ActiveProfiles("local")
-public class AuthControllerTest {
+public class AuthControllerTest extends SecuritySetupTest {
 
-    @Autowired MockMvc mockMvc;
-
-    @MockitoBean JwtAuthFilter jwtAuthFilter;
-    @MockitoBean UserDetailsService userDetailsService;
-    @MockitoBean JwtAuthEntryPoint jwtAuthEntryPoint;
     @MockitoBean AuthService authService;
-
-    @BeforeEach
-    void setUpJwtFilter() throws Exception {
-        doAnswer(inv -> {
-            ((FilterChain) inv.getArgument(2)).doFilter(inv.getArgument(0), inv.getArgument(1));
-            return null;
-        }).when(jwtAuthFilter).doFilter(any(), any(), any());
-    }
 
     private static final String LOGIN_URL = "/api/auth/login";
 

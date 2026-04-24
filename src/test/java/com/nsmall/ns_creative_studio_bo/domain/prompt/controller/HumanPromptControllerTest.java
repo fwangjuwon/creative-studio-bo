@@ -1,28 +1,15 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 
-import com.nsmall.ns_creative_studio_bo.common.config.SecurityConfig;
-import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthEntryPoint;
-import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthFilter;
+import com.nsmall.ns_creative_studio_bo.common.SecuritySetupTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptService;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptStepService;
-import jakarta.servlet.FilterChain;
-import jakarta.servlet.http.HttpServletResponse;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -38,31 +25,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @since 2026-04-17
  */
 @WebMvcTest(HumanPromptController.class)
-@Import(SecurityConfig.class)
-@ActiveProfiles("local")
-public class HumanPromptControllerTest {
+public class HumanPromptControllerTest extends SecuritySetupTest {
 
-    @Autowired MockMvc mockMvc;
-
-    @MockitoBean JwtAuthFilter jwtAuthFilter;
-    @MockitoBean UserDetailsService userDetailsService;
-    @MockitoBean JwtAuthEntryPoint jwtAuthEntryPoint;
     @MockitoBean HumanPromptService humanPromptService;
     @MockitoBean HumanPromptStepService humanPromptStepService;
-
-    @BeforeEach
-    void setUpJwtFilter() throws Exception {
-        doAnswer(inv -> {
-            ((FilterChain) inv.getArgument(2)).doFilter(inv.getArgument(0), inv.getArgument(1));
-            return null;
-        }).when(jwtAuthFilter).doFilter(any(), any(), any());
-
-        doAnswer(inv -> {
-            HttpServletResponse response = inv.getArgument(1);
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            return null;
-        }).when(jwtAuthEntryPoint).commence(any(), any(), any());
-    }
 
     private static final String BASE_URL = "/api/human-prompts";
 
