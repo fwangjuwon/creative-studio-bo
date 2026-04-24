@@ -1,6 +1,5 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nsmall.ns_creative_studio_bo.common.config.SecurityConfig;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthEntryPoint;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtAuthFilter;
@@ -43,7 +42,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class PromptControllerTest {
 
     @Autowired MockMvc mockMvc;
-    @Autowired ObjectMapper objectMapper;
 
     @MockitoBean JwtAuthFilter jwtAuthFilter;
     @MockitoBean UserDetailsService userDetailsService;
