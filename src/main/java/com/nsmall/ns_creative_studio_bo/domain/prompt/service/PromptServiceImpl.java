@@ -13,6 +13,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryPathDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
@@ -69,7 +70,6 @@ import java.util.stream.IntStream;
 @RequiredArgsConstructor
 public class PromptServiceImpl implements PromptService {
 
-    private static final int IMAGE_GENERATE_COUNT = 3;
     private static final long MAX_REFERENCE_IMAGE_BYTES = 15 * 1024 * 1024L; // 15MB
     private static final Set<String> ALLOWED_IMAGE_MIME_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp"
@@ -265,7 +265,7 @@ public class PromptServiceImpl implements PromptService {
     @Override
     @Transactional
     public List<String> generateGoodsImage(Long historyId, String promptText, MultipartFile referenceImage) {
-        // 1. 이미지 IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
         List<String> imageUrls;
         if (referenceImage != null && !referenceImage.isEmpty()) {
             try {
@@ -290,7 +290,7 @@ public class PromptServiceImpl implements PromptService {
                         + "(3) surface texture, material finish, and fine structural details; "
                         + "(4) color palette and tonal values of the product itself. "
                         + promptText;
-                imageUrls = IntStream.range(0, IMAGE_GENERATE_COUNT)
+                imageUrls = IntStream.range(0, PromptConstants.IMAGE_GENERATE_COUNT)
                         .mapToObj(i -> CompletableFuture.supplyAsync(
                                 () -> imageGenerationService.generateImageMime(referenceGuidePrompt, imageBytes, mimeType)))
                         .toList()
@@ -302,7 +302,7 @@ public class PromptServiceImpl implements PromptService {
                 throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
             }
         } else {
-            imageUrls = imageGenerationService.generateImages(promptText, IMAGE_GENERATE_COUNT);
+            imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
         }
 
         // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
