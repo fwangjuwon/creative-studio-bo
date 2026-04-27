@@ -1,0 +1,122 @@
+package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
+
+import com.nsmall.ns_creative_studio_bo.common.SecuritySetupTest;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.service.PromptService;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+/**
+ * Prompt 컨트롤러 — Validation 실패 케이스
+ *
+ * <p>createGoodsPrompt는 {@code @AuthenticationPrincipal CustomUserDetails}를 사용하나,
+ * Validation 400은 메서드 진입 전 발생하므로 {@code @WithMockUser}로 충분하다.
+ *
+ * @author iamjy
+ * @since 2026-04-17
+ */
+@WebMvcTest(PromptController.class)
+public class PromptControllerTest extends SecuritySetupTest {
+
+    @MockitoBean PromptService promptService;
+
+    private static final String BASE_URL = "/api/prompts";
+
+    // ============================================================
+    // POST /api/prompts/goods — 상품 프롬프트 생성
+    // ============================================================
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[400] 상품 프롬프트 생성 - goodsCategoryId null")
+    void 상품프롬프트_생성_goodsCategoryId_null_400() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/goods")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[400] 상품 프롬프트 생성 - Body 없음")
+    void 상품프롬프트_생성_Body없음_400() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/goods")
+                        .contentType(APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ============================================================
+    // POST /api/prompts/goods/generate-image — 상품 이미지 생성 (multipart)
+    // ============================================================
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[400] 상품 이미지 생성 - promptText 빈 값")
+    void 상품이미지_생성_promptText_빈값_400() throws Exception {
+        mockMvc.perform(multipart(BASE_URL + "/goods/generate-image")
+                        .param("promptText", ""))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[400] 상품 이미지 생성 - promptText 미전송")
+    void 상품이미지_생성_promptText_미전송_400() throws Exception {
+        mockMvc.perform(multipart(BASE_URL + "/goods/generate-image"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ============================================================
+    // DELETE /api/prompts/{id} — 프롬프트 이력 삭제
+    // ============================================================
+
+    @ParameterizedTest
+    @ValueSource(longs = {0L, -1L, -999L})
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("[400] 프롬프트 이력 삭제 - id가 양수가 아닌 경우")
+    void 프롬프트이력_삭제_id_양수아님_400(long id) throws Exception {
+        mockMvc.perform(delete(BASE_URL + "/{id}", id))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ============================================================
+    // 403 권한
+    // ============================================================
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 프롬프트 이력 삭제 - USER 권한")
+    void 프롬프트이력_삭제_USER권한_403() throws Exception {
+        mockMvc.perform(delete(BASE_URL + "/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[403] 프롬프트 이력 삭제 - MANAGER 권한")
+    void 프롬프트이력_삭제_MANAGER권한_403() throws Exception {
+        mockMvc.perform(delete(BASE_URL + "/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    // ============================================================
+    // 401 비로그인
+    // ============================================================
+
+    @Test
+    @DisplayName("[401] 프롬프트 이력 조회 - 비로그인")
+    void 프롬프트이력_조회_비로그인_401() throws Exception {
+        mockMvc.perform(get(BASE_URL))
+                .andExpect(status().isUnauthorized());
+    }
+}
