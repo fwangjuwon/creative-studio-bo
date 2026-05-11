@@ -104,6 +104,18 @@
 
 ---
 
+### refactor/extract-prompt-constants. 이미지 생성 장수 상수 PromptConstants로 통합
+
+> `PromptServiceImpl`에 `private`으로 선언된 `IMAGE_GENERATE_COUNT(3)`를 `PromptConstants` 공개 상수로 격상.
+> `HumanPromptServiceImpl`의 하드코딩 리터럴 `3`을 동일 상수로 교체.
+> 이제 이미지 생성 수를 변경할 때 `PromptConstants.java` 한 곳만 수정하면 된다.
+
+- [x] `PromptConstants.java` 신규 생성 (`domain/prompt/` 패키지)
+- [x] `PromptServiceImpl` — 자체 `private static final IMAGE_GENERATE_COUNT` 선언 제거, `PromptConstants.IMAGE_GENERATE_COUNT` 참조로 교체
+- [x] `HumanPromptServiceImpl` — 리터럴 `3` → `PromptConstants.IMAGE_GENERATE_COUNT` 교체
+
+---
+
 ### refactor/prompt-type-style-enum. PromptType/PromptStyle enum 도입
 
 > `prompt_history` 테이블의 `prompt_type`, `prompt_style` 컬럼 값을 하드코딩 문자열 대신 enum 타입으로 관리.
