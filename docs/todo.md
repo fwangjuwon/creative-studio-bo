@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ refactor/prompt-type-style-enum 완료
-> 최종 업데이트: 2026-04-16 (PromptType/PromptStyle enum 도입)
+> 상태: ✅ refactor/extract-prompt-constants 완료
+> 최종 업데이트: 2026-04-28 (이미지 생성 장수 상수 PromptConstants로 통합)
 
 ---
 
@@ -24,6 +24,18 @@
 ---
 
 ## 완료
+
+### refactor/extract-prompt-constants. 이미지 생성 장수 상수 PromptConstants로 통합
+
+> `PromptServiceImpl`에 `private`으로 선언된 `IMAGE_GENERATE_COUNT(3)`를 `PromptConstants` 공개 상수로 격상.
+> `HumanPromptServiceImpl`의 하드코딩 리터럴 `3`을 동일 상수로 교체.
+> 이제 이미지 생성 수를 변경할 때 `PromptConstants.java` 한 곳만 수정하면 된다.
+
+- [x] `PromptConstants.java` 신규 생성 (`domain/prompt/` 패키지)
+- [x] `PromptServiceImpl` — 자체 `private static final IMAGE_GENERATE_COUNT` 선언 제거, `PromptConstants.IMAGE_GENERATE_COUNT` 참조로 교체
+- [x] `HumanPromptServiceImpl` — 리터럴 `3` → `PromptConstants.IMAGE_GENERATE_COUNT` 교체
+
+---
 
 ### refactor/prompt-type-style-enum. PromptType/PromptStyle enum 도입
 
