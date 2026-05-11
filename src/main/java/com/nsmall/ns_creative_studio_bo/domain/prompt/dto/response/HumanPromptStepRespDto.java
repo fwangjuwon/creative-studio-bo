@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,6 +28,9 @@ public class HumanPromptStepRespDto {
     private int stepNumber;
     private String stepCode;
     private String name;
+    /** true: 전체 공통 선택 / false: 인물별 개별 선택 */
+    @JsonProperty("isCommon")
+    private boolean isCommon;
     private List<AttrDto> attrs;
 
     /**

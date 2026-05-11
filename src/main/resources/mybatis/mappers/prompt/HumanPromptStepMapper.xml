@@ -15,6 +15,7 @@
         <result property="stepNumber" column="step_number"/>
         <result property="stepCode"   column="step_code"/>
         <result property="name"       column="step_name"/>
+        <result property="isCommon"   column="is_common"/>
         <collection property="attrs"
                     ofType="com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto$AttrDto">
             <id     property="id"          column="attr_id"/>
@@ -33,7 +34,7 @@
     </resultMap>
 
     <select id="selectById" resultType="HumanPromptStep">
-        SELECT id, step_number, step_code, name,
+        SELECT id, step_number, step_code, name, is_common,
                init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm
         FROM human_prompt_step
         WHERE id = #{id}
@@ -59,11 +60,11 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO human_prompt_step (
-            step_number, step_code, name,
+            step_number, step_code, name, is_common,
             init_regi_pic, init_regi_dttm,
             final_rvis_pic, final_rvis_dttm
         ) VALUES (
-            #{stepNumber}, #{stepCode}, #{name},
+            #{stepNumber}, #{stepCode}, #{name}, #{isCommon},
             #{initRegiPic}, #{initRegiDttm},
             #{finalRvisPic}, #{finalRvisDttm}
         )
@@ -71,8 +72,10 @@
 
     <update id="update">
         UPDATE human_prompt_step
-        SET step_number    = #{stepNumber},
-            name           = #{name},
+        SET step_number     = #{stepNumber},
+            step_code       = #{stepCode},
+            name            = #{name},
+            is_common       = #{isCommon},
             final_rvis_pic  = #{finalRvisPic},
             final_rvis_dttm = #{finalRvisDttm}
         WHERE id = #{id}
@@ -89,6 +92,7 @@
             s.step_number,
             s.step_code,
             s.name            AS step_name,
+            s.is_common,
             a.id              AS attr_id,
             a.name            AS attr_name,
             a.is_multi_select,

@@ -28,6 +28,8 @@ public class HumanPromptHistoryOption {
     private Long id;
     private Long promptHistoryId;
     private Long optionId;
+    /** 인물 인덱스 (0-based). 1~5명 개별 모드: 0~4, 6명 이상 단체 모드: 0 고정 */
+    private Integer personIndex;
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;

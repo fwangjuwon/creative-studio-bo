@@ -73,6 +73,15 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
                     "이미 존재하는 세부항목명입니다. name=" + dto.getName());
         }
 
+        // 필수 항목을 해제하려는 경우, 해당 step에 남은 필수 attr이 없으면 거부
+        if (existing.isRequired() && !dto.getIsRequired()) {
+            int remainingRequired = humanPromptAttrMapper.countRequiredByStepId(existing.getStepId(), id);
+            if (remainingRequired == 0) {
+                throw new BizException(HumanPromptErrorCode.ATTR_LAST_REQUIRED,
+                        "단계에 필수 세부항목이 최소 1개 이상 있어야 합니다. stepId=" + existing.getStepId());
+            }
+        }
+
         String requesterId = SecurityUtil.getCurrentLoginId();
 
         HumanPromptAttr updated = HumanPromptAttr.builder()
@@ -94,13 +103,22 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
 
     @Override
     public void deleteAttr(Long id) {
-        humanPromptAttrMapper.selectById(id)
+        HumanPromptAttr existing = humanPromptAttrMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.ATTR_NOT_FOUND,
                         "세부항목을 찾을 수 없습니다. id=" + id));
 
         if (humanPromptOptionMapper.existsByAttrId(id)) {
             throw new BizException(HumanPromptErrorCode.ATTR_HAS_OPTIONS,
                     "하위 선택지가 존재하여 세부항목을 삭제할 수 없습니다. id=" + id);
+        }
+
+        // 필수 attr을 삭제하려는 경우, step에 남은 필수 attr이 없으면 거부
+        if (existing.isRequired()) {
+            int remainingRequired = humanPromptAttrMapper.countRequiredByStepId(existing.getStepId(), id);
+            if (remainingRequired == 0) {
+                throw new BizException(HumanPromptErrorCode.ATTR_LAST_REQUIRED,
+                        "단계에 필수 세부항목이 최소 1개 이상 있어야 합니다. stepId=" + existing.getStepId());
+            }
         }
 
         humanPromptAttrMapper.deleteById(id);

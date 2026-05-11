@@ -9,6 +9,14 @@
         WHERE is_required = true
     </select>
 
+    <select id="selectRequiredAttrIdsByStepIsCommon" resultType="Long">
+        SELECT a.id
+        FROM human_prompt_attr a
+        JOIN human_prompt_step s ON a.step_id = s.id
+        WHERE a.is_required = true
+          AND s.is_common = #{isCommon}
+    </select>
+
     <select id="selectById" resultType="HumanPromptAttr">
         SELECT id, step_id, name, is_multi_select, is_required, sort_order,
                init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm
@@ -32,6 +40,16 @@
         SELECT COUNT(*) <![CDATA[ > ]]> 0
         FROM human_prompt_attr
         WHERE step_id = #{stepId}
+    </select>
+
+    <select id="countRequiredByStepId" resultType="int">
+        SELECT COUNT(*)
+        FROM human_prompt_attr
+        WHERE step_id = #{stepId}
+          AND is_required = true
+        <if test="excludeId != null">
+            AND id <![CDATA[ <> ]]> #{excludeId}
+        </if>
     </select>
 
     <select id="existsByNameAndStepId" resultType="boolean">

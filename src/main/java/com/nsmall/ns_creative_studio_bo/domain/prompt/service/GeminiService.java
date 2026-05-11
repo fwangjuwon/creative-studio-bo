@@ -35,17 +35,24 @@ public interface GeminiService {
                                PromptStyle promptStyle);
 
     /**
-     * 5단계 구조적 선택 기반 인간 이미지 전용 영문 프롬프트를 생성한다.
+     * 인물별 5단계 선택 기반 영문 프롬프트를 생성한다.
      *
-     * @param stepOptionValues stepNumber(1~5) → 선택된 prompt_value 목록
-     * @param purpose          생성 목적 (nullable)
-     * @param additionalNotes  추가 지시 사항 (nullable)
-     * @param promptStyle      프롬프트 스타일 ({@link PromptStyle#NANO_BANANA}: 문장형,
-     *                         {@link PromptStyle#MID_JOURNEY}: 키워드 나열형)
-     * @param imageAspectRatio 이미지 비율 (nullable, 예: "1:1", "4:3", "16:9", "9:16")
+     * <pre>
+     * - 1~5명 개별 모드: personsStepValues에 인물 수만큼 Map이 담김
+     * - 6명 이상 단체 모드: personsStepValues에 공통 옵션 Map 1개 + isGroup=true
+     * </pre>
+     *
+     * @param personsStepValues 인물별 stepNumber → prompt_value 목록 (인물 수만큼)
+     * @param isGroup           6명 이상 단체 모드 여부
+     * @param purpose           생성 목적 (nullable)
+     * @param additionalNotes   추가 지시 사항 (nullable)
+     * @param promptStyle       프롬프트 스타일
+     * @param imageAspectRatio  이미지 비율 (nullable)
      * @return Gemini가 생성한 영문 프롬프트 텍스트
      */
-    String generateHumanPrompt(Map<Integer, List<String>> stepOptionValues,
-                               String purpose, String additionalNotes, PromptStyle promptStyle,
+    String generateHumanPrompt(List<Map<String, List<String>>> personsStepValues,
+                               Map<String, List<String>> commonStepValues,
+                               boolean isGroup,
+                               String relationship, String additionalNotes, PromptStyle promptStyle,
                                String imageAspectRatio);
 }

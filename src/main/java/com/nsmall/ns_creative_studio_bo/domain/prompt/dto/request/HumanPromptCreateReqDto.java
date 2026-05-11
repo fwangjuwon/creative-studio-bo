@@ -1,7 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,11 +10,14 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 인간 이미지 프롬프트 생성 요청 DTO
+ * 인물 이미지 프롬프트 생성 요청 DTO
  *
  * <pre>
  * POST /api/human-prompts 요청 바디.
- * selections: key = attrId, value = 선택한 optionId 목록 (단일선택도 List로 통일)
+ *
+ * 인원수에 따라 두 가지 모드로 동작한다:
+ *   - 1~5명 (개별 모드): persons 배열에 인물별 selections를 각각 담아 전달
+ *   - 6명 이상 (단체 모드): isGroup=true + selections에 공통 옵션 1세트 전달
  * </pre>
  *
  * @author jjhoo8936
@@ -28,14 +30,37 @@ import java.util.Map;
 public class HumanPromptCreateReqDto {
 
     /**
-     * 선택한 항목-선택지 맵.
-     * key: attrId, value: 선택된 optionId 목록 (1개 이상)
+     * 인물별 선택 옵션 목록 (1~5명 개별 모드).
+     * 각 원소가 인물 1명의 옵션 선택을 나타낸다.
+     * isGroup=true인 경우 null.
      */
-    @NotNull(message = "selections는 필수입니다.")
+    private List<PersonSelectionDto> persons;
+
+    /**
+     * 6명 이상 단체 모드 여부.
+     * true이면 persons 대신 selections(공통 옵션)를 사용한다.
+     */
+    private Boolean isGroup;
+
+    /**
+     * 공통 옵션 (6명 이상 단체 모드 전용).
+     * key: attrId, value: 선택된 optionId 목록
+     * isGroup=false인 경우 null.
+     */
     private Map<Long, List<Long>> selections;
 
-    /** 생성 목적 (선택) */
-    private String purpose;
+    /**
+     * 공통 단계 선택 (is_common=true인 step의 옵션).
+     * 1~5명 개별 모드 / 6명 이상 단체 모드 모두 공통으로 사용.
+     * key: attrId, value: 선택된 optionId 목록
+     */
+    private Map<Long, List<Long>> commonSelections;
+
+    /**
+     * 인물 간 관계 (2명 이상 선택 시 선택 입력).
+     * 예: "커플", "친구", "가족", "직장 동료"
+     */
+    private String relationship;
 
     /** 추가 지시 사항 (선택) */
     private String additionalNotes;

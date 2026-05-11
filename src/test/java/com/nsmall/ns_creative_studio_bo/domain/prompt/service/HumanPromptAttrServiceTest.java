@@ -124,6 +124,49 @@ public class HumanPromptAttrServiceTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] Attr 수정 - 마지막 필수 항목을 비필수로 변경 시 거부")
+    void 예외_Attr_수정_마지막_필수항목_해제_거부() {
+        HumanPromptStepSimpleRespDto step = 단계_생성(14, "V", "필수검증 단계");
+        HumanPromptAttrSimpleRespDto required =
+                humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "유일한 필수 속성", false, true, 1));
+
+        HumanPromptAttrUpdateReqDto updateDto = HumanPromptAttrUpdateReqDto.builder()
+                .name("유일한 필수 속성")
+                .isMultiSelect(false)
+                .isRequired(false)   // ← 마지막 필수를 비필수로
+                .sortOrder(1)
+                .build();
+
+        assertThatThrownBy(() -> humanPromptAttrService.updateAttr(required.getId(), updateDto))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(HumanPromptErrorCode.ATTR_LAST_REQUIRED));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] Attr 수정 - 필수 항목 해제 (다른 필수 항목 존재 시 허용)")
+    void 성공_Attr_수정_필수해제_다른_필수_존재() {
+        HumanPromptStepSimpleRespDto step = 단계_생성(15, "U", "필수복수 단계");
+        HumanPromptAttrSimpleRespDto required1 =
+                humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "필수 속성1", false, true, 1));
+        humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "필수 속성2", false, true, 2));
+
+        HumanPromptAttrUpdateReqDto updateDto = HumanPromptAttrUpdateReqDto.builder()
+                .name("필수 속성1")
+                .isMultiSelect(false)
+                .isRequired(false)   // ← 다른 필수 attr이 있으므로 허용
+                .sortOrder(1)
+                .build();
+
+        HumanPromptAttrSimpleRespDto updated = humanPromptAttrService.updateAttr(required1.getId(), updateDto);
+        assertThat(updated.isRequired()).isFalse();
+    }
+
+    @Test
     @DisplayName("[예외] Attr 수정 - 미존재")
     void 예외_Attr_수정_미존재() {
         HumanPromptAttrUpdateReqDto updateDto = HumanPromptAttrUpdateReqDto.builder()
@@ -153,6 +196,35 @@ public class HumanPromptAttrServiceTest {
                 humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "삭제가능 속성", false, false, 1));
 
         humanPromptAttrService.deleteAttr(created.getId());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] Attr 삭제 - 마지막 필수 항목 삭제 거부")
+    void 예외_Attr_삭제_마지막_필수항목_삭제_거부() {
+        HumanPromptStepSimpleRespDto step = 단계_생성(16, "T", "삭제필수검증 단계");
+        HumanPromptAttrSimpleRespDto required =
+                humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "유일한 필수 속성", false, true, 1));
+
+        assertThatThrownBy(() -> humanPromptAttrService.deleteAttr(required.getId()))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(HumanPromptErrorCode.ATTR_LAST_REQUIRED));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] Attr 삭제 - 필수 항목 삭제 (다른 필수 항목 존재 시 허용)")
+    void 성공_Attr_삭제_필수항목_다른_필수_존재() {
+        HumanPromptStepSimpleRespDto step = 단계_생성(17, "S2", "삭제필수복수 단계");
+        HumanPromptAttrSimpleRespDto required1 =
+                humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "삭제할 필수 속성", false, true, 1));
+        humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "남은 필수 속성", false, true, 2));
+
+        // 다른 필수 attr이 있으므로 삭제 허용
+        humanPromptAttrService.deleteAttr(required1.getId());
     }
 
     @Test

@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.HumanPromptStep;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,6 +29,8 @@ public class HumanPromptStepSimpleRespDto {
     private int stepNumber;
     private String stepCode;
     private String name;
+    @JsonProperty("isCommon")
+    private boolean isCommon;
 
     public static HumanPromptStepSimpleRespDto from(HumanPromptStep step) {
         return HumanPromptStepSimpleRespDto.builder()
@@ -35,6 +38,7 @@ public class HumanPromptStepSimpleRespDto {
                 .stepNumber(step.getStepNumber())
                 .stepCode(step.getStepCode())
                 .name(step.getName())
+                .isCommon(step.isCommon())
                 .build();
     }
 }
