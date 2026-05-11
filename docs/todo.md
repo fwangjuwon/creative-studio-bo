@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ refactor/extract-prompt-constants 완료
-> 최종 업데이트: 2026-04-28 (이미지 생성 장수 상수 PromptConstants로 통합)
+> 상태: ✅ refactor/nsist-emp-cd-db 완료
+> 최종 업데이트: 2026-05-11 (nsist SSO empCd 매핑을 별도 테이블(nsist_emp_mapping)로 전환)
 
 ---
 
@@ -13,17 +13,31 @@
 
 ## 기술 부채 (TODO)
 
-- [ ] **nsist SSO 로그인 — empCd→loginId 매핑을 DB 기반으로 교체**
-  - 현재 `application-{profile}.yml`의 `nsist.emp-cd-map` 으로 관리 중 (코드 하드코딩에서 개선 완료)
-  - `user` 테이블에 `emp_cd VARCHAR` 컬럼 추가 후 `UserMapper.selectByEmpCd(empCd)` 기반으로 교체 필요
-  - 관련 파일: `NsistProperties.java`, `AuthServiceImpl.java`, `User.java`, `UserMapper.java`, `UserMapper.xml`
-
-- [ ] **nsist SSO 로그인 — empCd→loginId 매핑 하드코딩 개선**
-  - 현재 `AuthServiceImpl.NSIST_EMP_CD_MAP` 에 `empCd → loginId` 를 하드코딩으로 관리 중
+없음
 
 ---
 
 ## 완료
+
+### refactor/nsist-emp-cd-db. nsist SSO empCd 매핑을 별도 테이블로 전환
+
+> `application-{profile}.yml`의 `nsist.emp-cd-map` 하드코딩 매핑을 제거하고,
+> `nsist_emp_mapping` 테이블을 신규 생성하여 DB 기반으로 전환.
+> 여러 nsist 사번이 하나의 NCS 팀 계정을 공유하는 운영 환경 요구사항을 반영 (N:1 구조).
+> ADMIN이 API로 매핑을 직접 관리(`POST/GET/DELETE /api/nsist-emp-mappings`).
+
+- [x] `nsist_emp_mapping` 테이블 신규 생성 (`db/schema.sql`, DDL, `erd.md`)
+- [x] `NsistEmpMapping` 엔티티 생성 (`domain/auth/entity/`)
+- [x] `NsistEmpMappingErrorCode` enum 생성 (`domain/auth/`)
+- [x] `NsistEmpMappingMapper` 인터페이스 + XML 생성 (`selectByEmpCd`, `selectList`, `insert`, `deleteByEmpCd`)
+- [x] `NsistEmpMappingRespDto` / `NsistEmpMappingCreateReqDto` 생성
+- [x] `NsistEmpMappingService` 인터페이스 + `NsistEmpMappingServiceImpl` 생성
+- [x] `NsistEmpMappingController` 생성 (ADMIN 전용 — `POST/GET/DELETE /api/nsist-emp-mappings`)
+- [x] `AuthServiceImpl` — `NsistProperties.empCdMap` 제거 → `NsistEmpMappingMapper.selectByEmpCd()` 기반으로 교체
+- [x] `NsistProperties` 클래스 삭제 (역할 소멸)
+- [x] `application-local.yml` / `application-dev.yml` — `nsist.emp-cd-map` 블록 제거
+
+---
 
 ### refactor/extract-prompt-constants. 이미지 생성 장수 상수 PromptConstants로 통합
 

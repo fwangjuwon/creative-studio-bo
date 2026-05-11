@@ -25,6 +25,7 @@
 | 테이블명 | Java 엔티티 | 설명 |
 |---|---|---|
 | `user` | `User` | 회원 정보, 권한, 팀명, 일일 생성 한도 |
+| `nsist_emp_mapping` | `NsistEmpMapping` | nsist 사원번호↔NCS 계정 매핑 (N:1) |
 | `category` | `Category` | 상품 카테고리 (3단계 계층: LCS→MCS→SCS) |
 | `tag_group` | `TagGroup` | 태그 묶음 (인물, 분위기 등) |
 | `tag` | `Tag` | 태그 값 (남자, 화사한 등) |
@@ -50,6 +51,25 @@
 | `team_name` | VARCHAR | | 팀명 (논리적 팀 구분, 별도 Team 테이블 없음) |
 | `daily_limit` | INT | NOT NULL | 하루 프롬프트 생성 허용 횟수 |
 | `use_yn` | CHAR(1) | NOT NULL, DEFAULT 'Y' | 계정 활성화 여부 (`Y`: 활성, `N`: 비활성/ban) |
+| `init_regi_pic` | VARCHAR | | 등록자 |
+| `init_regi_dttm` | TIMESTAMP | | 등록일시 |
+| `final_rvis_pic` | VARCHAR | | 최종수정자 |
+| `final_rvis_dttm` | TIMESTAMP | | 최종수정일시 |
+
+---
+
+### `nsist_emp_mapping`
+
+nsist 사원번호와 NCS 계정의 매핑 정보. ADMIN이 API로 관리.
+
+> `emp_cd` UNIQUE — 한 사번은 하나의 NCS 계정에만 매핑된다.
+> `user_id` N:1 — 여러 사번이 하나의 NCS 팀 계정을 공유할 수 있다.
+
+| 컬럼명 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 매핑 고유 ID |
+| `emp_cd` | VARCHAR(6) | NOT NULL, UNIQUE | nsist 사원번호 |
+| `user_id` | BIGINT | NOT NULL | 논리 FK → `user.id` |
 | `init_regi_pic` | VARCHAR | | 등록자 |
 | `init_regi_dttm` | TIMESTAMP | | 등록일시 |
 | `final_rvis_pic` | VARCHAR | | 최종수정자 |
