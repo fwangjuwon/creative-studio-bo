@@ -275,11 +275,12 @@ public class GeminiServiceImpl implements GeminiService {
                     .retrieve()
                     .body(GeminiResponse.class);
         } catch (RestClientResponseException e) {
-            log.error("Gemini API 오류 응답 (인물 프롬프트) — status: {}, body: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BizException(resolvePromptErrorCode(e.getStatusCode().value()));
+            log.error("Gemini API 오류 응답 (인물 프롬프트) — status: {}, body: {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BizException(resolvePromptErrorCode(e.getStatusCode().value()), e);
         } catch (RestClientException e) {
             log.error("Gemini API 호출 실패 (인물 프롬프트, 네트워크/타임아웃)", e);
-            throw new BizException(PromptErrorCode.GEMINI_API_ERROR);
+            throw new BizException(PromptErrorCode.GEMINI_API_ERROR, e);
         }
 
         String promptText = extractText(response);
@@ -325,11 +326,12 @@ public class GeminiServiceImpl implements GeminiService {
                     .retrieve()
                     .body(GeminiResponse.class);
         } catch (RestClientResponseException e) {
-            log.error("Gemini API 오류 응답 (상품 프롬프트) — status: {}, body: {}", e.getStatusCode(), e.getResponseBodyAsString());
-            throw new BizException(resolvePromptErrorCode(e.getStatusCode().value()));
+            log.error("Gemini API 오류 응답 (상품 프롬프트) — status: {}, body: {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BizException(resolvePromptErrorCode(e.getStatusCode().value()), e);
         } catch (RestClientException e) {
             log.error("Gemini API 호출 실패 (상품 프롬프트, 네트워크/타임아웃)", e);
-            throw new BizException(PromptErrorCode.GEMINI_API_ERROR);
+            throw new BizException(PromptErrorCode.GEMINI_API_ERROR, e);
         }
 
         String promptText = extractText(response);
