@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -60,6 +61,7 @@ public class HumanPromptCreateReqDto {
      * 인물 간 관계 (2명 이상 선택 시 선택 입력).
      * 예: "커플", "친구", "가족", "직장 동료"
      */
+    @Size(max = 100, message = "인물 간 관계는 100자 이하로 입력해 주세요.")
     private String relationship;
 
     /** 추가 지시 사항 (선택) */

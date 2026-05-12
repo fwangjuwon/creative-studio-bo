@@ -158,7 +158,7 @@ INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_r
 
 -- B, C 단계 옵션 제거됨
 
--- D-1: 조명 (단일선택, 필수)
+-- B-1: 조명 (단일선택, 필수)
 INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ((SELECT id FROM human_prompt_attr WHERE name = '조명'), '부드러운 자연광',  'Soft natural daylight',   1, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '조명'), '황금시간대/노을',  'Golden hour lighting',    2, 'system', NOW(), 'system', NOW()),
@@ -168,7 +168,7 @@ INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_r
 ((SELECT id FROM human_prompt_attr WHERE name = '조명'), '네온사인',         'Neon city lights',        6, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '조명'), '스튜디오 조명',    'Studio strobe lighting',  7, 'system', NOW(), 'system', NOW());
 
--- D-2: 배경 장소 (단일선택, 필수)
+-- B-2: 배경 장소 (단일선택, 필수)
 INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ((SELECT id FROM human_prompt_attr WHERE name = '배경 장소'), '집 내부/방',     'Home interior/Cozy room',    1, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '배경 장소'), '카페/식당',      'Cafe/Restaurant',            2, 'system', NOW(), 'system', NOW()),
@@ -176,26 +176,26 @@ INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_r
 ((SELECT id FROM human_prompt_attr WHERE name = '배경 장소'), '공원/자연',      'Park/Nature outdoor',        4, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '배경 장소'), '단색 스튜디오',  'Plain neutral studio wall',  5, 'system', NOW(), 'system', NOW());
 
--- D-3: 배경 처리 (단일선택, 선택)
+-- B-3: 배경 처리 (단일선택, 선택)
 INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ((SELECT id FROM human_prompt_attr WHERE name = '배경 처리'), '배경 흐림/보케',  'Blurred background/Bokeh',   1, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '배경 처리'), '배경 선명하게',   'Sharp background details',   2, 'system', NOW(), 'system', NOW());
 
--- E-1: 프레임 (단일선택, 필수)
+-- C-1: 프레임 (단일선택, 필수)
 INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ((SELECT id FROM human_prompt_attr WHERE name = '프레임'), '얼굴 클로즈업', 'Extreme close-up face',    1, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '프레임'), '가슴 위',       'Bust shot/Headshot',       2, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '프레임'), '허리 위',       'Waist-up shot',            3, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '프레임'), '전신',          'Full body shot',           4, 'system', NOW(), 'system', NOW());
 
--- E-2: 카메라 느낌 (단일선택, 선택)
+-- C-2: 카메라 느낌 (단일선택, 선택)
 INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ((SELECT id FROM human_prompt_attr WHERE name = '카메라 느낌'), '스마트폰 셀카',    'Smartphone front camera selfie',    1, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '카메라 느낌'), 'DSLR 고화질',      'High-resolution DSLR photo',        2, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '카메라 느낌'), '필름 카메라',      'Analog film grain 35mm',            3, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '카메라 느낌'), '폴라로이드/빈티지','Polaroid/Vintage photo style',      4, 'system', NOW(), 'system', NOW());
 
--- E-3: 강조 필터 (복수선택, 선택)
+-- C-3: 강조 필터 (복수선택, 선택)
 INSERT INTO human_prompt_option (attr_id, name, prompt_value, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ((SELECT id FROM human_prompt_attr WHERE name = '강조 필터'), '보정 없는 사실주의', 'Unfiltered photorealism',         1, 'system', NOW(), 'system', NOW()),
 ((SELECT id FROM human_prompt_attr WHERE name = '강조 필터'), '뷰티 필터 금지',     'No beauty filter/Not airbrushed', 2, 'system', NOW(), 'system', NOW());
