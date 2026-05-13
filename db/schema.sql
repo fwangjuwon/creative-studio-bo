@@ -15,6 +15,7 @@
 -- TABLE: user
 -- 설명: 회원 정보, 권한(ADMIN/MANAGER/USER), 팀명, 일일 생성 한도
 -- 논리 FK: prompt_history.user_id → user.id
+--          nsist_emp_mapping.user_id → user.id
 -- -----------------------------------------------------------------------------
 CREATE TABLE "user" (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -25,6 +26,24 @@ CREATE TABLE "user" (
     team_name       VARCHAR(100),
     daily_limit     INT             NOT NULL DEFAULT 3,
     use_yn          CHAR(1)         NOT NULL DEFAULT 'Y', -- 계정 활성화 여부 (Y: 활성, N: 비활성/ban)
+    init_regi_pic   VARCHAR(50),
+    init_regi_dttm  TIMESTAMP,
+    final_rvis_pic  VARCHAR(50),
+    final_rvis_dttm TIMESTAMP
+);
+
+
+-- -----------------------------------------------------------------------------
+-- TABLE: nsist_emp_mapping
+-- 설명: nsist 사원번호(emp_cd)와 NCS 사용자(user_id)의 매핑 정보
+--       emp_cd UNIQUE — 한 사번은 하나의 NCS 계정에만 매핑된다.
+--       user_id N:1   — 여러 사번이 하나의 NCS 팀 계정을 공유할 수 있다.
+-- 논리 FK: nsist_emp_mapping.user_id → user.id
+-- -----------------------------------------------------------------------------
+CREATE TABLE nsist_emp_mapping (
+    id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    emp_cd          VARCHAR(6)      NOT NULL UNIQUE,   -- nsist 사원번호 (1사번 = 1매핑)
+    user_id         BIGINT          NOT NULL,          -- 논리 FK → user.id (N:1 가능)
     init_regi_pic   VARCHAR(50),
     init_regi_dttm  TIMESTAMP,
     final_rvis_pic  VARCHAR(50),

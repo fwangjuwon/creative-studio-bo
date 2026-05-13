@@ -1,12 +1,13 @@
 package com.nsmall.ns_creative_studio_bo.domain.auth.service;
 
 import com.nsmall.ns_creative_studio_bo.common.config.JwtProperties;
-import com.nsmall.ns_creative_studio_bo.common.config.NsistProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtTokenProvider;
 import com.nsmall.ns_creative_studio_bo.domain.auth.AuthErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.request.LoginReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.response.LoginRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.auth.entity.NsistEmpMapping;
+import com.nsmall.ns_creative_studio_bo.domain.auth.mapper.NsistEmpMappingMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
@@ -14,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 /**
  * Auth 서비스 구현체 — 로그인 및 JWT 토큰 발급
@@ -31,7 +31,7 @@ public class AuthServiceImpl implements AuthService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
-    private final NsistProperties nsistProperties;
+    private final NsistEmpMappingMapper nsistEmpMappingMapper;
 
     @Override
     public LoginRespDto login(LoginReqDto dto) {
@@ -56,20 +56,20 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginRespDto nsistLogin(String empCd, String orgCd) {
-        String loginId = nsistProperties.getEmpCdMap().get(empCd);
-        if (!StringUtils.hasText(loginId)) {
-            log.warn("nsist SSO 로그인 실패 — 매핑되지 않은 empCd={}", empCd);
-            throw new BizException(AuthErrorCode.INVALID_CREDENTIALS);
-        }
-
-        User user = userMapper.selectByLoginId(loginId)
+        NsistEmpMapping mapping = nsistEmpMappingMapper.selectByEmpCd(empCd)
                 .orElseThrow(() -> {
-                    log.warn("nsist SSO 로그인 실패 — 사용자 미존재 loginId={}", loginId);
+                    log.warn("nsist SSO 로그인 실패 — 매핑되지 않은 empCd={}", empCd);
+                    return new BizException(AuthErrorCode.INVALID_CREDENTIALS);
+                });
+
+        User user = userMapper.selectById(mapping.getUserId())
+                .orElseThrow(() -> {
+                    log.warn("nsist SSO 로그인 실패 — 사용자 미존재 userId={}", mapping.getUserId());
                     return new BizException(AuthErrorCode.INVALID_CREDENTIALS);
                 });
 
         if (!"Y".equals(user.getUseYn())) {
-            log.warn("비활성화된 계정 nsist SSO 로그인 시도 — empCd={}, loginId={}", empCd, loginId);
+            log.warn("비활성화된 계정 nsist SSO 로그인 시도 — empCd={}, loginId={}", empCd, user.getLoginId());
             throw new BizException(UserErrorCode.USER_BANNED);
         }
 

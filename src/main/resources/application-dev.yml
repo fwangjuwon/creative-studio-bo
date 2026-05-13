@@ -15,13 +15,3 @@ cors:
 
 image:
   base-url: https://nsm-dev-creative-bo.nsmall.com
-
-nsist:
-  emp-cd-map:
-    "12496": "jjhoo8936"
-    "12474": "gaeddo"
-    "12450": "user"
-    "12300": "cloudtest"
-    "12494": "cloudtest"
-    "11159": "nana1010"
-    "11714": "thk"
