@@ -59,7 +59,6 @@ public class GeminiServiceImpl implements GeminiService {
            - Leading Lines: Design background elements (edges, surfaces, shadows) that guide the eye toward the product.
            - Color Theory: Apply "complementary color palette" for bold contrast or "monochromatic elegance" for refined cohesion.
         5. STYLE: Mood, color palette, and premium atmosphere.
-        6. CLOSING: Choose "Square format.", "Landscape format.", or "Portrait format."
 
         QUALITY RULES:
         - Describe how light interacts with the surface (reflections, subsurface scattering).
@@ -81,7 +80,7 @@ public class GeminiServiceImpl implements GeminiService {
         - Return ONLY the final prompt text.
 
         EXAMPLE:
-        "A high-resolution 45-degree product photograph of a premium matte-finish skincare bottle. It is placed on a damp dark slate surface with subtle water ripples. The lighting is a cool-toned side softbox that highlights the bottle's elegant silhouette and creates soft contact shadows. Captured with a 100mm macro lens for a clean professional focus. Square format."
+        "A high-resolution 45-degree product photograph of a premium matte-finish skincare bottle. It is placed on a damp dark slate surface with subtle water ripples. The lighting is a cool-toned side softbox that highlights the bottle's elegant silhouette and creates soft contact shadows. Captured with a 100mm macro lens for a clean professional focus."
         """;
 
     /**
@@ -146,7 +145,6 @@ public class GeminiServiceImpl implements GeminiService {
            - Negative Space: Leave intentional empty areas around the subject for editorial use.
            - Leading Lines: Use environmental elements (walls, paths, light beams) to draw the viewer's eye to the subject.
            - Color Theory: Apply "complementary color palette" for bold contrast or "monochromatic elegance" for refined cohesion.
-        6. CLOSING: Choose "Square format.", "Landscape format.", or "Portrait format."
 
         QUALITY RULES:
         - Avoid 'uncanny valley' or 'plastic skin'. Ensure anatomical correctness (especially hands).
@@ -169,7 +167,7 @@ public class GeminiServiceImpl implements GeminiService {
         - Return ONLY the final prompt text.
 
         EXAMPLE:
-        "A professional portrait of a confident middle-aged woman in a silk navy blazer, posing naturally in a bright minimalist office. Her skin shows natural textures and subtle pores under soft, diffused window lighting that creates gentle catchlights in her eyes. Captured with an 85mm lens at f/1.8, creating a creamy bokeh background. Portrait format."
+        "A professional portrait of a confident middle-aged woman in a silk navy blazer, posing naturally in a bright minimalist office. Her skin shows natural textures and subtle pores under soft, diffused window lighting that creates gentle catchlights in her eyes. Captured with an 85mm lens at f/1.8, creating a creamy bokeh background."
         """;
 
     /**
@@ -281,9 +279,7 @@ public class GeminiServiceImpl implements GeminiService {
                         .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
                         .strip() + ", " + formatSuffix;
             } else {
-                promptText = promptText.strip()
-                        .replaceAll("(?i)(Square|Portrait|Landscape) format\\.$", "")
-                        .strip() + " " + formatSuffix;
+                promptText = promptText.strip() + " " + formatSuffix;
             }
         }
 
@@ -324,9 +320,7 @@ public class GeminiServiceImpl implements GeminiService {
                         .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
                         .strip() + ", " + formatSuffix;
             } else {
-                promptText = promptText.strip()
-                        .replaceAll("(?i)(Square|Portrait|Landscape) format\\.$", "")
-                        .strip() + " " + formatSuffix;
+                promptText = promptText.strip() + " " + formatSuffix;
             }
         }
 
@@ -335,23 +329,23 @@ public class GeminiServiceImpl implements GeminiService {
 
     /**
      * imageAspectRatio와 promptStyle에 따라 적절한 format suffix를 반환한다.
-     * MidJourney 스타일은 "--ar X:X" 형식, 일반 스타일은 텍스트 형식을 사용한다.
      *
-     * @param imageAspectRatio 사용자가 선택한 이미지 비율 (예: "1:1", "4:3", "16:9", "9:16")
+     * <pre>
+     * - MidJourney: "--ar W:H" 형식으로 직접 전달
+     * - NanoBanana: "Aspect ratio W:H." 형식으로 동적 생성 (하드코딩 없음)
+     *   → DB 태그명이 무엇이든 자동 반영, Admin이 새 비율 추가 시 코드 수정 불필요
+     * </pre>
+     *
+     * @param imageAspectRatio 사용자가 선택한 이미지 비율 태그명
      * @param isMidJourney     MidJourney 스타일 여부
-     * @return format suffix 문자열, 해당 없으면 null
+     * @return format suffix 문자열, null이면 미선택
      */
     private String toFormatSuffix(String imageAspectRatio, boolean isMidJourney) {
         if (imageAspectRatio == null) return null;
         if (isMidJourney) {
             return "--ar " + imageAspectRatio;
         }
-        return switch (imageAspectRatio) {
-            case "1:1"         -> "Square format.";
-            case "4:3", "16:9" -> "Landscape format.";
-            case "9:16"        -> "Portrait format.";
-            default            -> null;
-        };
+        return "Aspect ratio " + imageAspectRatio + ".";
     }
 
     private String buildGoodsUserMessage(String goodsCategoryName, List<String> tagNames,
