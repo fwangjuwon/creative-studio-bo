@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo;
 
 import com.nsmall.ns_creative_studio_bo.domain.auth.AuthServiceTests;
+import com.nsmall.ns_creative_studio_bo.domain.auth.NsistEmpMappingServiceTests;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryServiceTests;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptServiceTests;
 import com.nsmall.ns_creative_studio_bo.domain.tag.TagServiceTests;
@@ -22,7 +23,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
         CategoryServiceTests.class,
         TagServiceTests.class,
         PromptServiceTests.class,
-        AuthServiceTests.class
+        AuthServiceTests.class,
+        NsistEmpMappingServiceTests.class
 })
 public class AllServiceTests {
 }
