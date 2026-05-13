@@ -3,12 +3,6 @@
 
 <mapper namespace="com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptAttrMapper">
 
-    <select id="selectRequiredAttrIds" resultType="Long">
-        SELECT id
-        FROM human_prompt_attr
-        WHERE is_required = true
-    </select>
-
     <select id="selectRequiredAttrIdsByStepIsCommon" resultType="Long">
         SELECT a.id
         FROM human_prompt_attr a

@@ -214,6 +214,9 @@ public class GeminiServiceImpl implements GeminiService {
     // STEP_NAME_TO_LABEL 제거 — step 이름은 DB에서 관리하므로 하드코딩 없이 그대로 사용
     // Admin에서 단계 추가/수정/삭제 시 코드 변경 없이 자동 반영됨
 
+    /** 인물 프롬프트 생성 시 최대 출력 토큰 수 — 다인원 프롬프트 길이 대응 */
+    private static final int HUMAN_PROMPT_MAX_OUTPUT_TOKENS = 4096;
+
     private final RestClient geminiRestClient;
     private final GeminiProperties geminiProperties;
 
@@ -265,7 +268,7 @@ public class GeminiServiceImpl implements GeminiService {
         GeminiSystemInstruction systemInstruction = new GeminiSystemInstruction(List.of(systemPart));
         GeminiPart userPart = new GeminiPart(userMessage);
         GeminiContent userContent = new GeminiContent("user", List.of(userPart));
-        GeminiGenerationConfig generationConfig = new GeminiGenerationConfig(4096);
+        GeminiGenerationConfig generationConfig = new GeminiGenerationConfig(HUMAN_PROMPT_MAX_OUTPUT_TOKENS);
         GeminiRequest requestBody = new GeminiRequest(systemInstruction, List.of(userContent), generationConfig);
 
         String uri = String.format("/models/%s:generateContent", geminiProperties.getModel());
