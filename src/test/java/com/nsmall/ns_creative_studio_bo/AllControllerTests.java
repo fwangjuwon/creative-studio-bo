@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo;
 
 import com.nsmall.ns_creative_studio_bo.domain.auth.AuthControllerTests;
+import com.nsmall.ns_creative_studio_bo.domain.auth.NsistEmpMappingControllerTests;
 import com.nsmall.ns_creative_studio_bo.domain.category.CategoryControllerTests;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptControllerTests;
 import com.nsmall.ns_creative_studio_bo.domain.tag.TagControllerTests;
@@ -19,6 +20,7 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SuiteDisplayName("전체 컨트롤러 테스트")
 @SelectClasses({
         AuthControllerTests.class,
+        NsistEmpMappingControllerTests.class,
         CategoryControllerTests.class,
         UserControllerTests.class,
         TagControllerTests.class,

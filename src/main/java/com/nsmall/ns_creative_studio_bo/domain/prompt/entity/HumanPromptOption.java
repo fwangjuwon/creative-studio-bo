@@ -35,6 +35,8 @@ public class HumanPromptOption {
 
     /** JOIN 조회 시 포함 — human_prompt_step.step_number */
     private Integer stepNumber;
+    /** JOIN 조회 시 포함 — human_prompt_step.name (STEP_LABELS 하드코딩 대체) */
+    private String stepName;
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;

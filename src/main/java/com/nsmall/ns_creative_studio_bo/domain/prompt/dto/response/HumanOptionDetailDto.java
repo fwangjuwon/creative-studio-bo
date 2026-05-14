@@ -27,5 +27,6 @@ import lombok.NoArgsConstructor;
 public class HumanOptionDetailDto {
 
     private Long promptHistoryId;
+    private int personIndex;
     private String optionName;
 }

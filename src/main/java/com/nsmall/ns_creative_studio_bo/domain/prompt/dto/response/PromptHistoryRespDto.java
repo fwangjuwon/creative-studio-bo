@@ -18,10 +18,11 @@ import java.util.List;
  * promptType에 따라 유효한 필드가 다르다.
  *
  * PRODUCT: categoryId, categoryPath, tagIds, tagNames 사용
- *          purpose, additionalNotes, optionNames 는 null
+ *          additionalNotes, personOptions 는 null
  *
- * PERSON : purpose, additionalNotes, optionNames 사용
+ * PERSON : additionalNotes, personOptions 사용
  *          categoryId, categoryPath, tagIds, tagNames 는 null
+ *          personOptions: personIndex -1(공통), 0 이상(인물 인덱스) 로 그룹핑
  *
  * imageUrl  : DB에 저장된 원본값 (단일 URL 또는 JSON 배열 문자열)
  * imageUrls : imageUrl을 파싱한 이미지 URL 목록 (항상 List 형태)
@@ -58,7 +59,23 @@ public class PromptHistoryRespDto {
     // 인물 프롬프트 전용
     private String purpose;
     private String additionalNotes;
-    private List<String> optionNames;  // 선택한 옵션 한국어명 목록
+    /** 인물별 선택 옵션 그룹 목록 (personIndex -1=공통, 0~N=인물 인덱스) */
+    private List<PersonOptionGroupDto> personOptions;
+
+    /**
+     * 인물별 선택 옵션 그룹 DTO
+     */
+    @Getter
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PersonOptionGroupDto {
+        /** -1: 공통(조명/촬영), 0 이상: 인물 인덱스 */
+        private int personIndex;
+        /** "공통", "사람 1", "사람 2" ... */
+        private String label;
+        private List<String> optionNames;
+    }
 
     // 감사 컬럼
     private String initRegiPic;
@@ -127,11 +144,11 @@ public class PromptHistoryRespDto {
     /**
      * 인물 프롬프트 이력 응답 생성.
      *
-     * @param optionNames  선택한 옵션 한국어명 목록 (단계 순서대로 정렬)
-     * @param imageBaseUrl 이미지 서빙 기준 URL (예: https://bo.nsmall.com)
+     * @param personOptions 인물별 선택 옵션 그룹 목록
+     * @param imageBaseUrl  이미지 서빙 기준 URL (예: https://bo.nsmall.com)
      */
     public static PromptHistoryRespDto fromHuman(PromptHistory history,
-                                                 List<String> optionNames,
+                                                 List<PersonOptionGroupDto> personOptions,
                                                  String imageBaseUrl) {
         return PromptHistoryRespDto.builder()
                 .id(history.getId())
@@ -144,7 +161,7 @@ public class PromptHistoryRespDto {
                 .imageUrls(parseImageUrls(history.getImageUrl(), imageBaseUrl))
                 .purpose(history.getPurpose())
                 .additionalNotes(history.getAdditionalNotes())
-                .optionNames(optionNames)
+                .personOptions(personOptions)
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())

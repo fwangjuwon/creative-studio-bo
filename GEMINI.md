@@ -138,7 +138,8 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 최종 선택
 | 조회 결과 없음 | 200 + `data: null` — 404 사용 안 함 (내부 API 개발 편의성) |
 | 페이지네이션 / 필터 | `GET /api/prompts` PageHelper 페이징 + 검색 필터 적용 완료. `pageNum`(기본 1) / `pageSize`(기본 10). 검색 조건(모두 선택): `loginId`(생성자), `promptType`(`PRODUCT`\|`PERSON`), `promptStyle`(`NANO_BANANA`\|`MID_JOURNEY`), `dateFrom`/`dateTo`(생성일 범위). 공통 모듈: `common/page/` |
 | JWT | 완료 (Access Token 1시간, Refresh Token 없음, PoC) |
-| nsist SSO 로그인 | `GET /api/auth/nsist-login?empCd=&orgCd=` — nsist 서비스에서 iframe으로 임베드 시 empCd 기반 자동 로그인. Referer URL 및 empCd→loginId 매핑은 `application-{profile}.yml`의 `nsist.*` 설정으로 관리 (`NsistProperties`). 추후 DB `emp_cd` 컬럼 기반으로 교체 예정. |
+| nsist SSO 로그인 | `GET /api/auth/nsist-login?empCd=&orgCd=` — nsist 서비스에서 iframe으로 임베드 시 empCd 기반 자동 로그인. `nsist_emp_mapping` 테이블에서 empCd → user_id 조회 후 JWT 발급. |
+| nsist 매핑 관리 | `POST/GET/DELETE /api/nsist-emp-mappings` — ADMIN 전용. 여러 nsist 사번이 하나의 NCS 팀 계정을 공유 가능 (N:1). |
 | Gemini API Key | `.env` 파일의 `GEMINI_API_KEY` 환경변수 |
 | 이미지 서빙 | 생성 이미지는 `image.storage-path` 경로에 저장, `image.base-url` prefix로 절대 URL 조립 후 응답. DB에는 `/images/{uuid}.ext` 상대 경로만 저장. `/images/**` 경로는 Security 인증 없이 공개. |
 | CORS | `local` 프로필에서만 Spring Boot `CorsConfig` 활성화 (`@Profile("local")`). dev/prod 환경은 APIM에서 CORS 처리. 허용 Origin은 `cors.allowed-origins`로 환경별 관리. |
@@ -228,10 +229,13 @@ Mapper → Service 등 **내부 계층 간 전달 전용 DTO**는 이 규칙을 
 클래스 레벨 JavaDoc (`@author`, `@since`)은 별개로 유지.
 
 ```java
-@Tag(name = "User", description = "회원 관리 API")   // 클래스
-@Operation(summary = "회원 생성", description = "...")  // 메서드
-@ApiResponse(responseCode = "201", description = "...")
+@Tag(name = "User", description = "회원 관리 API")      // 클래스
+@SecurityRequirement(name = "bearerAuth")               // 클래스 — 공개 API(login 등) 제외 모든 컨트롤러 필수
+@Operation(summary = "회원 생성", description = "...")   // 메서드
+@ApiResponse(responseCode = "200", description = "...")
 ```
+
+> ⚠️ `@SecurityRequirement(name = "bearerAuth")`가 누락되면 Swagger UI에서 Bearer 토큰이 요청에 포함되지 않아 인증 실패가 발생한다.
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html` (`local`/`dev` 프로필 전용 — prd 비활성화)
 

@@ -198,6 +198,7 @@ public class HumanPromptOptionServiceTest {
                 HumanPromptHistoryOption.builder()
                         .promptHistoryId(9999L)
                         .optionId(option.getId())
+                        .personIndex(0)
                         .initRegiPic("test")
                         .initRegiDttm(now)
                         .finalRvisPic("test")

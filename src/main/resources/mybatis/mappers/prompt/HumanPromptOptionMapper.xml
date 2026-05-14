@@ -66,8 +66,9 @@
     </delete>
 
     <!--
-        selectByIds: 선택된 option ID 목록으로 option 정보 + step_number 조회.
-        JOIN을 통해 step_number를 포함하여, 서비스에서 Map<stepNumber, List<promptValue>> 구성에 사용.
+        selectByIds: 선택된 option ID 목록으로 option 정보 + step_number + step_name 조회.
+        JOIN을 통해 step 정보를 포함하여, 서비스에서 Map<stepName, List<promptValue>> 구성에 사용.
+        STEP_LABELS 하드코딩 제거 — step_name을 직접 사용하여 Admin에서 단계 수정 시에도 정상 동작.
     -->
     <select id="selectByIds" resultType="HumanPromptOption">
         SELECT
@@ -76,7 +77,8 @@
             o.name,
             o.prompt_value,
             o.sort_order,
-            s.step_number
+            s.step_number,
+            s.name AS step_name
         FROM human_prompt_option o
         INNER JOIN human_prompt_attr a
             ON a.id = o.attr_id

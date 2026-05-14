@@ -88,6 +88,7 @@ public class HumanPromptStepServiceTest {
 
         HumanPromptStepUpdateReqDto updateDto = HumanPromptStepUpdateReqDto.builder()
                 .stepNumber(99)
+                .stepCode(code)
                 .name(afterName)
                 .build();
 
@@ -96,13 +97,15 @@ public class HumanPromptStepServiceTest {
 
         assertThat(updated.getStepNumber()).isEqualTo(99);
         assertThat(updated.getName()).isEqualTo(afterName);
-        assertThat(updated.getStepCode()).isEqualTo(code);
+        assertThat(updated.getStepCode()).isEqualTo(code.toUpperCase()); // 서비스에서 toUpperCase() 처리
     }
 
     @Test
     @DisplayName("[예외] Step 수정 - 미존재")
     void 예외_Step_수정_미존재() {
         HumanPromptStepUpdateReqDto updateDto = HumanPromptStepUpdateReqDto.builder()
+                .stepNumber(1)
+                .stepCode("Z")
                 .name("수정요청")
                 .build();
 

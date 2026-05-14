@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -84,12 +86,21 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     private String callAndSave(NbRequest requestBody) {
         String uri = String.format("/models/%s:generateContent", geminiProperties.getImageModel());
 
-        NbResponse response = geminiRestClient.post()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .body(NbResponse.class);
+        NbResponse response;
+        try {
+            response = geminiRestClient.post()
+                    .uri(uri)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(NbResponse.class);
+        } catch (RestClientResponseException e) {
+            log.error("NanoBanana API 오류 응답 — status: {}, body: {}", e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BizException(resolveImageErrorCode(e.getStatusCode().value()));
+        } catch (RestClientException e) {
+            log.error("NanoBanana API 호출 실패 (네트워크/타임아웃)", e);
+            throw new BizException(ImageGenerationErrorCode.IMAGE_GENERATION_FAILED);
+        }
 
         if (response == null
                 || response.candidates() == null
@@ -139,6 +150,15 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             }
             throw e;
         }
+    }
+
+    private ImageGenerationErrorCode resolveImageErrorCode(int statusCode) {
+        return switch (statusCode) {
+            case 429 -> ImageGenerationErrorCode.IMAGE_GENERATION_RATE_LIMITED;
+            case 403 -> ImageGenerationErrorCode.IMAGE_GENERATION_AUTH_FAILED;
+            case 500, 503, 504 -> ImageGenerationErrorCode.IMAGE_GENERATION_UNAVAILABLE;
+            default -> ImageGenerationErrorCode.IMAGE_GENERATION_FAILED;
+        };
     }
 
     /**

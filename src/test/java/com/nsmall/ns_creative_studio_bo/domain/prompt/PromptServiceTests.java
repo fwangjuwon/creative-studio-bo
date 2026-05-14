@@ -1,9 +1,11 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt;
 
+import com.nsmall.ns_creative_studio_bo.domain.prompt.service.GeminiServiceImplTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptAttrServiceTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptOptionServiceTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptServiceTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptStepServiceTest;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.service.NanoBananaServiceImplTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.PromptServiceTest;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
@@ -22,7 +24,9 @@ import org.junit.platform.suite.api.SuiteDisplayName;
         HumanPromptServiceTest.class,
         HumanPromptStepServiceTest.class,
         HumanPromptAttrServiceTest.class,
-        HumanPromptOptionServiceTest.class
+        HumanPromptOptionServiceTest.class,
+        NanoBananaServiceImplTest.class,
+        GeminiServiceImplTest.class
 })
 public class PromptServiceTests {
 }

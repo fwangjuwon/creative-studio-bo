@@ -28,6 +28,8 @@ public class HumanPromptStep {
     private int stepNumber;      // 1~5
     private String stepCode;     // A/B/C/D/E
     private String name;
+    /** true: 전체 공통 선택 (조명/촬영) / false: 인물별 개별 선택 (피사체/분위기/리얼리즘) */
+    private boolean isCommon;
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;
