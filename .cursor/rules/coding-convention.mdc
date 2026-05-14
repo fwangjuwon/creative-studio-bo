@@ -414,19 +414,28 @@ private final UserService userService;  // ✅ 인터페이스
 | 위치 | 어노테이션 | 용도 |
 |---|---|---|
 | 클래스 | `@Tag(name, description)` | API 그룹명 및 설명 |
+| 클래스 | `@SecurityRequirement(name = "bearerAuth")` | JWT 인증 필요 표시 — 공개 API(login 등) 제외 **모든 컨트롤러에 필수** |
 | 메서드 | `@Operation(summary, description)` | API 요약 및 상세 설명 |
 | 메서드 | `@ApiResponse(responseCode, description)` | HTTP 응답 코드 및 설명 |
 
 ```java
-// ✅ 올바른 방식
+// ✅ 올바른 방식 — 인증이 필요한 컨트롤러
 @Tag(name = "User", description = "회원 관리 API")
+@SecurityRequirement(name = "bearerAuth")   // ← 공개 API(login 등) 제외 모든 컨트롤러 필수
 @RestController
 public class UserController {
 
     @Operation(summary = "회원 생성", description = "ADMIN 전용")
-    @ApiResponse(responseCode = "201", description = "회원 생성 성공")
+    @ApiResponse(responseCode = "200", description = "회원 생성 성공")
     @PostMapping
-    public ResponseEntity<CommonResponse<UserRespDto>> createUser(...) { ... }
+    public CommonResponse<UserRespDto> createUser(...) { ... }
+}
+
+// ✅ 공개 API — @SecurityRequirement 생략 (JWT 불필요)
+@Tag(name = "Auth", description = "인증 API")
+@RestController
+public class AuthController {
+    // POST /api/auth/login, GET /api/auth/nsist-login 은 인증 불필요
 }
 
 // ❌ 금지 — @RestController 메서드에 JavaDoc 주석 사용
@@ -434,10 +443,10 @@ public class UserController {
  * 회원 생성
  */
 @PostMapping
-public ResponseEntity<...> createUser(...) { ... }
+public CommonResponse<...> createUser(...) { ... }
 ```
 
-> ⚠️ 클래스 레벨 JavaDoc (`@author`, `@since`)은 **Swagger 어노테이션과 별개로 반드시 유지**한다.
+> ⚠️ `@SecurityRequirement`가 누락되면 Swagger UI에서 Bearer 토큰이 요청에 포함되지 않아 인증 실패가 발생한다.
 
 ---
 

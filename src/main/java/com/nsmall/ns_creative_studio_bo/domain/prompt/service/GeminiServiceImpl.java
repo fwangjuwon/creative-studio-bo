@@ -10,6 +10,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,7 @@ import java.util.Map;
  *
  * <pre>
  * Spring RestClient를 사용하여 Gemini REST API를 호출한다.
- * 호출 실패 시 별도 처리 없이 GlobalExceptionHandler 500 응답으로 위임한다.
+ * API 호출 실패 시 {@link PromptErrorCode#GEMINI_API_ERROR}로 변환하여 던진다.
  *
  * 개선 포인트:
  * 1. 시스템 프롬프트에 재질(Texture), 반사(Reflection), 인물 디테일(Catchlight) 가이드 추가
@@ -276,12 +278,22 @@ public class GeminiServiceImpl implements GeminiService {
         log.debug("Gemini 인물 사진 API 호출 — model: {}, style: {}, personCount: {}, isGroup: {}",
                 geminiProperties.getModel(), promptStyle, personsStepValues.size(), isGroup);
 
-        GeminiResponse response = geminiRestClient.post()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .body(GeminiResponse.class);
+        GeminiResponse response;
+        try {
+            response = geminiRestClient.post()
+                    .uri(uri)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(GeminiResponse.class);
+        } catch (RestClientResponseException e) {
+            log.error("Gemini API 오류 응답 (인물 프롬프트) — status: {}, body: {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BizException(resolvePromptErrorCode(e.getStatusCode().value()), e);
+        } catch (RestClientException e) {
+            log.error("Gemini API 호출 실패 (인물 프롬프트, 네트워크/타임아웃)", e);
+            throw new BizException(PromptErrorCode.GEMINI_API_ERROR, e);
+        }
 
         String promptText = extractText(response);
 
@@ -326,12 +338,22 @@ public class GeminiServiceImpl implements GeminiService {
         log.debug("Gemini API 호출 — model: {}, goodsCategory: {}, tags: {}, aspectRatio: {}, style: {}",
                 geminiProperties.getModel(), goodsCategoryName, tagNames, imageAspectRatio, promptStyle);
 
-        GeminiResponse response = geminiRestClient.post()
-                .uri(uri)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(requestBody)
-                .retrieve()
-                .body(GeminiResponse.class);
+        GeminiResponse response;
+        try {
+            response = geminiRestClient.post()
+                    .uri(uri)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(GeminiResponse.class);
+        } catch (RestClientResponseException e) {
+            log.error("Gemini API 오류 응답 (상품 프롬프트) — status: {}, body: {}",
+                    e.getStatusCode(), e.getResponseBodyAsString());
+            throw new BizException(resolvePromptErrorCode(e.getStatusCode().value()), e);
+        } catch (RestClientException e) {
+            log.error("Gemini API 호출 실패 (상품 프롬프트, 네트워크/타임아웃)", e);
+            throw new BizException(PromptErrorCode.GEMINI_API_ERROR, e);
+        }
 
         String promptText = extractText(response);
 
@@ -400,6 +422,15 @@ public class GeminiServiceImpl implements GeminiService {
         GeminiContent userContent = new GeminiContent("user", List.of(userPart));
 
         return new GeminiRequest(systemInstruction, List.of(userContent), null);
+    }
+
+    private PromptErrorCode resolvePromptErrorCode(int statusCode) {
+        return switch (statusCode) {
+            case 429 -> PromptErrorCode.GEMINI_RATE_LIMITED;
+            case 403 -> PromptErrorCode.GEMINI_AUTH_FAILED;
+            case 500, 503, 504 -> PromptErrorCode.GEMINI_UNAVAILABLE;
+            default -> PromptErrorCode.GEMINI_API_ERROR;
+        };
     }
 
     private String extractText(GeminiResponse response) {
