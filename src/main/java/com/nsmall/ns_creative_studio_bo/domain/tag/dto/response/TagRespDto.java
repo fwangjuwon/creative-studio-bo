@@ -23,6 +23,7 @@ public class TagRespDto {
     private Long id;
     private Long tagGroupId;
     private String name;
+    private String tagValue;
     private Integer sortOrder;
     private LocalDateTime initRegiDttm;
     private LocalDateTime finalRvisDttm;
@@ -32,6 +33,7 @@ public class TagRespDto {
                 .id(tag.getId())
                 .tagGroupId(tag.getTagGroupId())
                 .name(tag.getName())
+                .tagValue(tag.getTagValue())
                 .sortOrder(tag.getSortOrder())
                 .initRegiDttm(tag.getInitRegiDttm())
                 .finalRvisDttm(tag.getFinalRvisDttm())
