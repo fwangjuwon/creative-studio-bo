@@ -15,7 +15,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
+
 
 /**
  * Gemini API 호출 서비스 구현체
@@ -131,28 +131,33 @@ public class GeminiServiceImpl implements GeminiService {
      * <pre>
      * 인물 중심 portrait/fashion 사진에 최적화된 구조.
      * 인체 리얼리즘(피부, 눈, 손) 및 uncanny valley 방지 규칙 포함.
+     * 다인원 입력(Person 1 / Person 2 ...)을 이해하고 각 인물의 특성을 반영한다.
      * </pre>
      */
     private static final String SYSTEM_PROMPT_PERSON = """
-        You are a high-end fashion and portrait photographer. 
-        Generate a 3-5 sentence narrative English prompt focusing on human realism.
+        You are a high-end fashion and portrait photographer.
+        Generate a narrative English prompt focusing on human realism.
 
-        STRUCTURE:
-        1. SUBJECT — exact number of people, age, gender, and key physical traits:
-           CRITICAL: Use the EXACT person count from the provided subject value.
-           Do NOT add or remove people under any circumstances.
+        INPUT FORMAT:
+        - Single person: one block of step options
+        - Multiple persons (1~5): "Person 1:", "Person 2:", ... blocks — describe each individually
+        - Group (6+): "Group (6+ people):" block — describe as a cohesive group scene
+
+        STRUCTURE (apply per person or for the group):
+        1. SUBJECT — describe each person's count, age, gender, and key physical traits individually.
+           CRITICAL: Reflect the EXACT characteristics provided for each person. Do NOT mix up traits between persons.
         2. SKIN & TEXTURE: Emphasize 'natural skin pores', 'fine hair details', and 'subtle catchlights in the eyes'.
         3. WARDROBE: Specific fabric materials (Silk, wool, linen) and styling.
-        4. SETTING: Environmental context and atmosphere.
+        4. SETTING: Environmental context and atmosphere that fits all subjects.
         5. LIGHTING & CAMERA: Professional portrait lighting (Rembrandt, Butterfly) and lens (35mm for environmental, 85mm for headshots).
            - Negative Space: Leave intentional empty areas around the subject for editorial use.
-           - Leading Lines: Use environmental elements (walls, paths, light beams) to draw the viewer's eye to the subject.
+           - Leading Lines: Use environmental elements to draw the viewer's eye to the subject.
            - Color Theory: Apply "complementary color palette" for bold contrast or "monochromatic elegance" for refined cohesion.
         6. CLOSING: Choose "Square format.", "Landscape format.", or "Portrait format."
 
         QUALITY RULES:
         - Avoid 'uncanny valley' or 'plastic skin'. Ensure anatomical correctness (especially hands).
-        - Subsurface Scattering (SSS): Emphasize the soft translucency of skin where light scatters beneath the surface (ears, nose tip, cheeks).
+        - Subsurface Scattering (SSS): Emphasize the soft translucency of skin where light scatters beneath the surface.
         - Micro-surface details: Capture fine skin pores, hair strands, and fabric weave texture at ultra-high detail.
 
         NEGATIVE:
@@ -160,18 +165,14 @@ public class GeminiServiceImpl implements GeminiService {
         - no watermark, no text artifacts, no logo
         - no overexposure, no blown highlights
 
-        COMPOSITION:
-        - Use professional composition (rule of thirds, centered composition)
-        - Ensure clear subject focus with strong isolation
-
         HAND & ANATOMY:
         - hands must be natural with correct finger count
         - no extra limbs, no deformed fingers
 
         - Return ONLY the final prompt text.
 
-        EXAMPLE:
-        "A professional portrait of a confident middle-aged woman in a silk navy blazer, posing naturally in a bright minimalist office. Her skin shows natural textures and subtle pores under soft, diffused window lighting that creates gentle catchlights in her eyes. Captured with an 85mm lens at f/1.8, creating a creamy bokeh background. Portrait format."
+        EXAMPLE (2 persons):
+        "A professional portrait of two models: a confident middle-aged woman in a silk navy blazer and a young man in a tailored grey suit, both posing naturally in a bright minimalist office. Their skin shows natural textures and subtle pores under soft diffused window lighting that creates gentle catchlights in their eyes. Captured with a 35mm lens at f/2.8. Landscape format."
         """;
 
     /**
@@ -179,12 +180,16 @@ public class GeminiServiceImpl implements GeminiService {
      *
      * <pre>
      * MidJourney는 쉼표로 구분된 짧은 키워드 나열 방식이 최적화되어 있다.
-     * 문장형이 아닌 설명 키워드 + 기술 파라미터 형식으로 생성.
+     * 다인원 입력을 이해하고 각 인물의 특성을 반영한다.
      * </pre>
      */
     private static final String SYSTEM_PROMPT_PERSON_MIDJOURNEY = """
-        You are an expert Midjourney prompt engineer for fashion portraits. 
+        You are an expert Midjourney prompt engineer for fashion portraits.
         Output ONLY a comma-separated keyword list. No sentences.
+
+        INPUT FORMAT:
+        - Multiple persons (Person 1 / Person 2 ...): reflect each person's traits individually
+        - Group (6+): describe as a cohesive group scene
 
         REQUIRED TAGS:
         Photorealistic, highly detailed skin pores, natural skin texture, subsurface scattering, micro-surface details, masterpiece, 8k, anatomical correctness, natural eyes.
@@ -194,55 +199,62 @@ public class GeminiServiceImpl implements GeminiService {
         - no watermark, no text artifacts, no logo
         - no overexposure, no blown highlights
 
-        COMPOSITION:
-        - Use professional composition (rule of thirds, centered composition)
-        - Ensure clear subject focus with strong isolation
-
         HAND & ANATOMY:
         - hands must be natural with correct finger count
         - no extra limbs, no deformed fingers
 
         STRUCTURE:
-        1. Subject — CRITICAL: Use the EXACT person count from the provided subject value. Do NOT add or remove people.
-           (Pose, Expression) 2. Wardrobe 3. Setting 4. Lighting (Catchlights, Cinematographic) 5. Camera (Depth of field, Negative Space for editorial use, Leading Lines, Color Theory: complementary or monochromatic) 6. Aspect Ratio (--ar X:X)
+        1. Subject (each person's traits individually, or group description)
+        2. Wardrobe 3. Setting 4. Lighting (Catchlights, Cinematographic)
+        5. Camera (Depth of field, Negative Space, Leading Lines, Color Theory)
+        6. Aspect Ratio (--ar X:X)
 
-        EXAMPLE:
-        Young male model, neutral expression, linen shirt, sunny Mediterranean balcony, golden hour lighting, catchlights, shot on 35mm lens, high-end fashion photography, ultra-realistic --ar 2:3
+        EXAMPLE (2 persons):
+        Female model 30s silk blouse, male model 20s linen shirt, together in sunny Mediterranean balcony, golden hour lighting, catchlights, 35mm lens, high-end fashion photography, ultra-realistic --ar 16:9
         """;
 
-    /**
-     * Step별 레이블 (user message 포맷용)
-     */
-    private static final Map<Integer, String> STEP_LABELS = new TreeMap<>(Map.of(
-            1, "Subject",
-            2, "Mood & Style",
-            3, "Realism",
-            4, "Lighting & Setting",
-            5, "Camera"
-    ));
+    // STEP_NAME_TO_LABEL 제거 — step 이름은 DB에서 관리하므로 하드코딩 없이 그대로 사용
+    // Admin에서 단계 추가/수정/삭제 시 코드 변경 없이 자동 반영됨
+
+    /** 인물 프롬프트 생성 시 최대 출력 토큰 수 — 다인원 프롬프트 길이 대응 */
+    private static final int HUMAN_PROMPT_MAX_OUTPUT_TOKENS = 4096;
 
     private final RestClient geminiRestClient;
     private final GeminiProperties geminiProperties;
 
     @Override
-    public String generateHumanPrompt(Map<Integer, List<String>> stepOptionValues,
-                                      String purpose, String additionalNotes, PromptStyle promptStyle,
+    public String generateHumanPrompt(List<Map<String, List<String>>> personsStepValues,
+                                      Map<String, List<String>> commonStepValues,
+                                      boolean isGroup,
+                                      String relationship, String additionalNotes, PromptStyle promptStyle,
                                       String imageAspectRatio) {
         StringBuilder sb = new StringBuilder();
 
-        // step 번호 오름차순으로 user message 구성
-        STEP_LABELS.forEach((stepNumber, label) -> {
-            List<String> values = stepOptionValues.get(stepNumber);
-            if (values != null && !values.isEmpty()) {
-                sb.append("Step ").append(stepNumber)
-                  .append(" (").append(label).append("): ")
-                  .append(String.join(", ", values))
-                  .append("\n");
-            }
-        });
+        // 공통 옵션 (조명/배경, 촬영기술) — 항상 먼저 기술
+        if (commonStepValues != null && !commonStepValues.isEmpty()) {
+            sb.append("Common Settings (apply to all):\n");
+            appendStepValues(sb, commonStepValues);
+            sb.append("\n");
+        }
 
-        if (purpose != null && !purpose.isBlank()) {
-            sb.append("Purpose: ").append(purpose).append("\n");
+        // 인물별 옵션
+        if (isGroup) {
+            sb.append("Group (6+ people) - Subject Options:\n");
+            appendStepValues(sb, personsStepValues.get(0));
+        } else if (personsStepValues.size() == 1) {
+            sb.append("Subject Options:\n");
+            appendStepValues(sb, personsStepValues.get(0));
+        } else {
+            sb.append("Total persons: ").append(personsStepValues.size()).append("\n\n");
+            for (int i = 0; i < personsStepValues.size(); i++) {
+                sb.append("Person ").append(i + 1).append(":\n");
+                appendStepValues(sb, personsStepValues.get(i));
+                sb.append("\n");
+            }
+        }
+
+        if (relationship != null && !relationship.isBlank()) {
+            sb.append("Relationship between persons: ").append(relationship).append("\n");
         }
         if (additionalNotes != null && !additionalNotes.isBlank()) {
             sb.append("Additional notes: ").append(additionalNotes).append("\n");
@@ -251,7 +263,6 @@ public class GeminiServiceImpl implements GeminiService {
 
         String userMessage = sb.toString();
 
-        // promptStyle에 따라 시스템 프롬프트 선택
         boolean isMidJourney = PromptStyle.MID_JOURNEY == promptStyle;
         String systemPromptText = isMidJourney ? SYSTEM_PROMPT_PERSON_MIDJOURNEY : SYSTEM_PROMPT_PERSON;
 
@@ -259,12 +270,13 @@ public class GeminiServiceImpl implements GeminiService {
         GeminiSystemInstruction systemInstruction = new GeminiSystemInstruction(List.of(systemPart));
         GeminiPart userPart = new GeminiPart(userMessage);
         GeminiContent userContent = new GeminiContent("user", List.of(userPart));
-        GeminiRequest requestBody = new GeminiRequest(systemInstruction, List.of(userContent));
+        GeminiGenerationConfig generationConfig = new GeminiGenerationConfig(HUMAN_PROMPT_MAX_OUTPUT_TOKENS);
+        GeminiRequest requestBody = new GeminiRequest(systemInstruction, List.of(userContent), generationConfig);
 
         String uri = String.format("/models/%s:generateContent", geminiProperties.getModel());
 
-        log.debug("Gemini 인물 사진 API 호출 — model: {}, style: {}, steps: {}",
-                geminiProperties.getModel(), promptStyle, stepOptionValues.keySet());
+        log.debug("Gemini 인물 사진 API 호출 — model: {}, style: {}, personCount: {}, isGroup: {}",
+                geminiProperties.getModel(), promptStyle, personsStepValues.size(), isGroup);
 
         GeminiResponse response;
         try {
@@ -288,7 +300,6 @@ public class GeminiServiceImpl implements GeminiService {
         String formatSuffix = toFormatSuffix(imageAspectRatio, isMidJourney);
         if (formatSuffix != null) {
             if (isMidJourney) {
-                // Gemini가 자체 생성한 --ar X:X 제거 후 사용자 선택 비율로 교체
                 promptText = promptText.strip()
                         .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
                         .strip() + ", " + formatSuffix;
@@ -300,6 +311,16 @@ public class GeminiServiceImpl implements GeminiService {
         }
 
         return promptText;
+    }
+
+    private void appendStepValues(StringBuilder sb, Map<String, List<String>> stepOptionValues) {
+        stepOptionValues.forEach((stepName, values) -> {
+            if (values != null && !values.isEmpty()) {
+                sb.append("  ").append(stepName).append(": ")
+                  .append(String.join(", ", values))
+                  .append("\n");
+            }
+        });
     }
 
     @Override
@@ -400,7 +421,7 @@ public class GeminiServiceImpl implements GeminiService {
         GeminiPart userPart = new GeminiPart(userMessage);
         GeminiContent userContent = new GeminiContent("user", List.of(userPart));
 
-        return new GeminiRequest(systemInstruction, List.of(userContent));
+        return new GeminiRequest(systemInstruction, List.of(userContent), null);
     }
 
     private PromptErrorCode resolvePromptErrorCode(int statusCode) {
@@ -443,7 +464,12 @@ public class GeminiServiceImpl implements GeminiService {
 
     private record GeminiRequest(
             @JsonProperty("system_instruction") GeminiSystemInstruction systemInstruction,
-            List<GeminiContent> contents
+            List<GeminiContent> contents,
+            @JsonProperty("generation_config") GeminiGenerationConfig generationConfig
+    ) {}
+
+    private record GeminiGenerationConfig(
+            @JsonProperty("max_output_tokens") int maxOutputTokens
     ) {}
 
     private record GeminiSystemInstruction(List<GeminiPart> parts) {}

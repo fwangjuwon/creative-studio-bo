@@ -38,18 +38,6 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "USER")
-    @DisplayName("[400] 인물 프롬프트 생성 - selections null")
-    void 인물프롬프트_생성_selections_null_400() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @WithMockUser(roles = "USER")
     @DisplayName("[400] 인물 프롬프트 생성 - Body 없음")
     void 인물프롬프트_생성_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL)
@@ -117,7 +105,19 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
         mockMvc.perform(put(BASE_URL + "/steps/{id}", 1L)
                         .contentType(APPLICATION_JSON)
                         .content("""
-                                {"name": "인물 유형"}
+                                {"stepCode": "A", "name": "인물 유형"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 단계 수정 - stepCode 빈 값")
+    void 단계_수정_stepCode_빈값_400() throws Exception {
+        mockMvc.perform(put(BASE_URL + "/steps/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"stepNumber": 1, "stepCode": "", "name": "인물 유형"}
                                 """))
                 .andExpect(status().isBadRequest());
     }
@@ -129,7 +129,7 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
         mockMvc.perform(put(BASE_URL + "/steps/{id}", 1L)
                         .contentType(APPLICATION_JSON)
                         .content("""
-                                {"stepNumber": 1, "name": ""}
+                                {"stepNumber": 1, "stepCode": "A", "name": ""}
                                 """))
                 .andExpect(status().isBadRequest());
     }
@@ -142,7 +142,7 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
         mockMvc.perform(put(BASE_URL + "/steps/{id}", id)
                         .contentType(APPLICATION_JSON)
                         .content("""
-                                {"stepNumber": 1, "name": "인물 유형"}
+                                {"stepNumber": 1, "stepCode": "A", "name": "인물 유형"}
                                 """))
                 .andExpect(status().isBadRequest());
     }
@@ -208,7 +208,7 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
         mockMvc.perform(put(BASE_URL + "/steps/{id}", 1L)
                         .contentType(APPLICATION_JSON)
                         .content("""
-                                {"stepNumber": 1, "name": "인물 유형"}
+                                {"stepNumber": 1, "stepCode": "A", "name": "인물 유형"}
                                 """))
                 .andExpect(status().isForbidden());
     }

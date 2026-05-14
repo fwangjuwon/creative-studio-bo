@@ -28,6 +28,13 @@ public class HumanPromptHistoryOption {
     private Long id;
     private Long promptHistoryId;
     private Long optionId;
+    /**
+     * 인물 인덱스.
+     * -1: 공통 단계 옵션 (조명/배경, 촬영기술)
+     *  0 이상: 인물별 개별 옵션 (0 = 사람1, 1 = 사람2, ...)
+     *  6명 이상 단체 모드의 피사체 옵션은 0으로 저장
+     */
+    private Integer personIndex;
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;

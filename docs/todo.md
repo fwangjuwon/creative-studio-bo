@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ refactor/nsist-emp-cd-db 완료
-> 최종 업데이트: 2026-05-11 (nsist SSO empCd 매핑을 별도 테이블(nsist_emp_mapping)로 전환)
+> 상태: ✅ feat/human-prompt-per-person-options 완료
+> 최종 업데이트: 2026-05-12 (인물 프롬프트 인원별 개별 옵션 선택 기능)
 
 ---
 
@@ -18,6 +18,85 @@
 ---
 
 ## 완료
+
+### feat/human-prompt-per-person-options. 인물 프롬프트 인원별 개별 옵션 선택
+
+> 인물 프롬프트 생성 시 N명 선택 → 각 인물별로 옵션을 독립적으로 선택할 수 있도록 변경.
+> 공통 설정(조명/촬영)과 인물별 개별 설정(피사체 정의)을 분리하는 단계 구조 개편 포함.
+> Admin이 단계/속성/선택지를 자유롭게 추가·수정·삭제해도 코드 변경 없이 자동 반영.
+
+#### DB 스키마 변경
+- [x] `human_prompt_step` — `is_common BOOLEAN NOT NULL DEFAULT FALSE` 컬럼 추가
+- [x] `human_prompt_history_option` — `person_index INTEGER NOT NULL DEFAULT 0` 컬럼 추가
+  - personIndex -1: 공통 옵션 / 0 이상: 인물 인덱스
+- [x] `db/schema.sql`, `db/data.sql` 반영
+  - 단계 구조 3단계로 개편: A(핵심피사체, 개별), B(조명/배경, 공통), C(촬영기술, 공통)
+  - 핵심 피사체 정의 attr 확장: 표정, 시선 처리, 의상 스타일, 헤어스타일, 헤어 컬러, 체형 추가
+  - 인원수 attr 제거 (FO 인원수 선택 UI로 대체)
+
+#### Entity 변경
+- [x] `HumanPromptStep` — `isCommon` 필드 추가
+- [x] `HumanPromptHistoryOption` — `personIndex` 필드 추가
+- [x] `HumanPromptOption` — `stepName` 필드 추가 (selectByIds JOIN 조회 시 포함)
+
+#### DTO 변경
+- [x] `HumanPromptCreateReqDto` — 구조 전면 개편
+  - 제거: `selections`(단일 flat map), `purpose`
+  - 추가: `persons(List<PersonSelectionDto>)`, `isGroup(Boolean)`, `commonSelections`, `relationship`
+- [x] `PersonSelectionDto` 신규 생성 — 인물 1명의 selections 담는 내부 전용 DTO
+- [x] `HumanPromptStepCreateReqDto` / `HumanPromptStepUpdateReqDto` — `isCommon`, `stepCode`(수정 가능) 추가
+- [x] `HumanPromptStepSimpleRespDto` — `isCommon` 추가 (`@JsonProperty("isCommon")` 명시)
+- [x] `HumanPromptStepRespDto` — `isCommon` 추가 (`@JsonProperty("isCommon")` 명시)
+- [x] `PromptHistoryRespDto` — `optionNames` 제거 → `personOptions(List<PersonOptionGroupDto>)` 교체
+  - `PersonOptionGroupDto`: personIndex, label("공통"/"사람 1"...), optionNames
+
+#### Mapper 변경
+- [x] `HumanPromptOptionMapper.xml` — `selectByIds`에 `s.name AS step_name` 추가
+- [x] `HumanPromptHistoryOptionMapper.xml` — `insertBatch`에 `person_index` 추가, `selectOptionDetailsByHistoryIds`에 `person_index` 추가 및 정렬 조건 추가
+- [x] `HumanPromptAttrMapper` — `selectRequiredAttrIdsByStepIsCommon(boolean isCommon)` 추가 (공통/개별 step 분리 검증용)
+- [x] `HumanPromptStepMapper.xml` — `insert`/`update`에 `is_common`, `step_code` 추가, `selectById`에 `is_common` 추가
+- [x] `HumanOptionDetailDto` — `personIndex` 필드 추가
+
+#### Service 변경
+- [x] `GeminiService.generateHumanPrompt()` — 시그니처 변경
+  - `Map<Integer, List<String>>` → `Map<String, List<String>>` (step_number → step 이름 기반)
+  - `isGroup`, `relationship` 파라미터 추가
+  - `STEP_LABELS` 하드코딩 제거 → DB step 이름 직접 사용 (Admin 변경 시 자동 반영)
+  - `generationConfig(maxOutputTokens=4096)` 추가 (다인원 프롬프트 길이 대응)
+- [x] `HumanPromptServiceImpl.createPrompt()` — 전면 개편
+  - 공통/개별 step 필수 attr 분리 검증
+  - 인물별 옵션 처리 (personsStepValues 구성)
+  - personIndex 포함 HumanPromptHistoryOption 배치 저장
+- [x] `HumanPromptStepServiceImpl` — `isCommon`, `stepCode` 수정 지원 추가
+- [x] `PromptServiceImpl.getPromptHistories()` — PERSON 옵션 그룹핑 로직 변경
+  - historyId → personIndex → optionNames 2단계 groupingBy
+  - PersonOptionGroupDto 변환 (personIndex 오름차순 정렬, label 생성)
+
+#### FO 변경 (ns-creative-studio-fo)
+- [x] `PromptNewView.vue` — 인물 탭 전면 개편
+  - 인원수 선택 UI (1~5명 개별 탭 / 6명 이상 공통 패널)
+  - 공통 옵션(촬영 환경 설정)과 인물별 옵션 분리 렌더링
+  - `commonSelectedOptions`, `personRelationship` 상태 추가
+  - API 요청: `persons` 배열 + `commonSelections` + `relationship`
+- [x] `PromptHistoryView.vue` — personOptions 기준 인물별 그룹 표시
+  - 공통 옵션: teal / 인물별 옵션: deep-purple 색상 구분
+- [x] `HumanPromptStructureView.vue` — 인물 속성 관리 UI 개선
+  - 단계 목록에 공통/개별 뱃지 표시
+  - 단계 추가/수정 다이얼로그에 isCommon 스위치 토글 추가
+  - ↑ ↓ 버튼으로 단계 순서 변경 (step_number 스왑)
+  - 단계 코드(stepCode) 수정 가능하도록 변경
+
+#### 테스트
+- [x] `HumanPromptServiceTest` — 전면 재작성
+  - 단계 구조 검증: 특정 코드 하드코딩 제거 → 유연한 검증 (is_common 구분, 단계 존재 여부)
+  - 최소 DTO 헬퍼: `공통_최소_선택지_구성()`, `개별_최소_선택지_구성()`, `최소_DTO_구성_1명()`
+  - mock stub: `any()` 5개 → 7개 (`anyBoolean()` 포함)
+  - 신규 테스트: 2명 + 관계 입력, personOptions 이력 조회 검증
+- [x] `HumanPromptControllerTest` — `selections null → 400` 테스트 제거 (더 이상 @NotNull 없음), `stepCode` 관련 검증 추가
+- [x] `HumanPromptStepServiceTest` — update DTO에 `stepCode` 추가
+- [x] `HumanPromptOptionServiceTest` — insertBatch 시 `personIndex(0)` 명시 추가
+
+---
 
 ### refactor/nsist-emp-cd-db. nsist SSO empCd 매핑을 별도 테이블로 전환
 

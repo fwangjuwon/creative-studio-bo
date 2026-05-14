@@ -226,22 +226,42 @@ public class PromptServiceImpl implements PromptService {
                             Collectors.mapping(GoodsTagDetailDto::getTagName, Collectors.toList())));
         }
 
-        // 쿼리 4: HUMAN — 옵션명 배치 조회
-        Map<Long, List<String>> optionNamesMap = Map.of();
+        // 쿼리 4: HUMAN — 옵션 배치 조회 (personIndex 포함)
+        Map<Long, List<PromptHistoryRespDto.PersonOptionGroupDto>> personOptionsMap = Map.of();
         if (!humanHistoryIds.isEmpty()) {
-            optionNamesMap = humanPromptHistoryOptionMapper
-                    .selectOptionDetailsByHistoryIds(humanHistoryIds)
-                    .stream()
+            List<HumanOptionDetailDto> details = humanPromptHistoryOptionMapper
+                    .selectOptionDetailsByHistoryIds(humanHistoryIds);
+
+            // historyId → ( personIndex → optionNames ) 2단계 그룹핑
+            Map<Long, Map<Integer, List<String>>> grouped = details.stream()
                     .collect(Collectors.groupingBy(
                             HumanOptionDetailDto::getPromptHistoryId,
-                            Collectors.mapping(HumanOptionDetailDto::getOptionName, Collectors.toList())));
+                            Collectors.groupingBy(
+                                    HumanOptionDetailDto::getPersonIndex,
+                                    Collectors.mapping(HumanOptionDetailDto::getOptionName, Collectors.toList())
+                            )
+                    ));
+
+            // personIndex 오름차순 정렬 후 PersonOptionGroupDto 변환
+            personOptionsMap = grouped.entrySet().stream()
+                    .collect(Collectors.toMap(
+                            Map.Entry::getKey,
+                            e -> e.getValue().entrySet().stream()
+                                    .sorted(Map.Entry.comparingByKey())
+                                    .map(pe -> PromptHistoryRespDto.PersonOptionGroupDto.builder()
+                                            .personIndex(pe.getKey())
+                                            .label(pe.getKey() == -1 ? "공통" : "사람 " + (pe.getKey() + 1))
+                                            .optionNames(pe.getValue())
+                                            .build())
+                                    .toList()
+                    ));
         }
 
         // Java에서 조립 (추가 쿼리 없음)
         final Map<Long, String> finalCategoryPathMap = categoryPathMap;
         final Map<Long, List<Long>> finalTagIdsMap = tagIdsMap;
         final Map<Long, List<String>> finalTagNamesMap = tagNamesMap;
-        final Map<Long, List<String>> finalOptionNamesMap = optionNamesMap;
+        final Map<Long, List<PromptHistoryRespDto.PersonOptionGroupDto>> finalPersonOptionsMap = personOptionsMap;
 
         List<PromptHistoryRespDto> items = list.stream()
                 .map(history -> {
@@ -253,8 +273,9 @@ public class PromptServiceImpl implements PromptService {
                         List<String> tagNames = finalTagNamesMap.getOrDefault(history.getId(), List.of());
                         return PromptHistoryRespDto.fromGoods(history, categoryPath, tagIds, tagNames, imageBaseUrl);
                     } else {
-                        List<String> optionNames = finalOptionNamesMap.getOrDefault(history.getId(), List.of());
-                        return PromptHistoryRespDto.fromHuman(history, optionNames, imageBaseUrl);
+                        List<PromptHistoryRespDto.PersonOptionGroupDto> personOptions =
+                                finalPersonOptionsMap.getOrDefault(history.getId(), List.of());
+                        return PromptHistoryRespDto.fromHuman(history, personOptions, imageBaseUrl);
                     }
                 })
                 .toList();

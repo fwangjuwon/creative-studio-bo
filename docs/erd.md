@@ -150,8 +150,8 @@ LCS: 식품 (parent_id = NULL)
 | `prompt_text` | TEXT | NOT NULL | Gemini가 생성한 영문 프롬프트 |
 | `image_url` | VARCHAR(500) | nullable | NanoBanana 이미지 생성 URL (DB에는 상대 경로 저장, 응답 시 `image.base-url` prefix를 붙여 절대 URL 조립) |
 | `image_aspect_ratio` | VARCHAR(10) | nullable | 이미지 생성 비율 (예: `1:1`, `4:3`, `16:9`, `9:16`). 상품·인물 공통. 미입력 시 Gemini가 기본 비율 사용 |
-| `purpose` | TEXT | nullable | 인물 프롬프트 생성 목적 (상품은 NULL) |
-| `additional_notes` | TEXT | nullable | 인물 프롬프트 추가 지시사항 (상품은 NULL) |
+| `purpose` | TEXT | nullable | 생성 목적 (현재 미사용, NULL 저장) |
+| `additional_notes` | TEXT | nullable | 추가 지시사항 (상품·인물 공통, 선택 입력) |
 | `init_regi_pic` | VARCHAR | | 등록자 |
 | `init_regi_dttm` | TIMESTAMP | | 등록일시 (일일 사용량 집계 기준) |
 | `final_rvis_pic` | VARCHAR | | 최종수정자 |
@@ -186,10 +186,31 @@ LCS: 식품 (parent_id = NULL)
 | `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 매핑 고유 ID |
 | `prompt_history_id` | BIGINT | NOT NULL | 프롬프트 ID (논리 FK → `prompt_history.id`) |
 | `option_id` | BIGINT | NOT NULL | 선택한 옵션 ID (논리 FK → `human_prompt_option.id`) |
+| `person_index` | INTEGER | NOT NULL DEFAULT 0 | 인물 인덱스 (-1: 공통 옵션, 0 이상: 인물 인덱스) |
 | `init_regi_pic` | VARCHAR | | 등록자 |
 | `init_regi_dttm` | TIMESTAMP | | 등록일시 |
 | `final_rvis_pic` | VARCHAR | | 최종수정자 |
 | `final_rvis_dttm` | TIMESTAMP | | 최종수정일시 |
+
+---
+
+### `human_prompt_step`
+
+인물 이미지 프롬프트 생성 단계 정의. Admin이 단계를 자유롭게 추가/수정/삭제할 수 있으며 코드 변경 없이 프롬프트 생성에 자동 반영된다.
+
+| 컬럼명 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 단계 고유 ID |
+| `step_number` | INT | NOT NULL | 단계 순서 번호 |
+| `step_code` | VARCHAR(2) | NOT NULL | 단계 식별 코드 (예: A, B, C) |
+| `name` | VARCHAR(100) | NOT NULL | 단계명 (Gemini 프롬프트 구성에 직접 사용) |
+| `is_common` | BOOLEAN | NOT NULL DEFAULT FALSE | 공통 단계 여부 (true: 전원 공통 적용, false: 인물별 개별 선택) |
+| `init_regi_pic` | VARCHAR | | 등록자 |
+| `init_regi_dttm` | TIMESTAMP | | 등록일시 |
+| `final_rvis_pic` | VARCHAR | | 최종수정자 |
+| `final_rvis_dttm` | TIMESTAMP | | 최종수정일시 |
+
+> `is_common=true` 단계(예: 조명/배경, 촬영기술)는 FO에서 1번만 선택. `is_common=false` 단계(예: 핵심 피사체 정의)는 인물별로 개별 선택.
 
 ---
 
@@ -255,6 +276,7 @@ erDiagram
         bigint id PK
         bigint prompt_history_id
         bigint option_id
+        int person_index
     }
 
     HUMAN_PROMPT_STEP {
@@ -262,6 +284,7 @@ erDiagram
         int step_number
         varchar step_code
         varchar name
+        boolean is_common
     }
 
     HUMAN_PROMPT_ATTR {

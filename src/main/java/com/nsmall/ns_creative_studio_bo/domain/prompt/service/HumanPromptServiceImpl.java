@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,13 +41,15 @@ import java.util.Map;
  * <pre>
  * 프롬프트 생성 흐름:
  *   1. 사용자 조회 + 일일 한도 체크
- *   2. 선택된 모든 optionId를 플랫 목록으로 수집
- *   3. 필수(is_required) attr 선택 여부 검증
- *   4. selectByIds(ids) 로 option 정보 + step_number 조회
- *   5. stepNumber 기준 Map 구성
+ *   2. 모드 판별 — isGroup(6명 이상 단체) vs persons(1~5명 개별)
+ *   3. 공통 step 필수 attr 검증 + 개별 step 필수 attr 인물별 검증
+ *   4. 공통 옵션(is_common=true) → stepName 기준 Map 구성
+ *   5. 인물별 옵션(is_common=false) → 각 인물별 stepName 기준 Map 구성
  *   6. GeminiService.generateHumanPrompt() 호출
  *   7. PromptHistory 저장 (promptType='PERSON', categoryId=null)
- *   8. HumanPromptHistoryOption 저장 (선택 옵션 매핑)
+ *   8. HumanPromptHistoryOption 저장 (personIndex 포함 배치 insert)
+ *      - 공통 옵션: personIndex = -1
+ *      - 인물별 옵션: personIndex = 0~N
  *   9. 생성된 이력 DTO 반환
  * </pre>
  *
@@ -91,49 +94,130 @@ public class HumanPromptServiceImpl implements HumanPromptService {
             throw new BizException(PromptErrorCode.DAILY_LIMIT_EXCEEDED);
         }
 
-        // 2. 선택된 모든 optionId 플랫 목록 수집
-        List<Long> allOptionIds = dto.getSelections().values().stream()
-                .flatMap(List::stream)
-                .distinct()
-                .toList();
+        // 2. 모드 판별 — 6명 이상(단체) vs 1~5명(개별)
+        boolean isGroup = Boolean.TRUE.equals(dto.getIsGroup());
 
-        if (allOptionIds.isEmpty()) {
-            throw new BizException(HumanPromptErrorCode.NO_OPTIONS_SELECTED);
+        List<Map<Long, List<Long>>> allPersonsSelections;
+        if (isGroup) {
+            if (dto.getSelections() == null || dto.getSelections().isEmpty()) {
+                throw new BizException(HumanPromptErrorCode.NO_OPTIONS_SELECTED);
+            }
+            allPersonsSelections = List.of(dto.getSelections());
+        } else {
+            if (dto.getPersons() == null || dto.getPersons().isEmpty()) {
+                throw new BizException(HumanPromptErrorCode.NO_OPTIONS_SELECTED);
+            }
+            allPersonsSelections = dto.getPersons().stream()
+                    .map(p -> p.getSelections())
+                    .toList();
         }
 
-        // 3. 필수 attr 선택 여부 검증
-        List<Long> requiredAttrIds = humanPromptAttrMapper.selectRequiredAttrIds();
-        boolean hasAllRequired = requiredAttrIds.stream()
+        // 3. 필수 attr 선택 여부 검증 — 공통/개별 step 분리 검증
+        // 3-1. 공통 step 필수 attr 검증 (조명/촬영)
+        List<Long> commonRequiredAttrIds = humanPromptAttrMapper.selectRequiredAttrIdsByStepIsCommon(true);
+        Map<Long, List<Long>> commonSelectionsMap = dto.getCommonSelections() != null ? dto.getCommonSelections() : Map.of();
+        boolean hasAllCommonRequired = commonRequiredAttrIds.stream()
                 .allMatch(attrId -> {
-                    List<Long> selected = dto.getSelections().get(attrId);
+                    List<Long> selected = commonSelectionsMap.get(attrId);
                     return selected != null && !selected.isEmpty();
                 });
-        if (!hasAllRequired) {
-            log.warn("필수 항목 미선택 — userId={}, selections={}", userId, dto.getSelections());
+        if (!hasAllCommonRequired) {
+            log.warn("공통 필수 항목 미선택 — userId={}", userId);
             throw new BizException(HumanPromptErrorCode.REQUIRED_OPTION_MISSING);
         }
 
-        // 4. option 정보 + step_number 조회
-        List<HumanPromptOption> options = humanPromptOptionMapper.selectByIds(allOptionIds);
-
-        // 5. stepNumber 기준 Map<stepNumber, List<promptValue>> 구성
-        Map<Integer, List<String>> stepOptionValues = new HashMap<>();
-        for (HumanPromptOption option : options) {
-            stepOptionValues
-                    .computeIfAbsent(option.getStepNumber(), k -> new ArrayList<>())
-                    .add(option.getPromptValue());
+        // 3-2. 개별 step 필수 attr 검증 (피사체/분위기/리얼리즘)
+        List<Long> individualRequiredAttrIds = humanPromptAttrMapper.selectRequiredAttrIdsByStepIsCommon(false);
+        for (int i = 0; i < allPersonsSelections.size(); i++) {
+            Map<Long, List<Long>> selections = allPersonsSelections.get(i);
+            boolean hasAllRequired = individualRequiredAttrIds.stream()
+                    .allMatch(attrId -> {
+                        List<Long> selected = selections.get(attrId);
+                        return selected != null && !selected.isEmpty();
+                    });
+            if (!hasAllRequired) {
+                String label = isGroup ? "공통 옵션" : "사람 " + (i + 1);
+                log.warn("필수 항목 미선택 — userId={}, {}", userId, label);
+                throw new BizException(HumanPromptErrorCode.REQUIRED_OPTION_MISSING);
+            }
         }
 
-        log.debug("인간 이미지 프롬프트 생성 — stepOptionValues: {}", stepOptionValues);
-
-        // 6. Gemini 호출 (promptStyle 기본값: NANO_BANANA)
-        PromptStyle style = dto.getPromptStyle() != null ? dto.getPromptStyle() : PromptStyle.NANO_BANANA;
-        String promptText = geminiService.generateHumanPrompt(stepOptionValues, dto.getPurpose(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio());
-
-        // 7. PromptHistory 저장 (PERSON 타입, categoryId=null)
+        // 4. 공통 옵션(조명/촬영) 조회 → stepName 기준 Map 구성 + HistoryOption 버퍼에 추가
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
+        List<HumanPromptHistoryOption> historyOptionsBuf = new ArrayList<>();
+        Map<String, List<String>> commonStepValues = new LinkedHashMap<>();
+
+        if (dto.getCommonSelections() != null && !dto.getCommonSelections().isEmpty()) {
+            List<Long> commonOptionIds = dto.getCommonSelections().values().stream()
+                    .flatMap(List::stream)
+                    .distinct()
+                    .toList();
+            List<HumanPromptOption> commonOptions = humanPromptOptionMapper.selectByIds(commonOptionIds);
+            for (HumanPromptOption option : commonOptions) {
+                commonStepValues.computeIfAbsent(option.getStepName(), k -> new ArrayList<>())
+                        .add(option.getPromptValue());
+            }
+            // 공통 옵션은 personIndex = -1 로 구분하여 저장
+            for (Long optionId : commonOptionIds) {
+                historyOptionsBuf.add(HumanPromptHistoryOption.builder()
+                        .optionId(optionId)
+                        .personIndex(-1)
+                        .initRegiPic(requesterId)
+                        .initRegiDttm(now)
+                        .finalRvisPic(requesterId)
+                        .finalRvisDttm(now)
+                        .build());
+            }
+        }
+
+        // 5. 인물별 optionId 조회 → stepName 기준 Map 구성 + HistoryOption 레코드 준비
+        List<Map<String, List<String>>> personsStepValues = new ArrayList<>();
+
+        for (int personIdx = 0; personIdx < allPersonsSelections.size(); personIdx++) {
+            Map<Long, List<Long>> selections = allPersonsSelections.get(personIdx);
+            List<Long> optionIds = selections.values().stream()
+                    .flatMap(List::stream)
+                    .distinct()
+                    .toList();
+
+            if (optionIds.isEmpty()) {
+                throw new BizException(HumanPromptErrorCode.NO_OPTIONS_SELECTED);
+            }
+
+            List<HumanPromptOption> options = humanPromptOptionMapper.selectByIds(optionIds);
+
+            Map<String, List<String>> stepValues = new LinkedHashMap<>();
+            for (HumanPromptOption option : options) {
+                stepValues.computeIfAbsent(option.getStepName(), k -> new ArrayList<>())
+                        .add(option.getPromptValue());
+            }
+            personsStepValues.add(stepValues);
+
+            final int idx = personIdx;
+            for (Long optionId : optionIds) {
+                historyOptionsBuf.add(HumanPromptHistoryOption.builder()
+                        .optionId(optionId)
+                        .personIndex(idx)
+                        .initRegiPic(requesterId)
+                        .initRegiDttm(now)
+                        .finalRvisPic(requesterId)
+                        .finalRvisDttm(now)
+                        .build());
+            }
+        }
+
+        log.debug("인물 프롬프트 생성 — personCount={}, isGroup={}, commonSteps={}",
+                personsStepValues.size(), isGroup, commonStepValues.keySet());
+
+        // 6. Gemini 호출
+        PromptStyle style = dto.getPromptStyle() != null ? dto.getPromptStyle() : PromptStyle.NANO_BANANA;
+        String promptText = geminiService.generateHumanPrompt(
+                personsStepValues, commonStepValues, isGroup,
+                dto.getRelationship(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio());
+
+        // 7. PromptHistory 저장
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
                 .categoryId(null)
@@ -142,7 +226,7 @@ public class HumanPromptServiceImpl implements HumanPromptService {
                 .promptText(promptText)
                 .imageAspectRatio(dto.getImageAspectRatio())
                 .imageUrl(null)
-                .purpose(dto.getPurpose())
+                .purpose(null)
                 .additionalNotes(dto.getAdditionalNotes())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
@@ -152,25 +236,25 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
         promptHistoryMapper.insert(history);
 
-        // 8. HumanPromptHistoryOption 저장 (선택 옵션 매핑)
-        List<HumanPromptHistoryOption> historyOptions = allOptionIds.stream()
-                .map(optionId -> HumanPromptHistoryOption.builder()
+        // 8. HumanPromptHistoryOption 저장 (promptHistoryId 주입 후 배치 insert)
+        List<HumanPromptHistoryOption> historyOptions = historyOptionsBuf.stream()
+                .map(o -> HumanPromptHistoryOption.builder()
                         .promptHistoryId(history.getId())
-                        .optionId(optionId)
-                        .initRegiPic(requesterId)
-                        .initRegiDttm(now)
-                        .finalRvisPic(requesterId)
-                        .finalRvisDttm(now)
+                        .optionId(o.getOptionId())
+                        .personIndex(o.getPersonIndex())
+                        .initRegiPic(o.getInitRegiPic())
+                        .initRegiDttm(o.getInitRegiDttm())
+                        .finalRvisPic(o.getFinalRvisPic())
+                        .finalRvisDttm(o.getFinalRvisDttm())
                         .build())
                 .toList();
         humanPromptHistoryOptionMapper.insertBatch(historyOptions);
 
-        log.info("인물 프롬프트 이력 저장 완료 — userId={}, historyId={}, optionCount={}",
-                userId, history.getId(), historyOptions.size());
+        log.info("인물 프롬프트 이력 저장 완료 — userId={}, historyId={}, personCount={}, optionCount={}",
+                userId, history.getId(), personsStepValues.size(), historyOptions.size());
 
-        // 9. 응답 반환
-        List<String> savedOptionNames = humanPromptHistoryOptionMapper.selectOptionNamesByHistoryId(history.getId());
-        return PromptHistoryRespDto.fromHuman(history, savedOptionNames, imageBaseUrl);
+        // 9. 응답 반환 (생성 직후 응답은 personOptions 빈 목록 — 이력 조회 시 상세 표시)
+        return PromptHistoryRespDto.fromHuman(history, List.of(), imageBaseUrl);
     }
 
     @Override

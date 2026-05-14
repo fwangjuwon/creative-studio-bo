@@ -189,6 +189,7 @@ CREATE TABLE human_prompt_step (
     step_number     INT             NOT NULL,           -- 1~5
     step_code       VARCHAR(2)      NOT NULL,           -- A/B/C/D/E
     name            VARCHAR(100)    NOT NULL,
+    is_common       BOOLEAN         NOT NULL DEFAULT FALSE, -- TRUE: 전체 공통 선택 / FALSE: 인물별 개별 선택
     init_regi_pic   VARCHAR(50),
     init_regi_dttm  TIMESTAMP,
     final_rvis_pic  VARCHAR(50),
@@ -248,6 +249,7 @@ CREATE TABLE human_prompt_history_option (
     id                  BIGINT      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     prompt_history_id   BIGINT      NOT NULL,           -- 논리 FK → prompt_history.id
     option_id           BIGINT      NOT NULL,           -- 논리 FK → human_prompt_option.id
+    person_index        INTEGER     NOT NULL DEFAULT 0, -- 인물 인덱스 (0-based). 1~5명: 0~4, 6명 이상: 0 고정
     init_regi_pic       VARCHAR(50),
     init_regi_dttm      TIMESTAMP,
     final_rvis_pic      VARCHAR(50),

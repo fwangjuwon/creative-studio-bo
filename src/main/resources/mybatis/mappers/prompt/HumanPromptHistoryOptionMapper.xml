@@ -13,6 +13,7 @@
         INSERT INTO human_prompt_history_option (
             prompt_history_id,
             option_id,
+            person_index,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -22,6 +23,7 @@
             (
                 #{item.promptHistoryId},
                 #{item.optionId},
+                #{item.personIndex},
                 #{item.initRegiPic},
                 #{item.initRegiDttm},
                 #{item.finalRvisPic},
@@ -52,6 +54,7 @@
     <select id="selectOptionDetailsByHistoryIds" resultType="HumanOptionDetailDto">
         SELECT
             hpho.prompt_history_id,
+            hpho.person_index,
             hpo.name AS option_name
         FROM human_prompt_history_option hpho
         JOIN human_prompt_option hpo ON hpho.option_id = hpo.id
@@ -61,7 +64,7 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        ORDER BY hpho.prompt_history_id ASC, hps.step_number ASC, hpa.sort_order ASC, hpo.sort_order ASC
+        ORDER BY hpho.prompt_history_id ASC, hpho.person_index ASC, hps.step_number ASC, hpa.sort_order ASC, hpo.sort_order ASC
     </select>
 
     <delete id="deleteByPromptHistoryId">

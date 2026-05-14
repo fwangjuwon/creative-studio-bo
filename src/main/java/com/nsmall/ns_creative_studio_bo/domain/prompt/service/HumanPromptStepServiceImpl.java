@@ -45,6 +45,7 @@ public class HumanPromptStepServiceImpl implements HumanPromptStepService {
                 .stepNumber(dto.getStepNumber())
                 .stepCode(dto.getStepCode())
                 .name(dto.getName())
+                .isCommon(dto.isCommon())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -68,13 +69,19 @@ public class HumanPromptStepServiceImpl implements HumanPromptStepService {
             throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_NAME,
                     "이미 존재하는 단계명입니다. name=" + dto.getName());
         }
+        if (humanPromptStepMapper.existsByStepCode(dto.getStepCode(), id)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_CODE,
+                    "이미 존재하는 단계 코드입니다. stepCode=" + dto.getStepCode());
+        }
 
         String requesterId = SecurityUtil.getCurrentLoginId();
 
         HumanPromptStep updated = HumanPromptStep.builder()
                 .id(id)
                 .stepNumber(dto.getStepNumber())
+                .stepCode(dto.getStepCode().toUpperCase())
                 .name(dto.getName())
+                .isCommon(dto.isCommon())
                 .finalRvisPic(requesterId)
                 .finalRvisDttm(LocalDateTime.now())
                 .build();
