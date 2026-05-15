@@ -310,7 +310,7 @@ INSERT INTO tag_group (name, is_multi_select, sort_order, init_regi_pic, init_re
 INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ((SELECT id FROM tag_group WHERE name = '장면'), '흰 배경',               1,  'system', NOW(), 'system', NOW()),
 ((SELECT id FROM tag_group WHERE name = '장면'), '라이프스타일',           2,  'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '장면'), '주방/식당',              3,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '주방/식탁',              3,  'system', NOW(), 'system', NOW()),
 ((SELECT id FROM tag_group WHERE name = '장면'), '욕실',                   4,  'system', NOW(), 'system', NOW()),
 ((SELECT id FROM tag_group WHERE name = '장면'), '침실',                   5,  'system', NOW(), 'system', NOW()),
 ((SELECT id FROM tag_group WHERE name = '장면'), '야외/자연',              6,  'system', NOW(), 'system', NOW()),
@@ -377,11 +377,11 @@ INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, 
 INSERT INTO tag_group (name, is_multi_select, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ('이미지 사이즈', FALSE, 99, 'system', NOW(), 'system', NOW());
 
-INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '1:1',       1, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '4:3',       2, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '16:9',      3, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '9:16',      4, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '365:825',   5, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '9216:1728', 6, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '12288:1728',7, 'system', NOW(), 'system', NOW());
+INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm, tag_value) VALUES
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '1:1',        1, 'system', NOW(), 'system', NOW(), NULL),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '4:3',        2, 'system', NOW(), 'system', NOW(), NULL),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '16:9',       3, 'system', NOW(), 'system', NOW(), NULL),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '9:16',       4, 'system', NOW(), 'system', NOW(), NULL),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '통강조',     5, 'system', NOW(), 'system', NOW(), '365:825'),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '미디어월80', 6, 'system', NOW(), 'system', NOW(), '9216:1728'),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '미디어월150',7, 'system', NOW(), 'system', NOW(), '12288:1728');
