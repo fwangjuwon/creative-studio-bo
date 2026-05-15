@@ -142,12 +142,13 @@ public class HumanPromptServiceImpl implements HumanPromptService {
             }
         }
 
-        // 4. 공통 옵션(조명/촬영) 조회 → stepName 기준 Map 구성 + HistoryOption 버퍼에 추가
+        // 4. 공통 옵션(조명/촬영) 조회 → stepName > attrName 기준 Map 구성 + HistoryOption 버퍼에 추가
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
         List<HumanPromptHistoryOption> historyOptionsBuf = new ArrayList<>();
-        Map<String, List<String>> commonStepValues = new LinkedHashMap<>();
+        // stepName → (attrName → promptValues)
+        Map<String, Map<String, List<String>>> commonStepValues = new LinkedHashMap<>();
 
         if (dto.getCommonSelections() != null && !dto.getCommonSelections().isEmpty()) {
             List<Long> commonOptionIds = dto.getCommonSelections().values().stream()
@@ -156,7 +157,9 @@ public class HumanPromptServiceImpl implements HumanPromptService {
                     .toList();
             List<HumanPromptOption> commonOptions = humanPromptOptionMapper.selectByIds(commonOptionIds);
             for (HumanPromptOption option : commonOptions) {
-                commonStepValues.computeIfAbsent(option.getStepName(), k -> new ArrayList<>())
+                commonStepValues
+                        .computeIfAbsent(option.getStepName(), k -> new LinkedHashMap<>())
+                        .computeIfAbsent(option.getAttrName(), k -> new ArrayList<>())
                         .add(option.getPromptValue());
             }
             // 공통 옵션은 personIndex = -1 로 구분하여 저장
@@ -172,8 +175,9 @@ public class HumanPromptServiceImpl implements HumanPromptService {
             }
         }
 
-        // 5. 인물별 optionId 조회 → stepName 기준 Map 구성 + HistoryOption 레코드 준비
-        List<Map<String, List<String>>> personsStepValues = new ArrayList<>();
+        // 5. 인물별 optionId 조회 → stepName > attrName 기준 Map 구성 + HistoryOption 레코드 준비
+        // stepName → (attrName → promptValues)
+        List<Map<String, Map<String, List<String>>>> personsStepValues = new ArrayList<>();
 
         for (int personIdx = 0; personIdx < allPersonsSelections.size(); personIdx++) {
             Map<Long, List<Long>> selections = allPersonsSelections.get(personIdx);
@@ -188,9 +192,11 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
             List<HumanPromptOption> options = humanPromptOptionMapper.selectByIds(optionIds);
 
-            Map<String, List<String>> stepValues = new LinkedHashMap<>();
+            Map<String, Map<String, List<String>>> stepValues = new LinkedHashMap<>();
             for (HumanPromptOption option : options) {
-                stepValues.computeIfAbsent(option.getStepName(), k -> new ArrayList<>())
+                stepValues
+                        .computeIfAbsent(option.getStepName(), k -> new LinkedHashMap<>())
+                        .computeIfAbsent(option.getAttrName(), k -> new ArrayList<>())
                         .add(option.getPromptValue());
             }
             personsStepValues.add(stepValues);

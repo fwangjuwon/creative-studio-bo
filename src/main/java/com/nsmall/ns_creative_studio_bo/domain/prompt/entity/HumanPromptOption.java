@@ -37,6 +37,8 @@ public class HumanPromptOption {
     private Integer stepNumber;
     /** JOIN 조회 시 포함 — human_prompt_step.name (STEP_LABELS 하드코딩 대체) */
     private String stepName;
+    /** JOIN 조회 시 포함 — human_prompt_attr.name (Gemini 프롬프트에 속성명 구분용) */
+    private String attrName;
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;
