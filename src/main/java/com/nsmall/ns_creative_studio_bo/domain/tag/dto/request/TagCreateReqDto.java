@@ -25,5 +25,8 @@ public class TagCreateReqDto {
     @NotBlank(message = "태그명은 필수입니다.")
     private String name;
 
+    /** 실제 사용값 (선택). null이면 name을 그대로 사용. */
+    private String tagValue;
+
     private Integer sortOrder;
 }

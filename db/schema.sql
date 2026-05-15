@@ -99,7 +99,8 @@ CREATE TABLE tag_group (
 CREATE TABLE tag (
     id              BIGINT          GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     tag_group_id    BIGINT          NOT NULL,           -- 논리 FK → tag_group.id
-    name            VARCHAR(100)    NOT NULL,
+    name            VARCHAR(100)    NOT NULL,           -- 표시명 (화면에 보이는 이름)
+    tag_value       VARCHAR(50),                        -- 실제 사용값 (nullable, 예: 이미지 비율 "365:825"). null이면 name 사용
     sort_order      INT             NOT NULL DEFAULT 0,
     init_regi_pic   VARCHAR(50),
     init_regi_dttm  TIMESTAMP,

@@ -308,38 +308,68 @@ INSERT INTO tag_group (name, is_multi_select, sort_order, init_regi_pic, init_re
 
 -- 장면 (단일선택) — 상품이 놓인 배경/환경
 INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '장면'), '흰 배경',     1, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '장면'), '라이프스타일', 2, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '장면'), '주방/식탁',   3, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '장면'), '욕실',        4, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '장면'), '침실',        5, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '장면'), '야외/자연',   6, 'system', NOW(), 'system', NOW());
+((SELECT id FROM tag_group WHERE name = '장면'), '흰 배경',               1,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '라이프스타일',           2,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '주방/식탁',              3,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '욕실',                   4,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '침실',                   5,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '야외/자연',              6,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '모던 인테리어',          7,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '대리석',                 8,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '원목',                   9,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '수면 위(Water Surface)', 10, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '리넨',                   11, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '기하학적 오브제',        12, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '모래',                   13, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '콘크리트',               14, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '미니멀 데스크',          15, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '벨벳',                   16, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '장면'), '크로마 키',              17, 'system', NOW(), 'system', NOW());
 
 -- 카메라 앵글 (단일선택) — 촬영 각도
 INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '정면',    1, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '탑뷰',    2, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '45도',    3, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '사이드뷰', 4, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '클로즈업', 5, 'system', NOW(), 'system', NOW());
+((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '로우 앵글',        1, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '정면',              2, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '탑뷰',              3, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '45도',              4, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '사이드뷰',          5, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '클로즈업',          6, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '광각',              7, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '카메라 앵글'), '익스트림 클로즈업', 8, 'system', NOW(), 'system', NOW());
 
 -- 조명 (단일선택) — 광원 스타일
 INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '조명'), '자연광',      1, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '조명'), '스튜디오',    2, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '조명'), '소프트박스',  3, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '조명'), '역광',        4, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '조명'), '드라마틱',    5, 'system', NOW(), 'system', NOW());
+((SELECT id FROM tag_group WHERE name = '조명'), '자연광',          1,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '스튜디오',        2,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '소프트박스',      3,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '역광',            4,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '드라마틱',        5,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '프리즘 무지개',   6,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '네온조명',        7,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '안개광',          8,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '블라인드 그림자', 9,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '골든아워',        10, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '림 라이트',       11, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '나뭇잎 그림자',   12, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '조명'), '스포트라이트',    13, 'system', NOW(), 'system', NOW());
 
 -- 분위기 (복수선택) — 이미지 전체 톤/무드
 INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '분위기'), '미니멀',    1, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '분위기'), '럭셔리',    2, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '분위기'), '내추럴',    3, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '분위기'), '따뜻한',    4, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '분위기'), '화사한',    5, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '분위기'), '모던',      6, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '분위기'), '빈티지',    7, 'system', NOW(), 'system', NOW());
+((SELECT id FROM tag_group WHERE name = '분위기'), '미니멀',        1,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '럭셔리',        2,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '내추럴',        3,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '따뜻한',        4,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '화사한',        5,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '모던',          6,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '빈티지',        7,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '뮤트(차분함)',  8,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '시네마틱',      9,  'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '하이키',        10, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '오가닉',        11, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '사이버펑크',    12, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '비비드',        13, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '미스테리',      14, 'system', NOW(), 'system', NOW()),
+((SELECT id FROM tag_group WHERE name = '분위기'), '로우키(Low-key)', 15, 'system', NOW(), 'system', NOW());
 
 -- =============================================================================
 -- 이미지 사이즈 태그 그룹 (상품/인물 공통 — FO에서 이미지 비율 선택용)
@@ -347,8 +377,11 @@ INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, 
 INSERT INTO tag_group (name, is_multi_select, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
 ('이미지 사이즈', FALSE, 99, 'system', NOW(), 'system', NOW());
 
-INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '1:1',  1, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '4:3',  2, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '16:9', 3, 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '9:16', 4, 'system', NOW(), 'system', NOW());
+INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm, tag_value) VALUES
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '1:1',        1, 'system', NOW(), 'system', NOW(), NULL),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '4:3',        2, 'system', NOW(), 'system', NOW(), NULL),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '16:9',       3, 'system', NOW(), 'system', NOW(), NULL),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '9:16',       4, 'system', NOW(), 'system', NOW(), NULL),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '통강조',     5, 'system', NOW(), 'system', NOW(), '365:825'),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '미디어월80', 6, 'system', NOW(), 'system', NOW(), '9216:1728'),
+((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '미디어월150',7, 'system', NOW(), 'system', NOW(), '12288:1728');

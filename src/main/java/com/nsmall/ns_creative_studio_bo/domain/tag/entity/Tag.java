@@ -27,6 +27,8 @@ public class Tag {
     private Long id;
     private Long tagGroupId;
     private String name;
+    /** 실제 사용값 (nullable). null이면 name을 그대로 사용. 이미지 사이즈 등 표시명과 실제값이 다를 때 활용. */
+    private String tagValue;
     private Integer sortOrder;
 
     private String initRegiPic;

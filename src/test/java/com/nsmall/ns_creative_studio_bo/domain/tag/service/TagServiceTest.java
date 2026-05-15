@@ -70,6 +70,15 @@ public class TagServiceTest {
                 .build();
     }
 
+    private TagCreateReqDto 태그_생성_DTO_with_value(Long tagGroupId, String name, String tagValue) {
+        return TagCreateReqDto.builder()
+                .tagGroupId(tagGroupId)
+                .name(name)
+                .tagValue(tagValue)
+                .sortOrder(1)
+                .build();
+    }
+
     // ============================================================
     // Tag 생성
     // ============================================================
@@ -91,6 +100,33 @@ public class TagServiceTest {
         assertThat(result.getId()).isNotNull();
         assertThat(result.getName()).isEqualTo(tagName);
         assertThat(result.getTagGroupId()).isEqualTo(group.getId());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 생성 - tagValue 포함 (이미지 사이즈 등)")
+    void 성공_태그_생성_tagValue_포함() {
+        TagGroupRespDto group = 태그그룹_생성("사이즈테스트그룹_tagValue");
+
+        TagRespDto result = tagService.createTag(
+                태그_생성_DTO_with_value(group.getId(), "통강조", "365:825"));
+
+        assertThat(result).isNotNull();
+        assertThat(result.getName()).isEqualTo("통강조");
+        assertThat(result.getTagValue()).isEqualTo("365:825");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 생성 - tagValue null이면 null로 저장")
+    void 성공_태그_생성_tagValue_null() {
+        TagGroupRespDto group = 태그그룹_생성("분위기테스트그룹_tagValue");
+
+        TagRespDto result = tagService.createTag(태그_생성_DTO(group.getId(), "미니멀_tagValue테스트"));
+
+        assertThat(result.getTagValue()).isNull();
     }
 
     @Test
@@ -209,6 +245,46 @@ public class TagServiceTest {
         assertThat(updated.getName()).isEqualTo("수정후태그");
         assertThat(updated.getSortOrder()).isEqualTo(99);
         assertThat(updated.getTagGroupId()).isEqualTo(group.getId());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 수정 - tagValue 변경")
+    void 성공_태그_수정_tagValue_변경() {
+        TagGroupRespDto group = 태그그룹_생성("수정tagValue변경테스트그룹");
+        TagRespDto created = tagService.createTag(
+                태그_생성_DTO_with_value(group.getId(), "통강조수정", "365:825"));
+
+        TagUpdateReqDto updateDto = TagUpdateReqDto.builder()
+                .name("통강조수정")
+                .tagValue("73:165")
+                .sortOrder(1)
+                .build();
+
+        TagRespDto updated = tagService.updateTag(created.getId(), updateDto);
+
+        assertThat(updated.getTagValue()).isEqualTo("73:165");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 수정 - tagValue null로 초기화")
+    void 성공_태그_수정_tagValue_null_초기화() {
+        TagGroupRespDto group = 태그그룹_생성("수정tagValueNull테스트그룹");
+        TagRespDto created = tagService.createTag(
+                태그_생성_DTO_with_value(group.getId(), "통강조null테스트", "365:825"));
+
+        TagUpdateReqDto updateDto = TagUpdateReqDto.builder()
+                .name("통강조")
+                .tagValue(null)
+                .sortOrder(1)
+                .build();
+
+        TagRespDto updated = tagService.updateTag(created.getId(), updateDto);
+
+        assertThat(updated.getTagValue()).isNull();
     }
 
     @Test
