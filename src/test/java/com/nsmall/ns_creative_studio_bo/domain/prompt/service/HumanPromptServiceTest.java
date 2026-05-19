@@ -4,6 +4,7 @@ import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
@@ -24,6 +25,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,6 +38,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import org.mockito.ArgumentCaptor;
 
@@ -554,7 +557,7 @@ public class HumanPromptServiceTest {
         UserRespDto user = 유저_생성("img_gen_user", "USER", "팀E", 5);
         PromptHistory history = PERSON_히스토리_직접_삽입(user.getId());
 
-        List<String> imageUrls = humanPromptService.generateImage(history.getId(), MOCK_PROMPT);
+        List<String> imageUrls = humanPromptService.generateImage(history.getId(), MOCK_PROMPT, null);
 
         assertThat(imageUrls).hasSize(3);
         assertThat(imageUrls).contains("http://localhost:8080/images/test-uuid-1.jpg");
@@ -576,12 +579,71 @@ public class HumanPromptServiceTest {
         UserRespDto user = 유저_생성("img_gen_nohistory", "USER", "팀F", 5);
         PromptHistory history = PERSON_히스토리_직접_삽입(user.getId());
 
-        List<String> imageUrls = humanPromptService.generateImage(null, MOCK_PROMPT);
+        List<String> imageUrls = humanPromptService.generateImage(null, MOCK_PROMPT, null);
 
         assertThat(imageUrls).hasSize(3);
 
         PromptHistory unchanged = promptHistoryMapper.selectById(history.getId()).orElseThrow();
         assertThat(unchanged.getImageUrl()).isNull();
         assertThat(unchanged.getFinalRvisPic()).isEqualTo("test");
+    }
+
+    // ================================================================
+    // 이미지 생성 — 참조 이미지 검증
+    // ================================================================
+
+    @Test
+    @DisplayName("[예외] 이미지 생성 - 허용되지 않는 MIME 타입 (text/plain)")
+    void 예외_이미지_생성_허용되지않는_MIME타입() {
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(1024L);
+        given(file.getContentType()).willReturn("text/plain");
+
+        assertThatThrownBy(() -> humanPromptService.generateImage(null, "test prompt", file))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
+    }
+
+    @Test
+    @DisplayName("[예외] 이미지 생성 - 허용되지 않는 MIME 타입 (application/x-sh)")
+    void 예외_이미지_생성_허용되지않는_MIME타입_sh() {
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(1024L);
+        given(file.getContentType()).willReturn("application/x-sh");
+
+        assertThatThrownBy(() -> humanPromptService.generateImage(null, "test prompt", file))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
+    }
+
+    @Test
+    @DisplayName("[예외] 이미지 생성 - Content-Type null")
+    void 예외_이미지_생성_ContentType_null() {
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(1024L);
+        given(file.getContentType()).willReturn(null);
+
+        assertThatThrownBy(() -> humanPromptService.generateImage(null, "test prompt", file))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE));
+    }
+
+    @Test
+    @DisplayName("[예외] 이미지 생성 - 파일 크기 15MB 초과")
+    void 예외_이미지_생성_파일크기_초과() {
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(16 * 1024 * 1024L); // 16MB
+
+        assertThatThrownBy(() -> humanPromptService.generateImage(null, "test prompt", file))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.IMAGE_TOO_LARGE));
     }
 }

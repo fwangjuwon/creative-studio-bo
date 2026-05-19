@@ -168,20 +168,16 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
     @WithMockUser(roles = "USER")
     @DisplayName("[400] 인물 이미지 생성 - promptText 빈 값")
     void 인물이미지_생성_promptText_빈값_400() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/generate-image")
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"promptText": ""}
-                                """))
+        mockMvc.perform(multipart(BASE_URL + "/generate-image")
+                        .param("promptText", ""))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     @WithMockUser(roles = "USER")
-    @DisplayName("[400] 인물 이미지 생성 - Body 없음")
-    void 인물이미지_생성_Body없음_400() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/generate-image")
-                        .contentType(APPLICATION_JSON))
+    @DisplayName("[400] 인물 이미지 생성 - promptText 미전송")
+    void 인물이미지_생성_promptText_미전송_400() throws Exception {
+        mockMvc.perform(multipart(BASE_URL + "/generate-image"))
                 .andExpect(status().isBadRequest());
     }
 
