@@ -1,7 +1,7 @@
 # TODO
 
-> 상태: ✅ feat/human-prompt-per-person-options 완료
-> 최종 업데이트: 2026-05-12 (인물 프롬프트 인원별 개별 옵션 선택 기능)
+> 상태: ✅ feat/dto-field-validation 완료
+> 최종 업데이트: 2026-05-19 (DTO 필드 길이 검증 및 컨트롤러 파라미터 검증 강화)
 
 ---
 
@@ -18,6 +18,44 @@
 ---
 
 ## 완료
+
+### feat/dto-field-validation. DTO 필드 길이 검증 및 컨트롤러 파라미터 검증 강화
+
+> DB VARCHAR 컬럼 크기에 맞게 모든 Request DTO에 `@Size` 어노테이션을 추가.
+> `AuthController`·`NsistEmpMappingController`에 `@Validated`와 파라미터 레벨 제약을 적용하여
+> `nsistLogin`(empCd·orgCd), `deleteMapping`(empCd) 입력 검증을 보완.
+> 각 컨트롤러 테스트에 `@Size` 초과 케이스를 추가하여 검증 커버리지 확보.
+
+#### DTO — `@Size` 추가
+
+- `LoginReqDto` — `loginId` max=50
+- `NsistEmpMappingCreateReqDto` — `empCd` max=6
+- `UserCreateReqDto` — `loginId` max=50, `name` max=100, `teamName` max=100
+- `UserUpdateReqDto` — `name` max=100, `teamName` max=100
+- `CategoryCreate/UpdateReqDto` — `name` max=200
+- `TagGroupCreate/UpdateReqDto` — `name` max=100
+- `TagCreate/UpdateReqDto` — `name` max=100, `tagValue` max=50
+- `HumanPromptStepCreate/UpdateReqDto` — `stepCode` max=2, `name` max=100
+- `HumanPromptAttrCreate/UpdateReqDto` — `name` max=100
+- `HumanPromptOptionCreate/UpdateReqDto` — `name` max=200, `promptValue` max=500
+
+#### 컨트롤러
+
+- `AuthController` — `@Validated` 추가, `nsistLogin` empCd `@NotBlank @Size(max=6)`, orgCd `@NotBlank`
+- `NsistEmpMappingController` — `@Validated` 추가, `deleteMapping` empCd `@NotBlank @Size(max=6)`
+
+#### 테스트
+
+- 각 컨트롤러 테스트에 `@Size` 초과 케이스 추가 (총 15건 신규)
+- `AuthControllerTest` — nsist SSO 로그인 파라미터 검증 4건 신규 (empCd 빈값·공백·길이초과, orgCd 빈값)
+- `NsistEmpMappingControllerTest` — empCd 길이초과 2건 신규 (등록·삭제)
+
+#### 문서
+
+- `docs/todo.md` 현행화
+- `.cursor/rules/coding-convention.mdc` — Request DTO `@Size` 적용 컨벤션 추가
+
+---
 
 ### feat/human-prompt-per-person-options. 인물 프롬프트 인원별 개별 옵션 선택
 
