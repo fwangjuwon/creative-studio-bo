@@ -120,14 +120,14 @@ public class UserControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    @DisplayName("[400] 사용자 생성 - password 256자 초과")
-    void 사용자_생성_password_길이초과_400() throws Exception {
-        String password = "a".repeat(256);
+    @DisplayName("[400] 사용자 생성 - teamName 101자 초과")
+    void 사용자_생성_teamName_길이초과_400() throws Exception {
+        String teamName = "가".repeat(101);
         mockMvc.perform(post(BASE_URL)
                         .contentType(APPLICATION_JSON)
                         .content("""
-                                {"loginId": "user1", "password": "%s", "name": "홍길동", "role": "ADMIN", "dailyLimit": 10}
-                                """.formatted(password)))
+                                {"loginId": "user1", "password": "pass123", "name": "홍길동", "role": "ADMIN", "teamName": "%s", "dailyLimit": 10}
+                                """.formatted(teamName)))
                 .andExpect(status().isBadRequest());
     }
 

@@ -93,18 +93,6 @@ public class AuthControllerTest extends SecuritySetupTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @Test
-    @DisplayName("[400] 로그인 - password 256자 초과")
-    void 로그인_password_길이초과_400() throws Exception {
-        String password = "a".repeat(256);
-        mockMvc.perform(post(LOGIN_URL)
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"loginId": "user1", "password": "%s"}
-                                """.formatted(password)))
-                .andExpect(status().isBadRequest());
-    }
-
     // ============================================================
     // GET /api/auth/nsist-login — nsist SSO 로그인
     // ============================================================

@@ -24,6 +24,5 @@ public class LoginReqDto {
     private String loginId;
 
     @NotBlank(message = "비밀번호는 필수입니다.")
-    @Size(max = 255, message = "비밀번호는 255자 이하여야 합니다.")
     private String password;
 }

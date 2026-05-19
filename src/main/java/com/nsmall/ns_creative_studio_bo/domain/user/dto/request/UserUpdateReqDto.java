@@ -20,7 +20,6 @@ import lombok.NoArgsConstructor;
 @Builder
 public class UserUpdateReqDto {
 
-    @Size(max = 255, message = "비밀번호는 255자 이하여야 합니다.")
     private String password;
 
     @Size(max = 100, message = "이름은 100자 이하여야 합니다.")
