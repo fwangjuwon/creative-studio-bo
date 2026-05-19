@@ -70,10 +70,34 @@ public class NsistEmpMappingControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    @DisplayName("[400] 매핑 등록 - empCd 7자 초과")
+    void 매핑_등록_empCd_길이초과_400() throws Exception {
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"empCd": "1234567", "userId": 1}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("[400] 매핑 등록 - Body 없음")
     void 매핑_등록_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL)
                         .contentType(APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ============================================================
+    // DELETE /api/nsist-emp-mappings/{empCd} — 매핑 삭제
+    // ============================================================
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("[400] 매핑 삭제 - empCd 7자 초과")
+    void 매핑_삭제_empCd_길이초과_400() throws Exception {
+        mockMvc.perform(delete(BASE_URL + "/{empCd}", "1234567"))
                 .andExpect(status().isBadRequest());
     }
 

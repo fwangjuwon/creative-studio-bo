@@ -93,6 +93,19 @@ public class HumanPromptAttrControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 세부항목 생성 - name 101자 초과")
+    void 세부항목_생성_name_길이초과_400() throws Exception {
+        String name = "가".repeat(101);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"stepId": 1, "name": "%s", "isMultiSelect": false, "isRequired": true, "sortOrder": 1}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 세부항목 생성 - Body 없음")
     void 세부항목_생성_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL)
@@ -125,6 +138,19 @@ public class HumanPromptAttrControllerTest extends SecuritySetupTest {
                         .content("""
                                 {"name": "연령대", "isRequired": true, "sortOrder": 1}
                                 """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 세부항목 수정 - name 101자 초과")
+    void 세부항목_수정_name_길이초과_400() throws Exception {
+        String name = "가".repeat(101);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "isMultiSelect": false, "isRequired": true, "sortOrder": 1}
+                                """.formatted(name)))
                 .andExpect(status().isBadRequest());
     }
 

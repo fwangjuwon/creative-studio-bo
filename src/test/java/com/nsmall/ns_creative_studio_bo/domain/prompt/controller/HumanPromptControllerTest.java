@@ -87,6 +87,18 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 단계 생성 - stepCode 3자 초과")
+    void 단계_생성_stepCode_길이초과_400() throws Exception {
+        mockMvc.perform(post(BASE_URL + "/steps")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"stepNumber": 1, "stepCode": "ABC", "name": "인물 유형"}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 단계 생성 - Body 없음")
     void 단계_생성_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL + "/steps")
@@ -130,6 +142,18 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
                         .contentType(APPLICATION_JSON)
                         .content("""
                                 {"stepNumber": 1, "stepCode": "A", "name": ""}
+                                """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 단계 수정 - stepCode 3자 초과")
+    void 단계_수정_stepCode_길이초과_400() throws Exception {
+        mockMvc.perform(put(BASE_URL + "/steps/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"stepNumber": 1, "stepCode": "ABC", "name": "인물 유형"}
                                 """))
                 .andExpect(status().isBadRequest());
     }

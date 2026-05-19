@@ -107,6 +107,45 @@ public class UserControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
+    @DisplayName("[400] 사용자 생성 - loginId 51자 초과")
+    void 사용자_생성_loginId_길이초과_400() throws Exception {
+        String loginId = "a".repeat(51);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"loginId": "%s", "password": "pass123", "name": "홍길동", "role": "ADMIN", "dailyLimit": 10}
+                                """.formatted(loginId)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("[400] 사용자 생성 - password 256자 초과")
+    void 사용자_생성_password_길이초과_400() throws Exception {
+        String password = "a".repeat(256);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"loginId": "user1", "password": "%s", "name": "홍길동", "role": "ADMIN", "dailyLimit": 10}
+                                """.formatted(password)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("[400] 사용자 생성 - name 101자 초과")
+    void 사용자_생성_name_길이초과_400() throws Exception {
+        String name = "가".repeat(101);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"loginId": "user1", "password": "pass123", "name": "%s", "role": "ADMIN", "dailyLimit": 10}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     @DisplayName("[400] 사용자 생성 - Body 없음")
     void 사용자_생성_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL)
@@ -165,6 +204,32 @@ public class UserControllerTest extends SecuritySetupTest {
                         .content("""
                                 {"dailyLimit": -1}
                                 """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("[400] 사용자 수정 - name 101자 초과")
+    void 사용자_수정_name_길이초과_400() throws Exception {
+        String name = "가".repeat(101);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s"}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    @DisplayName("[400] 사용자 수정 - teamName 101자 초과")
+    void 사용자_수정_teamName_길이초과_400() throws Exception {
+        String teamName = "가".repeat(101);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"teamName": "%s"}
+                                """.formatted(teamName)))
                 .andExpect(status().isBadRequest());
     }
 

@@ -57,6 +57,19 @@ public class CategoryControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 카테고리 생성 - name 201자 초과")
+    void 카테고리_생성_name_길이초과_400() throws Exception {
+        String name = "가".repeat(201);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "categoryType": "LCS"}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 카테고리 생성 - Body 없음")
     void 카테고리_생성_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL)
@@ -90,6 +103,19 @@ public class CategoryControllerTest extends SecuritySetupTest {
                         .content("""
                                 {"name": "", "sortOrder": 1}
                                 """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 카테고리 수정 - name 201자 초과")
+    void 카테고리_수정_name_길이초과_400() throws Exception {
+        String name = "가".repeat(201);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "sortOrder": 1}
+                                """.formatted(name)))
                 .andExpect(status().isBadRequest());
     }
 
