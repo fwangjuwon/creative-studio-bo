@@ -26,9 +26,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,6 +36,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
+import org.mockito.ArgumentCaptor;
 
 /**
  * HumanPromptService 통합 테스트 — 비즈니스 로직 + DB 연동 검증
@@ -96,34 +98,28 @@ public class HumanPromptServiceTest {
      * 공통 단계(is_common=true)의 필수 attr 최소 선택지 구성.
      */
     private Map<Long, List<Long>> 공통_최소_선택지_구성() {
-        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
-        Map<Long, List<Long>> selections = new HashMap<>();
-        for (HumanPromptStepRespDto step : steps) {
-            if (!step.isCommon()) continue;
-            for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
-                if (attr.isRequired()) {
-                    selections.put(attr.getId(), List.of(attr.getOptions().get(0).getId()));
-                }
-            }
-        }
-        return selections;
+        return humanPromptService.getSteps().stream()
+                .filter(HumanPromptStepRespDto::isCommon)
+                .flatMap(step -> step.getAttrs().stream())
+                .filter(HumanPromptStepRespDto.AttrDto::isRequired)
+                .collect(Collectors.toMap(
+                        HumanPromptStepRespDto.AttrDto::getId,
+                        attr -> List.of(attr.getOptions().get(0).getId())
+                ));
     }
 
     /**
      * 개별 단계(is_common=false)의 필수 attr 최소 선택지 구성.
      */
     private Map<Long, List<Long>> 개별_최소_선택지_구성() {
-        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
-        Map<Long, List<Long>> selections = new HashMap<>();
-        for (HumanPromptStepRespDto step : steps) {
-            if (step.isCommon()) continue;
-            for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
-                if (attr.isRequired()) {
-                    selections.put(attr.getId(), List.of(attr.getOptions().get(0).getId()));
-                }
-            }
-        }
-        return selections;
+        return humanPromptService.getSteps().stream()
+                .filter(step -> !step.isCommon())
+                .flatMap(step -> step.getAttrs().stream())
+                .filter(HumanPromptStepRespDto.AttrDto::isRequired)
+                .collect(Collectors.toMap(
+                        HumanPromptStepRespDto.AttrDto::getId,
+                        attr -> List.of(attr.getOptions().get(0).getId())
+                ));
     }
 
     /**
@@ -423,6 +419,124 @@ public class HumanPromptServiceTest {
         assertThat(found.getPersonOptions()).isNotEmpty();
         assertThat(found.getAdditionalNotes()).isEqualTo("밝은 배경");
         assertThat(found.getPromptStyle()).isEqualTo(PromptStyle.MID_JOURNEY.name());
+    }
+
+    // ================================================================
+    // attrName 분리 구조 검증 (fix/human-prompt-attr-name-in-prompt)
+    // ================================================================
+
+    /**
+     * 개별 단계에서 복수 attr(연령대 + 성별 등)를 선택하는 DTO 구성.
+     * 각 attr마다 첫 번째 option을 선택한다 (required 여부 무관).
+     */
+    private Map<Long, List<Long>> 개별_복수_attr_선택지_구성() {
+        return humanPromptService.getSteps().stream()
+                .filter(step -> !step.isCommon())
+                .flatMap(step -> step.getAttrs().stream())
+                .filter(attr -> !attr.getOptions().isEmpty())
+                .collect(Collectors.toMap(
+                        HumanPromptStepRespDto.AttrDto::getId,
+                        attr -> List.of(attr.getOptions().get(0).getId())
+                ));
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] attrName 분리 - 1명 복수 attr 선택 시 Gemini 인자가 attrName별로 분리됨")
+    @SuppressWarnings("unchecked")
+    void 성공_attrName_분리_복수_attr_Gemini_인자_구조_검증() {
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+                .willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("attr_split_user", "USER", "팀AttrTest", 5);
+
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .persons(List.of(PersonSelectionDto.builder()
+                        .selections(개별_복수_attr_선택지_구성())
+                        .build()))
+                .commonSelections(공통_최소_선택지_구성())
+                .build();
+
+        humanPromptService.createPrompt(user.getId(), dto);
+
+        // Gemini 호출 시 전달된 personsStepValues 캡처
+        ArgumentCaptor<List<Map<String, Map<String, List<String>>>>> personsCaptor =
+                ArgumentCaptor.forClass(List.class);
+        verify(geminiService).generateHumanPrompt(
+                personsCaptor.capture(), any(), anyBoolean(), any(), any(), any(), any());
+
+        List<Map<String, Map<String, List<String>>>> capturedPersons = personsCaptor.getValue();
+
+        // 1명 모드 → List 크기 1
+        assertThat(capturedPersons).hasSize(1);
+
+        // 첫 번째 인물의 stepValues: stepName → (attrName → promptValues)
+        Map<String, Map<String, List<String>>> person0StepValues = capturedPersons.get(0);
+        assertThat(person0StepValues).isNotEmpty();
+
+        // 각 step 내부에 attrName이 개별 키로 분리되어 있는지 확인
+        person0StepValues.forEach((stepName, attrMap) -> {
+            assertThat(attrMap)
+                    .as("step '%s' 의 attrMap이 비어있으면 안 됨", stepName)
+                    .isNotEmpty();
+            attrMap.forEach((attrName, values) -> {
+                assertThat(values)
+                        .as("step '%s' / attr '%s' 의 promptValues가 비어있으면 안 됨", stepName, attrName)
+                        .isNotEmpty();
+            });
+        });
+
+        // 개별 단계에 복수 attr가 선택된 경우 각각 별도 키로 분리되어야 함 (핵심 검증)
+        boolean hasMultipleAttrsInAnyStep = person0StepValues.values().stream()
+                .anyMatch(attrMap -> attrMap.size() > 1);
+        assertThat(hasMultipleAttrsInAnyStep)
+                .as("복수 attr가 선택된 step은 attrName이 개별 키로 분리되어야 함 (Gemini 오해 방지)")
+                .isTrue();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] attrName 분리 - 공통 옵션도 attrName별로 분리되어 Gemini에 전달됨")
+    @SuppressWarnings("unchecked")
+    void 성공_attrName_분리_공통_옵션_Gemini_인자_구조_검증() {
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+                .willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("common_attr_split_user", "USER", "팀CommonAttr", 5);
+
+        // 공통 단계도 복수 attr 선택 (모든 attr 첫 option 선택)
+        Map<Long, List<Long>> fullCommonSelections = humanPromptService.getSteps().stream()
+                .filter(HumanPromptStepRespDto::isCommon)
+                .flatMap(step -> step.getAttrs().stream())
+                .filter(attr -> !attr.getOptions().isEmpty())
+                .collect(Collectors.toMap(
+                        HumanPromptStepRespDto.AttrDto::getId,
+                        attr -> List.of(attr.getOptions().get(0).getId())
+                ));
+
+        HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
+                .persons(List.of(PersonSelectionDto.builder()
+                        .selections(개별_최소_선택지_구성())
+                        .build()))
+                .commonSelections(fullCommonSelections)
+                .build();
+
+        humanPromptService.createPrompt(user.getId(), dto);
+
+        ArgumentCaptor<Map<String, Map<String, List<String>>>> commonCaptor =
+                ArgumentCaptor.forClass(Map.class);
+        verify(geminiService).generateHumanPrompt(
+                any(), commonCaptor.capture(), anyBoolean(), any(), any(), any(), any());
+
+        Map<String, Map<String, List<String>>> capturedCommon = commonCaptor.getValue();
+
+        // 공통 단계가 존재하는 경우 attrName 분리 구조 확인
+        assertThat(capturedCommon).isNotEmpty();
+        capturedCommon.forEach((stepName, attrMap) ->
+                assertThat(attrMap).as("공통 step '%s' 의 attrMap이 비어있으면 안 됨", stepName).isNotEmpty()
+        );
     }
 
     // ================================================================

@@ -221,8 +221,8 @@ public class GeminiServiceImpl implements GeminiService {
     private final GeminiProperties geminiProperties;
 
     @Override
-    public String generateHumanPrompt(List<Map<String, List<String>>> personsStepValues,
-                                      Map<String, List<String>> commonStepValues,
+    public String generateHumanPrompt(List<Map<String, Map<String, List<String>>>> personsStepValues,
+                                      Map<String, Map<String, List<String>>> commonStepValues,
                                       boolean isGroup,
                                       String relationship, String additionalNotes, PromptStyle promptStyle,
                                       String imageAspectRatio) {
@@ -309,13 +309,31 @@ public class GeminiServiceImpl implements GeminiService {
         return promptText;
     }
 
-    private void appendStepValues(StringBuilder sb, Map<String, List<String>> stepOptionValues) {
-        stepOptionValues.forEach((stepName, values) -> {
-            if (values != null && !values.isEmpty()) {
-                sb.append("  ").append(stepName).append(": ")
-                  .append(String.join(", ", values))
-                  .append("\n");
-            }
+    /**
+     * stepName → (attrName → promptValues) 구조를 Gemini 프롬프트 텍스트로 직렬화한다.
+     *
+     * <pre>
+     * 출력 예시:
+     *   핵심 피사체 정의:
+     *     - 연령대: Child
+     *     - 성별: Man
+     *   조명/배경:
+     *     - 조명 유형: Soft natural window light
+     * </pre>
+     *
+     * attrName별로 개별 라인으로 출력하여 Gemini가 복수 속성을 여러 인물로 오해하는 버그를 방지한다.
+     */
+    private void appendStepValues(StringBuilder sb, Map<String, Map<String, List<String>>> stepOptionValues) {
+        stepOptionValues.forEach((stepName, attrMap) -> {
+            if (attrMap == null || attrMap.isEmpty()) return;
+            sb.append("  ").append(stepName).append(":\n");
+            attrMap.forEach((attrName, values) -> {
+                if (values != null && !values.isEmpty()) {
+                    sb.append("    - ").append(attrName).append(": ")
+                      .append(String.join(", ", values))
+                      .append("\n");
+                }
+            });
         });
     }
 

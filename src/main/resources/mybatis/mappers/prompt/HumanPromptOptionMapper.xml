@@ -70,6 +70,11 @@
         JOIN을 통해 step 정보를 포함하여, 서비스에서 Map<stepName, List<promptValue>> 구성에 사용.
         STEP_LABELS 하드코딩 제거 — step_name을 직접 사용하여 Admin에서 단계 수정 시에도 정상 동작.
     -->
+    <!--
+        selectByIds: 선택된 option ID 목록으로 option 정보 + step_number + step_name + attr_name 조회.
+        JOIN을 통해 step/attr 정보를 포함하여, 서비스에서 Map<stepName, Map<attrName, List<promptValue>>> 구성에 사용.
+        STEP_LABELS 하드코딩 제거 — step_name/attr_name을 직접 사용하여 Admin에서 수정 시에도 정상 동작.
+    -->
     <select id="selectByIds" resultType="HumanPromptOption">
         SELECT
             o.id,
@@ -78,7 +83,8 @@
             o.prompt_value,
             o.sort_order,
             s.step_number,
-            s.name AS step_name
+            s.name AS step_name,
+            a.name AS attr_name
         FROM human_prompt_option o
         INNER JOIN human_prompt_attr a
             ON a.id = o.attr_id
@@ -88,7 +94,7 @@
         <foreach collection="ids" item="id" open="(" separator="," close=")">
             #{id}
         </foreach>
-        ORDER BY s.step_number ASC, o.sort_order ASC
+        ORDER BY s.step_number ASC, a.sort_order ASC, o.sort_order ASC
     </select>
 
 </mapper>
