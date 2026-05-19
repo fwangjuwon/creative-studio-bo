@@ -26,9 +26,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,6 +36,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 import org.mockito.ArgumentCaptor;
 
 /**
@@ -97,34 +98,28 @@ public class HumanPromptServiceTest {
      * 공통 단계(is_common=true)의 필수 attr 최소 선택지 구성.
      */
     private Map<Long, List<Long>> 공통_최소_선택지_구성() {
-        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
-        Map<Long, List<Long>> selections = new HashMap<>();
-        for (HumanPromptStepRespDto step : steps) {
-            if (!step.isCommon()) continue;
-            for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
-                if (attr.isRequired()) {
-                    selections.put(attr.getId(), List.of(attr.getOptions().get(0).getId()));
-                }
-            }
-        }
-        return selections;
+        return humanPromptService.getSteps().stream()
+                .filter(HumanPromptStepRespDto::isCommon)
+                .flatMap(step -> step.getAttrs().stream())
+                .filter(HumanPromptStepRespDto.AttrDto::isRequired)
+                .collect(Collectors.toMap(
+                        HumanPromptStepRespDto.AttrDto::getId,
+                        attr -> List.of(attr.getOptions().get(0).getId())
+                ));
     }
 
     /**
      * 개별 단계(is_common=false)의 필수 attr 최소 선택지 구성.
      */
     private Map<Long, List<Long>> 개별_최소_선택지_구성() {
-        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
-        Map<Long, List<Long>> selections = new HashMap<>();
-        for (HumanPromptStepRespDto step : steps) {
-            if (step.isCommon()) continue;
-            for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
-                if (attr.isRequired()) {
-                    selections.put(attr.getId(), List.of(attr.getOptions().get(0).getId()));
-                }
-            }
-        }
-        return selections;
+        return humanPromptService.getSteps().stream()
+                .filter(step -> !step.isCommon())
+                .flatMap(step -> step.getAttrs().stream())
+                .filter(HumanPromptStepRespDto.AttrDto::isRequired)
+                .collect(Collectors.toMap(
+                        HumanPromptStepRespDto.AttrDto::getId,
+                        attr -> List.of(attr.getOptions().get(0).getId())
+                ));
     }
 
     /**
@@ -432,21 +427,17 @@ public class HumanPromptServiceTest {
 
     /**
      * 개별 단계에서 복수 attr(연령대 + 성별 등)를 선택하는 DTO 구성.
-     * 각 required attr마다 첫 번째 option을 선택한다.
+     * 각 attr마다 첫 번째 option을 선택한다 (required 여부 무관).
      */
     private Map<Long, List<Long>> 개별_복수_attr_선택지_구성() {
-        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
-        Map<Long, List<Long>> selections = new HashMap<>();
-        for (HumanPromptStepRespDto step : steps) {
-            if (step.isCommon()) continue;
-            for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
-                // required 여부 상관없이 모든 attr의 첫 번째 option 선택
-                if (!attr.getOptions().isEmpty()) {
-                    selections.put(attr.getId(), List.of(attr.getOptions().get(0).getId()));
-                }
-            }
-        }
-        return selections;
+        return humanPromptService.getSteps().stream()
+                .filter(step -> !step.isCommon())
+                .flatMap(step -> step.getAttrs().stream())
+                .filter(attr -> !attr.getOptions().isEmpty())
+                .collect(Collectors.toMap(
+                        HumanPromptStepRespDto.AttrDto::getId,
+                        attr -> List.of(attr.getOptions().get(0).getId())
+                ));
     }
 
     @Test
@@ -472,7 +463,7 @@ public class HumanPromptServiceTest {
         // Gemini 호출 시 전달된 personsStepValues 캡처
         ArgumentCaptor<List<Map<String, Map<String, List<String>>>>> personsCaptor =
                 ArgumentCaptor.forClass(List.class);
-        org.mockito.Mockito.verify(geminiService).generateHumanPrompt(
+        verify(geminiService).generateHumanPrompt(
                 personsCaptor.capture(), any(), anyBoolean(), any(), any(), any(), any());
 
         List<Map<String, Map<String, List<String>>>> capturedPersons = personsCaptor.getValue();
@@ -516,16 +507,14 @@ public class HumanPromptServiceTest {
         UserRespDto user = 유저_생성("common_attr_split_user", "USER", "팀CommonAttr", 5);
 
         // 공통 단계도 복수 attr 선택 (모든 attr 첫 option 선택)
-        List<HumanPromptStepRespDto> steps = humanPromptService.getSteps();
-        Map<Long, List<Long>> fullCommonSelections = new HashMap<>();
-        for (HumanPromptStepRespDto step : steps) {
-            if (!step.isCommon()) continue;
-            for (HumanPromptStepRespDto.AttrDto attr : step.getAttrs()) {
-                if (!attr.getOptions().isEmpty()) {
-                    fullCommonSelections.put(attr.getId(), List.of(attr.getOptions().get(0).getId()));
-                }
-            }
-        }
+        Map<Long, List<Long>> fullCommonSelections = humanPromptService.getSteps().stream()
+                .filter(HumanPromptStepRespDto::isCommon)
+                .flatMap(step -> step.getAttrs().stream())
+                .filter(attr -> !attr.getOptions().isEmpty())
+                .collect(Collectors.toMap(
+                        HumanPromptStepRespDto.AttrDto::getId,
+                        attr -> List.of(attr.getOptions().get(0).getId())
+                ));
 
         HumanPromptCreateReqDto dto = HumanPromptCreateReqDto.builder()
                 .persons(List.of(PersonSelectionDto.builder()
@@ -538,7 +527,7 @@ public class HumanPromptServiceTest {
 
         ArgumentCaptor<Map<String, Map<String, List<String>>>> commonCaptor =
                 ArgumentCaptor.forClass(Map.class);
-        org.mockito.Mockito.verify(geminiService).generateHumanPrompt(
+        verify(geminiService).generateHumanPrompt(
                 any(), commonCaptor.capture(), anyBoolean(), any(), any(), any(), any());
 
         Map<String, Map<String, List<String>>> capturedCommon = commonCaptor.getValue();
