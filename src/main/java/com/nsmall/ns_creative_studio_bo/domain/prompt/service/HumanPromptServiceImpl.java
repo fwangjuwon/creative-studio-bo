@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
@@ -27,13 +28,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.IntStream;
 
 /**
  * 인간 이미지 프롬프트 서비스 구현체
@@ -60,6 +66,11 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class HumanPromptServiceImpl implements HumanPromptService {
+
+    private static final long MAX_REFERENCE_IMAGE_BYTES = 15 * 1024 * 1024L; // 15MB
+    private static final Set<String> ALLOWED_IMAGE_MIME_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp"
+    );
 
     private final HumanPromptStepMapper humanPromptStepMapper;
     private final HumanPromptAttrMapper humanPromptAttrMapper;
@@ -265,16 +276,55 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
     @Override
     @Transactional
-    public List<String> generateImage(Long historyId, String promptText) {
-        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 생성
-        List<String> imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
+    public List<String> generateImage(Long historyId, String promptText, MultipartFile referenceImage) {
+        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        List<String> imageUrls;
+        if (referenceImage != null && !referenceImage.isEmpty()) {
+            try {
+                if (referenceImage.getSize() > MAX_REFERENCE_IMAGE_BYTES) {
+                    throw new BizException(ImageGenerationErrorCode.IMAGE_TOO_LARGE);
+                }
+                String mimeType = referenceImage.getContentType();
+                if (mimeType == null) {
+                    throw new BizException(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE);
+                }
+                if (!ALLOWED_IMAGE_MIME_TYPES.contains(mimeType)) {
+                    log.warn("허용되지 않은 MIME 타입 — mimeType={}", mimeType);
+                    throw new BizException(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE);
+                }
+                byte[] imageBytes = referenceImage.getBytes();
+                // 인물 프롬프트의 참조 이미지는 주로 "상품 이미지" — 상품을 그대로 보존하고
+                // 인물은 promptText 묘사에 따라 새로 생성한다는 방향으로 지시
+                String referenceGuidePrompt = "Use the provided reference image as the visual guide for the product/object only. "
+                        + "Strictly preserve all of the following from the reference: "
+                        + "(1) exact product shape, silhouette, and overall form without any distortion; "
+                        + "(2) original proportions and scale of the product; "
+                        + "(3) surface texture, material finish, and fine structural details; "
+                        + "(4) color palette and tonal values of the product itself. "
+                        + "Generate the human subject newly according to the text prompt below, "
+                        + "and make the person interact naturally with the referenced product. "
+                        + promptText;
+                imageUrls = IntStream.range(0, PromptConstants.IMAGE_GENERATE_COUNT)
+                        .mapToObj(i -> CompletableFuture.supplyAsync(
+                                () -> imageGenerationService.generateImageMime(referenceGuidePrompt, imageBytes, mimeType)))
+                        .toList()
+                        .stream()
+                        .map(CompletableFuture::join)
+                        .toList();
+            } catch (IOException e) {
+                log.error("참조 이미지 읽기 실패", e);
+                throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
+            }
+        } else {
+            imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
+        }
 
         // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
         if (historyId != null) {
             try {
                 String imageUrlsJson = objectMapper.writeValueAsString(imageUrls);
                 promptHistoryMapper.updateImageUrl(historyId, imageUrlsJson, SecurityUtil.getCurrentLoginId());
-                log.info("이미지 URL 이력 업데이트 완료 — historyId={}, urls={}", historyId, imageUrlsJson);
+                log.info("인물 이미지 URL 이력 업데이트 완료 — historyId={}, urls={}", historyId, imageUrlsJson);
             } catch (JsonProcessingException e) {
                 log.warn("이미지 URL JSON 직렬화 실패 — 첫 번째 URL만 저장. historyId={}", historyId, e);
                 promptHistoryMapper.updateImageUrl(historyId, imageUrls.get(0), SecurityUtil.getCurrentLoginId());
