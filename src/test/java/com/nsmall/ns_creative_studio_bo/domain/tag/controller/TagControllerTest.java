@@ -57,6 +57,32 @@ public class TagControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 태그 생성 - name 101자 초과")
+    void 태그_생성_name_길이초과_400() throws Exception {
+        String name = "가".repeat(101);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"tagGroupId": 1, "name": "%s"}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 태그 생성 - tagValue 51자 초과")
+    void 태그_생성_tagValue_길이초과_400() throws Exception {
+        String tagValue = "a".repeat(51);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"tagGroupId": 1, "name": "남자", "tagValue": "%s"}
+                                """.formatted(tagValue)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 태그 생성 - Body 없음")
     void 태그_생성_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL)
@@ -90,6 +116,32 @@ public class TagControllerTest extends SecuritySetupTest {
                         .content("""
                                 {"name": "", "sortOrder": 1}
                                 """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 태그 수정 - name 101자 초과")
+    void 태그_수정_name_길이초과_400() throws Exception {
+        String name = "가".repeat(101);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "sortOrder": 1}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 태그 수정 - tagValue 51자 초과")
+    void 태그_수정_tagValue_길이초과_400() throws Exception {
+        String tagValue = "a".repeat(51);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "남자", "tagValue": "%s", "sortOrder": 1}
+                                """.formatted(tagValue)))
                 .andExpect(status().isBadRequest());
     }
 

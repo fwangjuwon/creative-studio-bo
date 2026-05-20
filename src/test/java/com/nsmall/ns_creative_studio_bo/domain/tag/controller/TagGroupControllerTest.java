@@ -57,6 +57,19 @@ public class TagGroupControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 태그 그룹 생성 - name 101자 초과")
+    void 태그그룹_생성_name_길이초과_400() throws Exception {
+        String name = "가".repeat(101);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "isMultiSelect": false}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 태그 그룹 생성 - Body 없음")
     void 태그그룹_생성_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL)
@@ -80,6 +93,19 @@ public class TagGroupControllerTest extends SecuritySetupTest {
     // ============================================================
     // PUT /api/tag-groups/{id} — 태그 그룹 수정
     // ============================================================
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 태그 그룹 수정 - name 101자 초과")
+    void 태그그룹_수정_name_길이초과_400() throws Exception {
+        String name = "가".repeat(101);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "isMultiSelect": false}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
 
     @Test
     @WithMockUser(roles = "MANAGER")

@@ -483,6 +483,31 @@ Mapper → Service 등 **내부 계층 간 전달 전용 DTO**는 이 규칙을 
 
 ---
 
+### Request DTO — @Size 필드 길이 제약
+
+DB `VARCHAR(n)` 컬럼과 매핑되는 String 필드는 **`@Size(max = n)`** 을 반드시 추가한다.
+DB 컬럼 크기와 동일한 값을 사용하여 DB insert 전 애플리케이션 레이어에서 먼저 차단한다.
+
+```java
+// ✅ DB: login_id VARCHAR(50) → @Size(max = 50)
+@NotBlank(message = "로그인 아이디는 필수입니다.")
+@Size(max = 50, message = "로그인 아이디는 50자 이하여야 합니다.")
+private String loginId;
+
+// ✅ nullable 필드도 동일하게 적용 (@NotBlank 없이 @Size만)
+@Size(max = 100, message = "팀명은 100자 이하여야 합니다.")
+private String teamName;
+```
+
+#### 예외 — @Size 적용하지 않는 필드
+
+| 필드 | 이유 |
+|------|------|
+| `password` | DB에 bcrypt 해시(60자 고정)가 저장되므로 평문 길이 제약 불필요 |
+| `TEXT` 컬럼 매핑 필드 | DB 크기 제한 없음 (`purpose`, `additionalNotes` 등) |
+
+---
+
 ## 테스트 코드 규칙
 
 ### 테스트 범위

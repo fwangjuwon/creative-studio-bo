@@ -81,6 +81,32 @@ public class HumanPromptOptionControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 선택지 생성 - name 201자 초과")
+    void 선택지_생성_name_길이초과_400() throws Exception {
+        String name = "가".repeat(201);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"attrId": 1, "name": "%s", "promptValue": "in their 20s", "sortOrder": 1}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 선택지 생성 - promptValue 501자 초과")
+    void 선택지_생성_promptValue_길이초과_400() throws Exception {
+        String promptValue = "a".repeat(501);
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"attrId": 1, "name": "20대", "promptValue": "%s", "sortOrder": 1}
+                                """.formatted(promptValue)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 선택지 생성 - Body 없음")
     void 선택지_생성_Body없음_400() throws Exception {
         mockMvc.perform(post(BASE_URL)
@@ -113,6 +139,32 @@ public class HumanPromptOptionControllerTest extends SecuritySetupTest {
                         .content("""
                                 {"name": "20대", "promptValue": "", "sortOrder": 1}
                                 """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 선택지 수정 - name 201자 초과")
+    void 선택지_수정_name_길이초과_400() throws Exception {
+        String name = "가".repeat(201);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "%s", "promptValue": "in their 20s", "sortOrder": 1}
+                                """.formatted(name)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[400] 선택지 수정 - promptValue 501자 초과")
+    void 선택지_수정_promptValue_길이초과_400() throws Exception {
+        String promptValue = "a".repeat(501);
+        mockMvc.perform(put(BASE_URL + "/{id}", 1L)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"name": "20대", "promptValue": "%s", "sortOrder": 1}
+                                """.formatted(promptValue)))
                 .andExpect(status().isBadRequest());
     }
 

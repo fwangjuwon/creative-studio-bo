@@ -8,6 +8,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -77,6 +78,60 @@ public class AuthControllerTest extends SecuritySetupTest {
     void 로그인_Body없음_400() throws Exception {
         mockMvc.perform(post(LOGIN_URL)
                         .contentType(APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("[400] 로그인 - loginId 51자 초과")
+    void 로그인_loginId_길이초과_400() throws Exception {
+        String loginId = "a".repeat(51);
+        mockMvc.perform(post(LOGIN_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"loginId": "%s", "password": "pw123"}
+                                """.formatted(loginId)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ============================================================
+    // GET /api/auth/nsist-login — nsist SSO 로그인
+    // ============================================================
+
+    private static final String NSIST_LOGIN_URL = "/api/auth/nsist-login";
+
+    @Test
+    @DisplayName("[400] nsist SSO 로그인 - empCd 빈 값")
+    void nsist_로그인_empCd_빈값_400() throws Exception {
+        mockMvc.perform(get(NSIST_LOGIN_URL)
+                        .param("empCd", "")
+                        .param("orgCd", "ORG01"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("[400] nsist SSO 로그인 - empCd 공백만")
+    void nsist_로그인_empCd_공백만_400() throws Exception {
+        mockMvc.perform(get(NSIST_LOGIN_URL)
+                        .param("empCd", "   ")
+                        .param("orgCd", "ORG01"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("[400] nsist SSO 로그인 - empCd 7자 초과")
+    void nsist_로그인_empCd_길이초과_400() throws Exception {
+        mockMvc.perform(get(NSIST_LOGIN_URL)
+                        .param("empCd", "1234567")
+                        .param("orgCd", "ORG01"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("[400] nsist SSO 로그인 - orgCd 빈 값")
+    void nsist_로그인_orgCd_빈값_400() throws Exception {
+        mockMvc.perform(get(NSIST_LOGIN_URL)
+                        .param("empCd", "EMP01")
+                        .param("orgCd", ""))
                 .andExpect(status().isBadRequest());
     }
 }
