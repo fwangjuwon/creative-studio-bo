@@ -93,6 +93,44 @@ public class HumanPromptAttrServiceTest {
                         .isEqualTo(HumanPromptErrorCode.STEP_NOT_FOUND));
     }
 
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] Attr 생성 - sortOrder 미입력 시 step 내 최대값 + 1 자동 세팅")
+    void 성공_Attr_생성_sortOrder_자동증가() {
+        HumanPromptStepSimpleRespDto step = 단계_생성(11, "Y", "자동증가테스트단계");
+        humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "기준속성", false, true, 9000));
+
+        HumanPromptAttrSimpleRespDto result = humanPromptAttrService.createAttr(
+                HumanPromptAttrCreateReqDto.builder()
+                        .stepId(step.getId())
+                        .name("자동속성")
+                        .isMultiSelect(false)
+                        .isRequired(false)
+                        .build());  // sortOrder null
+
+        assertThat(result.getSortOrder()).isEqualTo(9001);
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] Attr 생성 - sortOrder 연속 미입력 시 순차 증가")
+    void 성공_Attr_생성_sortOrder_연속_자동증가() {
+        HumanPromptStepSimpleRespDto step = 단계_생성(12, "Z", "연속증가테스트단계");
+        humanPromptAttrService.createAttr(세부항목_생성_DTO(step.getId(), "기준속성", false, true, 9000));
+
+        HumanPromptAttrSimpleRespDto result1 = humanPromptAttrService.createAttr(
+                HumanPromptAttrCreateReqDto.builder()
+                        .stepId(step.getId()).name("자동속성A").isMultiSelect(false).isRequired(false).build());
+        HumanPromptAttrSimpleRespDto result2 = humanPromptAttrService.createAttr(
+                HumanPromptAttrCreateReqDto.builder()
+                        .stepId(step.getId()).name("자동속성B").isMultiSelect(false).isRequired(false).build());
+
+        assertThat(result1.getSortOrder()).isEqualTo(9001);
+        assertThat(result2.getSortOrder()).isEqualTo(9002);
+    }
+
     // ================================================================
     // Attr 수정
     // ================================================================

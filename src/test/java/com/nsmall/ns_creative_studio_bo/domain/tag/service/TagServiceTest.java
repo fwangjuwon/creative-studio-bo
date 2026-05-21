@@ -130,6 +130,39 @@ public class TagServiceTest {
     }
 
     @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 생성 - sortOrder 미입력 시 그룹 내 최대값 + 1 자동 세팅")
+    void 성공_태그_생성_sortOrder_자동증가() {
+        TagGroupRespDto group = 태그그룹_생성("자동증가테스트그룹_태그");
+        tagService.createTag(TagCreateReqDto.builder()
+                .tagGroupId(group.getId()).name("기준태그").sortOrder(9000).build());
+
+        TagRespDto result = tagService.createTag(TagCreateReqDto.builder()
+                .tagGroupId(group.getId()).name("자동태그").build());
+
+        assertThat(result.getSortOrder()).isEqualTo(9001);
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 생성 - sortOrder 연속 미입력 시 순차 증가")
+    void 성공_태그_생성_sortOrder_연속_자동증가() {
+        TagGroupRespDto group = 태그그룹_생성("연속증가테스트그룹_태그");
+        tagService.createTag(TagCreateReqDto.builder()
+                .tagGroupId(group.getId()).name("기준태그").sortOrder(9000).build());
+
+        TagRespDto result1 = tagService.createTag(TagCreateReqDto.builder()
+                .tagGroupId(group.getId()).name("자동태그A").build());
+        TagRespDto result2 = tagService.createTag(TagCreateReqDto.builder()
+                .tagGroupId(group.getId()).name("자동태그B").build());
+
+        assertThat(result1.getSortOrder()).isEqualTo(9001);
+        assertThat(result2.getSortOrder()).isEqualTo(9002);
+    }
+
+    @Test
     @DisplayName("[예외] 태그 생성 - 존재하지 않는 TagGroup")
     void 예외_태그_생성_그룹_미존재() {
         TagCreateReqDto dto = 태그_생성_DTO(Long.MAX_VALUE, "미존재그룹태그");

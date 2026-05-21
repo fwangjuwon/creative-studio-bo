@@ -33,6 +33,6 @@ public class HumanPromptAttrCreateReqDto {
     @NotNull(message = "필수 선택 여부는 필수입니다.")
     private Boolean isRequired;
 
-    @NotNull(message = "정렬 순서는 필수입니다.")
+    /** 정렬 순서 (선택 사항) — null이면 서비스에서 현재 최대값 + 1로 자동 세팅 */
     private Integer sortOrder;
 }

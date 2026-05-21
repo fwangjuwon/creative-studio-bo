@@ -83,6 +83,11 @@
         WHERE id = #{id}
     </delete>
 
+    <select id="selectMaxSortOrder" resultType="int">
+        SELECT COALESCE(MAX(sort_order), 0)
+        FROM tag_group
+    </select>
+
     <select id="existsBySortOrder" resultType="boolean">
         SELECT EXISTS (
             SELECT 1 FROM tag_group

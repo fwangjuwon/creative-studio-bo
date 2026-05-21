@@ -29,21 +29,42 @@ public class HumanPromptStepServiceImpl implements HumanPromptStepService {
 
     @Override
     public HumanPromptStepSimpleRespDto createStep(HumanPromptStepCreateReqDto dto) {
-        if (humanPromptStepMapper.existsByStepCode(dto.getStepCode(), null)) {
-            throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_CODE,
-                    "이미 존재하는 단계 코드입니다. stepCode=" + dto.getStepCode());
-        }
         if (humanPromptStepMapper.existsByName(dto.getName(), null)) {
             throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_NAME,
                     "이미 존재하는 단계명입니다. name=" + dto.getName());
+        }
+
+        // stepNumber 미입력 시 현재 최대값 + 1 자동 세팅
+        int stepNumber = dto.getStepNumber() != null
+                ? dto.getStepNumber()
+                : humanPromptStepMapper.selectMaxStepNumber() + 1;
+
+        // stepNumber 중복 체크 (직접 입력한 경우만)
+        if (dto.getStepNumber() != null
+                && humanPromptStepMapper.existsByStepNumber(stepNumber, null)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_NUMBER,
+                    "이미 존재하는 순서 번호입니다. stepNumber=" + stepNumber);
+        }
+
+        // stepCode 미입력 시 stepNumber 기반 알파벳 자동 생성 (1→A, 2→B, ...)
+        // 명시 입력 시 toUpperCase 처리 + 중복 체크
+        String stepCode = (dto.getStepCode() != null && !dto.getStepCode().isBlank())
+                ? dto.getStepCode().toUpperCase()
+                : String.valueOf((char) ('A' + stepNumber - 1));
+
+        // stepCode 중복 체크 (직접 입력한 경우만)
+        if (dto.getStepCode() != null && !dto.getStepCode().isBlank()
+                && humanPromptStepMapper.existsByStepCode(stepCode, null)) {
+            throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_CODE,
+                    "이미 존재하는 단계 코드입니다. stepCode=" + stepCode);
         }
 
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
         HumanPromptStep step = HumanPromptStep.builder()
-                .stepNumber(dto.getStepNumber())
-                .stepCode(dto.getStepCode())
+                .stepNumber(stepNumber)
+                .stepCode(stepCode)
                 .name(dto.getName())
                 .isCommon(dto.isCommon())
                 .initRegiPic(requesterId)

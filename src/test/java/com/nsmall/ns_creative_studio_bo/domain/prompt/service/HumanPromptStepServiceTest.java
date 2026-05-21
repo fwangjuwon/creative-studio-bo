@@ -66,7 +66,7 @@ public class HumanPromptStepServiceTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isNotNull();
         assertThat(result.getStepNumber()).isEqualTo(6);
-        assertThat(result.getStepCode()).isEqualTo(code);
+        assertThat(result.getStepCode()).isEqualTo(code.toUpperCase());
         assertThat(result.getName()).isEqualTo(name);
     }
 

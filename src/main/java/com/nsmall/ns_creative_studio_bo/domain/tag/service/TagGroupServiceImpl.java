@@ -32,10 +32,15 @@ public class TagGroupServiceImpl implements TagGroupService {
     @Override
     public TagGroupRespDto createTagGroup(TagGroupCreateReqDto dto) {
 
+        // sortOrder 미입력 시 현재 최대값 + 1 자동 세팅
+        int sortOrder = dto.getSortOrder() != null
+                ? dto.getSortOrder()
+                : tagGroupMapper.selectMaxSortOrder() + 1;
+
         if (dto.getSortOrder() != null
-                && tagGroupMapper.existsBySortOrder(dto.getSortOrder())) {
+                && tagGroupMapper.existsBySortOrder(sortOrder)) {
             throw new BizException(TagGroupErrorCode.DUPLICATE_SORT_ORDER,
-                    "이미 정렬순서 " + dto.getSortOrder() + "을(를) 가진 태그 그룹이 존재합니다.");
+                    "이미 정렬순서 " + sortOrder + "을(를) 가진 태그 그룹이 존재합니다.");
         }
         if (tagGroupMapper.existsByName(dto.getName(), null)) {
             throw new BizException(TagGroupErrorCode.DUPLICATE_TAG_GROUP_NAME,
@@ -48,7 +53,7 @@ public class TagGroupServiceImpl implements TagGroupService {
         TagGroup tagGroup = TagGroup.builder()
                 .name(dto.getName())
                 .isMultiSelect(dto.getIsMultiSelect())
-                .sortOrder(dto.getSortOrder())
+                .sortOrder(sortOrder)
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)

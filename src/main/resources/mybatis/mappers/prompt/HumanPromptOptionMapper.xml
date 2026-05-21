@@ -38,6 +38,12 @@
         </if>
     </select>
 
+    <select id="selectMaxSortOrder" resultType="int">
+        SELECT COALESCE(MAX(sort_order), 0)
+        FROM human_prompt_option
+        WHERE attr_id = #{attrId}
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO human_prompt_option (
             attr_id, name, prompt_value, sort_order,

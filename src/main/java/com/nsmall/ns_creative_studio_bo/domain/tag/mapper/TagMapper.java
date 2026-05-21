@@ -38,6 +38,9 @@ public interface TagMapper {
 
     void deleteById(@Param("id") Long id);
 
+    /** 동일 tagGroupId 내 최대 sort_order 조회 — 자동 증가 시 사용 (데이터 없으면 0 반환) */
+    int selectMaxSortOrder(@Param("tagGroupId") Long tagGroupId);
+
     /** 동일 tagGroupId 스코프에서 sortOrder 중복 여부 확인 */
     boolean existsBySortOrder(@Param("tagGroupId") Long tagGroupId, @Param("sortOrder") Integer sortOrder);
 

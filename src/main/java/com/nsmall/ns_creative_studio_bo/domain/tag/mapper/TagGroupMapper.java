@@ -28,6 +28,9 @@ public interface TagGroupMapper {
 
     void deleteById(@Param("id") Long id);
 
+    /** 전체 태그 그룹 중 최대 sort_order 조회 — 자동 증가 시 사용 (데이터 없으면 0 반환) */
+    int selectMaxSortOrder();
+
     /** 전체 스코프에서 sortOrder 중복 여부 확인 */
     boolean existsBySortOrder(@Param("sortOrder") Integer sortOrder);
 

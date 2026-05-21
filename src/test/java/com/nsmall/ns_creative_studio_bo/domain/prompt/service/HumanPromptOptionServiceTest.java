@@ -91,6 +91,47 @@ public class HumanPromptOptionServiceTest {
     @Test
     @Transactional
     @Rollback
+    @DisplayName("[성공] Option 생성 - sortOrder 미입력 시 attr 내 최대값 + 1 자동 세팅")
+    void 성공_Option_생성_sortOrder_자동증가() {
+        HumanPromptStepSimpleRespDto step = 단계_생성(21, "Q", "자동증가테스트단계");
+        HumanPromptAttrSimpleRespDto attr = 세부항목_생성(step.getId(), "자동증가테스트속성");
+        선택지_생성(attr.getId(), "기준선택지", "base_value");  // sortOrder=1 기준
+
+        HumanPromptOptionSimpleRespDto result = humanPromptOptionService.createOption(
+                HumanPromptOptionCreateReqDto.builder()
+                        .attrId(attr.getId())
+                        .name("자동선택지")
+                        .promptValue("auto_value")
+                        .build());  // sortOrder null
+
+        assertThat(result.getSortOrder()).isEqualTo(2);
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] Option 생성 - sortOrder 연속 미입력 시 순차 증가")
+    void 성공_Option_생성_sortOrder_연속_자동증가() {
+        HumanPromptStepSimpleRespDto step = 단계_생성(22, "R", "연속증가테스트단계");
+        HumanPromptAttrSimpleRespDto attr = 세부항목_생성(step.getId(), "연속증가테스트속성");
+        선택지_생성(attr.getId(), "기준선택지", "base_value");  // sortOrder=1 기준
+
+        HumanPromptOptionSimpleRespDto result1 = humanPromptOptionService.createOption(
+                HumanPromptOptionCreateReqDto.builder()
+                        .attrId(attr.getId()).name("자동선택지A").promptValue("auto_a").build());
+        HumanPromptOptionSimpleRespDto result2 = humanPromptOptionService.createOption(
+                HumanPromptOptionCreateReqDto.builder()
+                        .attrId(attr.getId()).name("자동선택지B").promptValue("auto_b").build());
+
+        assertThat(result1.getSortOrder()).isEqualTo(2);
+        assertThat(result2.getSortOrder()).isEqualTo(3);
+    }
+
+
+
+    @Test
+    @Transactional
+    @Rollback
     @DisplayName("[성공] Option 생성")
     void 성공_Option_생성() {
         HumanPromptStepSimpleRespDto step = 단계_생성(20, "P", "테스트 단계");

@@ -51,30 +51,6 @@ public class HumanPromptControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
-    @DisplayName("[400] 단계 생성 - stepNumber null")
-    void 단계_생성_stepNumber_null_400() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/steps")
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"stepCode": "A", "name": "인물 유형"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @WithMockUser(roles = "MANAGER")
-    @DisplayName("[400] 단계 생성 - stepCode 빈 값")
-    void 단계_생성_stepCode_빈값_400() throws Exception {
-        mockMvc.perform(post(BASE_URL + "/steps")
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"stepNumber": 1, "stepCode": "", "name": "인물 유형"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 단계 생성 - name 빈 값")
     void 단계_생성_name_빈값_400() throws Exception {
         mockMvc.perform(post(BASE_URL + "/steps")

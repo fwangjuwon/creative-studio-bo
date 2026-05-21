@@ -98,6 +98,39 @@ public class TagGroupServiceTest {
         assertThat(r2.getId()).isNotNull();
     }
 
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 그룹 생성 - sortOrder 미입력 시 현재 최대값 + 1 자동 세팅")
+    void 성공_태그그룹_생성_sortOrder_자동증가() {
+        // sortOrder=9000으로 기준 항목 생성
+        tagGroupService.createTagGroup(TagGroupCreateReqDto.builder()
+                .name("자동증가기준그룹").isMultiSelect(false).sortOrder(9000).build());
+
+        // sortOrder null로 생성 → 9001 자동 세팅 기대
+        TagGroupRespDto result = tagGroupService.createTagGroup(TagGroupCreateReqDto.builder()
+                .name("자동증가결과그룹").isMultiSelect(false).build());
+
+        assertThat(result.getSortOrder()).isEqualTo(9001);
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 태그 그룹 생성 - sortOrder 연속 미입력 시 순차 증가")
+    void 성공_태그그룹_생성_sortOrder_연속_자동증가() {
+        tagGroupService.createTagGroup(TagGroupCreateReqDto.builder()
+                .name("연속증가기준그룹").isMultiSelect(false).sortOrder(9000).build());
+
+        TagGroupRespDto result1 = tagGroupService.createTagGroup(TagGroupCreateReqDto.builder()
+                .name("연속증가결과그룹A").isMultiSelect(false).build());
+        TagGroupRespDto result2 = tagGroupService.createTagGroup(TagGroupCreateReqDto.builder()
+                .name("연속증가결과그룹B").isMultiSelect(false).build());
+
+        assertThat(result1.getSortOrder()).isEqualTo(9001);
+        assertThat(result2.getSortOrder()).isEqualTo(9002);
+    }
+
     // ============================================================
     // TagGroup 단건 조회
     // ============================================================
