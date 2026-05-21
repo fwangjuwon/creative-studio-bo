@@ -114,6 +114,6 @@ class ImageValidationUtilTest {
         assertThatThrownBy(() -> ImageValidationUtil.validate(file))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.IMAGE_SAVE_FAILED));
+                        .isEqualTo(ImageGenerationErrorCode.IMAGE_READ_FAILED));
     }
 }

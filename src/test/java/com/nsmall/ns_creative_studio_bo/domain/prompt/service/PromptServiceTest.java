@@ -34,6 +34,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -714,67 +715,13 @@ public class PromptServiceTest {
     }
 
     // ================================================================
-    // 상품 이미지 생성 — 참조 이미지 검증
+    // 상품 이미지 생성 — 참조 이미지 오케스트레이션
+    // (참조 이미지 검증 규칙은 ImageValidationUtilTest 가 소유)
     // ================================================================
 
     @Test
-    @DisplayName("[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (text/plain)")
-    void 예외_상품_이미지_생성_허용되지않는_MIME타입() {
-        MultipartFile file = mock(MultipartFile.class);
-        given(file.isEmpty()).willReturn(false);
-        given(file.getSize()).willReturn(1024L);
-        given(file.getContentType()).willReturn("text/plain");
-
-        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
-    }
-
-    @Test
-    @DisplayName("[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (application/x-sh)")
-    void 예외_상품_이미지_생성_허용되지않는_MIME타입_sh() {
-        MultipartFile file = mock(MultipartFile.class);
-        given(file.isEmpty()).willReturn(false);
-        given(file.getSize()).willReturn(1024L);
-        given(file.getContentType()).willReturn("application/x-sh");
-
-        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
-    }
-
-    @Test
-    @DisplayName("[예외] 상품 이미지 생성 - Content-Type null")
-    void 예외_상품_이미지_생성_ContentType_null() {
-        MultipartFile file = mock(MultipartFile.class);
-        given(file.isEmpty()).willReturn(false);
-        given(file.getSize()).willReturn(1024L);
-        given(file.getContentType()).willReturn(null);
-
-        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE));
-    }
-
-    @Test
-    @DisplayName("[예외] 상품 이미지 생성 - 파일 크기 15MB 초과")
-    void 예외_상품_이미지_생성_파일크기_초과() {
-        MultipartFile file = mock(MultipartFile.class);
-        given(file.isEmpty()).willReturn(false);
-        given(file.getSize()).willReturn(16 * 1024 * 1024L); // 16MB
-
-        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.IMAGE_TOO_LARGE));
-    }
-
-    @Test
     @DisplayName("[성공] 상품 이미지 생성 - 참조 이미지 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
-    void 성공_상품_이미지_생성_참조이미지_가이드_워딩_적용() throws java.io.IOException {
+    void 성공_상품_이미지_생성_참조이미지_가이드_워딩_적용() throws IOException {
         given(imageGenerationService.generateImageMime(any(), any(), any()))
                 .willReturn("/images/test-uuid.jpg");
 
