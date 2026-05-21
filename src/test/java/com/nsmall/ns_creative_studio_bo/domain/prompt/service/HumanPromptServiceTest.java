@@ -39,6 +39,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import org.mockito.ArgumentCaptor;
 
@@ -645,5 +646,31 @@ public class HumanPromptServiceTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_TOO_LARGE));
+    }
+
+    @Test
+    @DisplayName("[성공] 이미지 생성 - 참조 이미지 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
+    void 성공_이미지_생성_참조이미지_가이드_워딩_적용() throws java.io.IOException {
+        given(imageGenerationService.generateImageMime(any(), any(), any()))
+                .willReturn("/images/test-uuid.jpg");
+
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(1024L);
+        given(file.getContentType()).willReturn("image/jpeg");
+        given(file.getBytes()).willReturn(new byte[]{1, 2, 3});
+
+        List<String> imageUrls = humanPromptService.generateImage(null, MOCK_PROMPT, file);
+
+        assertThat(imageUrls).hasSize(3);
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(imageGenerationService, times(3))
+                .generateImageMime(promptCaptor.capture(), any(), any());
+        String capturedPrompt = promptCaptor.getValue();
+        assertThat(capturedPrompt)
+                .startsWith("Use the provided reference image as the visual guide for the product/object only.")
+                .contains("Generate the human subject newly")
+                .endsWith(MOCK_PROMPT);
     }
 }

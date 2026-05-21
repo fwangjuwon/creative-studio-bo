@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
@@ -21,6 +20,8 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryO
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -30,16 +31,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.IntStream;
 
 /**
  * 인간 이미지 프롬프트 서비스 구현체
@@ -65,12 +62,26 @@ import java.util.stream.IntStream;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class HumanPromptServiceImpl implements HumanPromptService {
+public class HumanPromptServiceImpl extends AbstractImagePromptService implements HumanPromptService {
 
-    private static final long MAX_REFERENCE_IMAGE_BYTES = 15 * 1024 * 1024L; // 15MB
-    private static final Set<String> ALLOWED_IMAGE_MIME_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp"
-    );
+    @Override
+    protected ImageGenerationService imageGenerationService() {
+        return imageGenerationService;
+    }
+
+    @Override
+    protected String buildReferenceGuide(String userPrompt) {
+        return "Use the provided reference image as the visual guide for the product/object only. "
+                + "Strictly preserve all of the following from the reference: "
+                + "(1) exact product shape, silhouette, and overall form without any distortion; "
+                + "(2) original proportions and scale of the product; "
+                + "(3) surface texture, material finish, and fine structural details; "
+                + "(4) color palette and tonal values of the product itself. "
+                + "Generate the human subject newly according to the text prompt below, "
+                + "and make the person interact naturally with the referenced product. "
+                + userPrompt;
+    }
+
 
     private final HumanPromptStepMapper humanPromptStepMapper;
     private final HumanPromptAttrMapper humanPromptAttrMapper;
@@ -279,42 +290,10 @@ public class HumanPromptServiceImpl implements HumanPromptService {
     public List<String> generateImage(Long historyId, String promptText, MultipartFile referenceImage) {
         // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
         List<String> imageUrls;
-        if (referenceImage != null && !referenceImage.isEmpty()) {
-            try {
-                if (referenceImage.getSize() > MAX_REFERENCE_IMAGE_BYTES) {
-                    throw new BizException(ImageGenerationErrorCode.IMAGE_TOO_LARGE);
-                }
-                String mimeType = referenceImage.getContentType();
-                if (mimeType == null) {
-                    throw new BizException(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE);
-                }
-                if (!ALLOWED_IMAGE_MIME_TYPES.contains(mimeType)) {
-                    log.warn("허용되지 않은 MIME 타입 — mimeType={}", mimeType);
-                    throw new BizException(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE);
-                }
-                byte[] imageBytes = referenceImage.getBytes();
-                // 인물 프롬프트의 참조 이미지는 주로 "상품 이미지" — 상품을 그대로 보존하고
-                // 인물은 promptText 묘사에 따라 새로 생성한다는 방향으로 지시
-                String referenceGuidePrompt = "Use the provided reference image as the visual guide for the product/object only. "
-                        + "Strictly preserve all of the following from the reference: "
-                        + "(1) exact product shape, silhouette, and overall form without any distortion; "
-                        + "(2) original proportions and scale of the product; "
-                        + "(3) surface texture, material finish, and fine structural details; "
-                        + "(4) color palette and tonal values of the product itself. "
-                        + "Generate the human subject newly according to the text prompt below, "
-                        + "and make the person interact naturally with the referenced product. "
-                        + promptText;
-                imageUrls = IntStream.range(0, PromptConstants.IMAGE_GENERATE_COUNT)
-                        .mapToObj(i -> CompletableFuture.supplyAsync(
-                                () -> imageGenerationService.generateImageMime(referenceGuidePrompt, imageBytes, mimeType)))
-                        .toList()
-                        .stream()
-                        .map(CompletableFuture::join)
-                        .toList();
-            } catch (IOException e) {
-                log.error("참조 이미지 읽기 실패", e);
-                throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
-            }
+        ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
+        if (refImage != null) {
+            imageUrls = generateImagesWithReference(
+                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
         } else {
             imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
         }
