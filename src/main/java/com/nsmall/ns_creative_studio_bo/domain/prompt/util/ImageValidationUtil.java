@@ -16,13 +16,10 @@ import java.util.Set;
  *   - 허용 MIME: image/jpeg, image/png, image/webp
  *   - 최대 크기: 15MB
  *   - null/empty 입력은 "참조 이미지 없음"으로 간주하여 null 반환 (예외 아님)
- *
- * 설계 의도 — Spring Bean(@Component)으로 등록하지 않은 이유:
+
  *   - 상태(필드)와 외부 의존성(주입 대상)이 없는 순수 함수형 검증 로직
- *   - Spring 라이프사이클(init/destroy/AOP)이나 환경별 설정이 불필요
- *   - JDK Collections/Objects/Files 등과 동일한 정적 유틸 관용을 따름
- *   - 검증 규칙을 환경별로 교체하거나 외부 서비스(예: AV 스캔)를 주입해야 할 때
- *     비로소 빈으로 승격하는 것이 적절
+ *
+ *   
  * </pre>
  *
  * @author iamjy
