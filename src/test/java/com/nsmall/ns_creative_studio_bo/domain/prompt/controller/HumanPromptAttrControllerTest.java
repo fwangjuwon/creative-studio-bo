@@ -81,18 +81,6 @@ public class HumanPromptAttrControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
-    @DisplayName("[400] 세부항목 생성 - sortOrder null")
-    void 세부항목_생성_sortOrder_null_400() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"stepId": 1, "name": "연령대", "isMultiSelect": false, "isRequired": true}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 세부항목 생성 - name 101자 초과")
     void 세부항목_생성_name_길이초과_400() throws Exception {
         String name = "가".repeat(101);

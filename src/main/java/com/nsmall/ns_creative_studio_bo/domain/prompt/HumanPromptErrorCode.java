@@ -31,6 +31,7 @@ public enum HumanPromptErrorCode implements ErrorCode {
 
     DUPLICATE_STEP_NAME("HP016", "이미 존재하는 단계명입니다.", HttpStatus.BAD_REQUEST.value()),
     DUPLICATE_STEP_CODE("HP017", "이미 존재하는 단계 코드입니다.", HttpStatus.BAD_REQUEST.value()),
+    DUPLICATE_STEP_NUMBER("HP021", "이미 존재하는 순서 번호입니다.", HttpStatus.BAD_REQUEST.value()),
     DUPLICATE_ATTR_NAME("HP018", "이미 존재하는 세부항목명입니다.", HttpStatus.BAD_REQUEST.value()),
     DUPLICATE_OPTION_NAME("HP019", "이미 존재하는 선택지명입니다.", HttpStatus.BAD_REQUEST.value());
 

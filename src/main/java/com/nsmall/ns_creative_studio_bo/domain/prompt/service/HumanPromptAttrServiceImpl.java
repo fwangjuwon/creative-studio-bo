@@ -40,6 +40,11 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
                     "이미 존재하는 세부항목명입니다. name=" + dto.getName());
         }
 
+        // sortOrder 미입력 시 해당 step 내 최대값 + 1 자동 세팅
+        int sortOrder = dto.getSortOrder() != null
+                ? dto.getSortOrder()
+                : humanPromptAttrMapper.selectMaxSortOrder(dto.getStepId()) + 1;
+
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
 
@@ -48,7 +53,7 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
                 .name(dto.getName())
                 .isMultiSelect(dto.getIsMultiSelect())
                 .isRequired(dto.getIsRequired())
-                .sortOrder(dto.getSortOrder())
+                .sortOrder(sortOrder)
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)

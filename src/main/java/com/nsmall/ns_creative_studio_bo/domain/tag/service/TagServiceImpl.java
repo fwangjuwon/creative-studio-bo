@@ -37,12 +37,17 @@ public class TagServiceImpl implements TagService {
                 .orElseThrow(() -> new BizException(TagErrorCode.TAG_GROUP_NOT_FOUND,
                         "태그 그룹을 찾을 수 없습니다. tagGroupId=" + dto.getTagGroupId()));
 
+        // sortOrder 미입력 시 해당 그룹 내 최대값 + 1 자동 세팅
+        int sortOrder = dto.getSortOrder() != null
+                ? dto.getSortOrder()
+                : tagMapper.selectMaxSortOrder(dto.getTagGroupId()) + 1;
+
         if (dto.getSortOrder() != null
-                && tagMapper.existsBySortOrder(dto.getTagGroupId(), dto.getSortOrder())) {
+                && tagMapper.existsBySortOrder(dto.getTagGroupId(), sortOrder)) {
             throw new BizException(TagErrorCode.DUPLICATE_SORT_ORDER,
-                    "동일 그룹 내에 정렬순서 " + dto.getSortOrder() + "이(가) 이미 존재합니다.");
+                    "동일 그룹 내에 정렬순서 " + sortOrder + "이(가) 이미 존재합니다.");
         }
-        
+
         if (tagMapper.existsByNameAndTagGroupId(dto.getName(), dto.getTagGroupId(), null)) {
             throw new BizException(TagErrorCode.DUPLICATE_TAG_NAME,
                     "이미 존재하는 태그명입니다. name=" + dto.getName());
@@ -55,7 +60,7 @@ public class TagServiceImpl implements TagService {
                 .tagGroupId(dto.getTagGroupId())
                 .name(dto.getName())
                 .tagValue(dto.getTagValue())
-                .sortOrder(dto.getSortOrder())
+                .sortOrder(sortOrder)
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)

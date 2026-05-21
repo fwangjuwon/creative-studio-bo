@@ -36,6 +36,11 @@ public interface HumanPromptStepMapper {
 
     boolean existsByStepCode(@Param("stepCode") String stepCode, @Param("excludeId") Long excludeId);
 
+    boolean existsByStepNumber(@Param("stepNumber") int stepNumber, @Param("excludeId") Long excludeId);
+
+    /** 현재 최대 step_number 조회 — 자동 증가 시 사용 (데이터 없으면 0 반환) */
+    int selectMaxStepNumber();
+
     void insert(HumanPromptStep step);
 
     void update(HumanPromptStep step);

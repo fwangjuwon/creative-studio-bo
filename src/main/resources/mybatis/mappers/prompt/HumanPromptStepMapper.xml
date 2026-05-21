@@ -58,6 +58,21 @@
         </if>
     </select>
 
+    <select id="existsByStepNumber" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM human_prompt_step
+            WHERE step_number = #{stepNumber}
+            <if test="excludeId != null">
+                AND id <![CDATA[ <> ]]> #{excludeId}
+            </if>
+        )
+    </select>
+
+    <select id="selectMaxStepNumber" resultType="int">
+        SELECT COALESCE(MAX(step_number), 0)
+        FROM human_prompt_step
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO human_prompt_step (
             step_number, step_code, name, is_common,

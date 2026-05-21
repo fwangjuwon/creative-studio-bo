@@ -42,6 +42,9 @@ public interface HumanPromptAttrMapper {
      */
     int countRequiredByStepId(@Param("stepId") Long stepId, @Param("excludeId") Long excludeId);
 
+    /** 동일 stepId 내 최대 sort_order 조회 — 자동 증가 시 사용 (데이터 없으면 0 반환) */
+    int selectMaxSortOrder(@Param("stepId") Long stepId);
+
     void insert(HumanPromptAttr attr);
 
     void update(HumanPromptAttr attr);

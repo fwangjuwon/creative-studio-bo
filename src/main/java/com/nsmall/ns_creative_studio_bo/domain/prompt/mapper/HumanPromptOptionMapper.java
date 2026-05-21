@@ -29,6 +29,9 @@ public interface HumanPromptOptionMapper {
 
     boolean existsByNameAndAttrId(@Param("name") String name, @Param("attrId") Long attrId, @Param("excludeId") Long excludeId);
 
+    /** 동일 attrId 내 최대 sort_order 조회 — 자동 증가 시 사용 (데이터 없으면 0 반환) */
+    int selectMaxSortOrder(@Param("attrId") Long attrId);
+
     void insert(HumanPromptOption option);
 
     void update(HumanPromptOption option);

@@ -69,18 +69,6 @@ public class HumanPromptOptionControllerTest extends SecuritySetupTest {
 
     @Test
     @WithMockUser(roles = "MANAGER")
-    @DisplayName("[400] 선택지 생성 - sortOrder null")
-    void 선택지_생성_sortOrder_null_400() throws Exception {
-        mockMvc.perform(post(BASE_URL)
-                        .contentType(APPLICATION_JSON)
-                        .content("""
-                                {"attrId": 1, "name": "20대", "promptValue": "in their 20s"}
-                                """))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @WithMockUser(roles = "MANAGER")
     @DisplayName("[400] 선택지 생성 - name 201자 초과")
     void 선택지_생성_name_길이초과_400() throws Exception {
         String name = "가".repeat(201);

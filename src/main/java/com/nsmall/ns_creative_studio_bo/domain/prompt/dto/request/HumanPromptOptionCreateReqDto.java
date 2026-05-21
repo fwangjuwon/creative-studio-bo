@@ -31,6 +31,6 @@ public class HumanPromptOptionCreateReqDto {
     @Size(max = 500, message = "프롬프트 값은 500자 이하여야 합니다.")
     private String promptValue;
 
-    @NotNull(message = "정렬 순서는 필수입니다.")
+    /** 정렬 순서 (선택 사항) — null이면 서비스에서 현재 최대값 + 1로 자동 세팅 */
     private Integer sortOrder;
 }

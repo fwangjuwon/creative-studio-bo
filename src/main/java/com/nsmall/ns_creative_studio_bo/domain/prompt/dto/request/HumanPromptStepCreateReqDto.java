@@ -2,7 +2,6 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,10 +20,10 @@ import lombok.NoArgsConstructor;
 @Builder
 public class HumanPromptStepCreateReqDto {
 
-    @NotNull(message = "단계 번호는 필수입니다.")
+    /** 단계 번호 (선택 사항) — null이면 서비스에서 현재 최대값 + 1로 자동 세팅 */
     private Integer stepNumber;
 
-    @NotBlank(message = "단계 코드는 필수입니다.")
+    /** 단계 코드 (선택 사항) — null이면 서비스에서 stepNumber 기반으로 자동 생성 (1→A, 2→B ...) */
     @Size(max = 2, message = "단계 코드는 2자 이하여야 합니다.")
     private String stepCode;
 
