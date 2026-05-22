@@ -3,6 +3,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -38,10 +39,12 @@ public interface HumanPromptService {
 
     /**
      * NanoBanana 이미지를 3개 병렬 생성하고, 첫 번째 URL을 이력에 업데이트한다.
+     * referenceImage 가 전달되면 해당 이미지를 Base64 로 인코딩하여 함께 전달한다.
      *
-     * @param historyId  업데이트할 prompt_history ID
-     * @param promptText 이미지 생성에 사용할 영문 프롬프트
+     * @param historyId      업데이트할 prompt_history ID
+     * @param promptText     이미지 생성에 사용할 영문 프롬프트
+     * @param referenceImage 참조 이미지 (선택, 주로 상품 이미지). 인물 묘사는 promptText 에 따라 새로 생성
      * @return 생성된 이미지 접근 URL 목록 (/images/{uuid}.jpg × 3)
      */
-    List<String> generateImage(Long historyId, String promptText);
+    List<String> generateImage(Long historyId, String promptText, MultipartFile referenceImage);
 }

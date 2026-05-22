@@ -24,7 +24,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -36,6 +38,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import org.mockito.ArgumentCaptor;
 
@@ -554,7 +558,7 @@ public class HumanPromptServiceTest {
         UserRespDto user = 유저_생성("img_gen_user", "USER", "팀E", 5);
         PromptHistory history = PERSON_히스토리_직접_삽입(user.getId());
 
-        List<String> imageUrls = humanPromptService.generateImage(history.getId(), MOCK_PROMPT);
+        List<String> imageUrls = humanPromptService.generateImage(history.getId(), MOCK_PROMPT, null);
 
         assertThat(imageUrls).hasSize(3);
         assertThat(imageUrls).contains("http://localhost:8080/images/test-uuid-1.jpg");
@@ -576,12 +580,43 @@ public class HumanPromptServiceTest {
         UserRespDto user = 유저_생성("img_gen_nohistory", "USER", "팀F", 5);
         PromptHistory history = PERSON_히스토리_직접_삽입(user.getId());
 
-        List<String> imageUrls = humanPromptService.generateImage(null, MOCK_PROMPT);
+        List<String> imageUrls = humanPromptService.generateImage(null, MOCK_PROMPT, null);
 
         assertThat(imageUrls).hasSize(3);
 
         PromptHistory unchanged = promptHistoryMapper.selectById(history.getId()).orElseThrow();
         assertThat(unchanged.getImageUrl()).isNull();
         assertThat(unchanged.getFinalRvisPic()).isEqualTo("test");
+    }
+
+    // ================================================================
+    // 이미지 생성 — 참조 이미지 오케스트레이션
+    // (참조 이미지 검증 규칙은 ImageValidationUtilTest 가 소유)
+    // ================================================================
+
+    @Test
+    @DisplayName("[성공] 이미지 생성 - 참조 이미지 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
+    void 성공_이미지_생성_참조이미지_가이드_워딩_적용() throws IOException {
+        given(imageGenerationService.generateImageMime(any(), any(), any()))
+                .willReturn("/images/test-uuid.jpg");
+
+        MultipartFile file = mock(MultipartFile.class);
+        given(file.isEmpty()).willReturn(false);
+        given(file.getSize()).willReturn(1024L);
+        given(file.getContentType()).willReturn("image/jpeg");
+        given(file.getBytes()).willReturn(new byte[]{1, 2, 3});
+
+        List<String> imageUrls = humanPromptService.generateImage(null, MOCK_PROMPT, file);
+
+        assertThat(imageUrls).hasSize(3);
+
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(imageGenerationService, times(3))
+                .generateImageMime(promptCaptor.capture(), any(), any());
+        String capturedPrompt = promptCaptor.getValue();
+        assertThat(capturedPrompt)
+                .startsWith("Use the provided reference image as the visual guide for the product/object only.")
+                .contains("Generate the human subject newly")
+                .endsWith(MOCK_PROMPT);
     }
 }

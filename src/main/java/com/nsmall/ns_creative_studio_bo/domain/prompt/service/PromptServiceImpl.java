@@ -12,9 +12,10 @@ import com.nsmall.ns_creative_studio_bo.domain.category.entity.Category;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryPathDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
@@ -45,10 +46,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Prompt 서비스 구현체
@@ -68,12 +66,24 @@ import java.util.stream.IntStream;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class PromptServiceImpl implements PromptService {
+public class PromptServiceImpl extends AbstractImagePromptService implements PromptService {
 
-    private static final long MAX_REFERENCE_IMAGE_BYTES = 15 * 1024 * 1024L; // 15MB
-    private static final Set<String> ALLOWED_IMAGE_MIME_TYPES = Set.of(
-            "image/jpeg", "image/png", "image/webp"
-    );
+    @Override
+    protected ImageGenerationService imageGenerationService() {
+        return imageGenerationService;
+    }
+
+    @Override
+    protected String buildReferenceGuide(String userPrompt) {
+        return "Use the provided reference image as the primary visual guide. "
+                + "Strictly preserve all of the following from the reference: "
+                + "(1) exact product shape, silhouette, and overall form without any distortion; "
+                + "(2) original proportions and scale of the product; "
+                + "(3) surface texture, material finish, and fine structural details; "
+                + "(4) color palette and tonal values of the product itself. "
+                + userPrompt;
+    }
+
 
     private final PromptHistoryMapper promptHistoryMapper;
     private final GoodsPromptHistoryTagMapper goodsPromptHistoryTagMapper;
@@ -288,40 +298,10 @@ public class PromptServiceImpl implements PromptService {
     public List<String> generateGoodsImage(Long historyId, String promptText, MultipartFile referenceImage) {
         // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
         List<String> imageUrls;
-        if (referenceImage != null && !referenceImage.isEmpty()) {
-            try {
-                if (referenceImage.getSize() > MAX_REFERENCE_IMAGE_BYTES) {
-                    throw new BizException(ImageGenerationErrorCode.IMAGE_TOO_LARGE);
-                }
-                String mimeType = referenceImage.getContentType();
-                if (mimeType == null) {
-                    throw new BizException(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE);
-                }
-                if (!ALLOWED_IMAGE_MIME_TYPES.contains(mimeType)) {
-                    log.warn("허용되지 않은 MIME 타입 — mimeType={}", mimeType);
-                    throw new BizException(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE);
-                }
-                byte[] imageBytes = referenceImage.getBytes();
-                // 참조 이미지의 형태·비율·질감·색감을 보존하도록 지시문 앞에 추가
-                // 조명·구도는 promptText에 위임하여 이미지 다양성을 확보
-                String referenceGuidePrompt = "Use the provided reference image as the primary visual guide. "
-                        + "Strictly preserve all of the following from the reference: "
-                        + "(1) exact product shape, silhouette, and overall form without any distortion; "
-                        + "(2) original proportions and scale of the product; "
-                        + "(3) surface texture, material finish, and fine structural details; "
-                        + "(4) color palette and tonal values of the product itself. "
-                        + promptText;
-                imageUrls = IntStream.range(0, PromptConstants.IMAGE_GENERATE_COUNT)
-                        .mapToObj(i -> CompletableFuture.supplyAsync(
-                                () -> imageGenerationService.generateImageMime(referenceGuidePrompt, imageBytes, mimeType)))
-                        .toList()
-                        .stream()
-                        .map(CompletableFuture::join)
-                        .toList();
-            } catch (IOException e) {
-                log.error("참조 이미지 읽기 실패", e);
-                throw new BizException(ImageGenerationErrorCode.IMAGE_SAVE_FAILED);
-            }
+        ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
+        if (refImage != null) {
+            imageUrls = generateImagesWithReference(
+                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
         } else {
             imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
         }

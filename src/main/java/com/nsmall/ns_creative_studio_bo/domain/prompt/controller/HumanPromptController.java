@@ -5,7 +5,6 @@ import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptStepCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptStepUpdateReqDto;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.ImageGenerateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.HumanPromptStepSimpleRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.ImageGenerateRespDto;
@@ -17,12 +16,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -114,16 +116,20 @@ public class HumanPromptController {
     @Operation(
             summary = "인간 이미지 생성 (NanoBanana)",
             description = "영문 프롬프트 텍스트를 NanoBanana(gemini-3-pro-image-preview)에 전달하여 이미지를 생성하고 " +
-                          "서버에 저장 후 접근 URL을 반환한다. historyId를 전달하면 이력의 imageUrl도 업데이트된다.",
+                          "서버에 저장 후 접근 URL을 반환한다. historyId를 전달하면 이력의 imageUrl도 업데이트된다. " +
+                          "referenceImage(주로 상품 이미지) 첨부 시 해당 이미지를 보존하면서 인물을 새로 생성한다.",
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "이미지 생성 성공")
-    @ApiResponse(responseCode = "400", description = "promptText 누락")
+    @ApiResponse(responseCode = "400", description = "promptText 누락 또는 빈 문자열 / 허용되지 않는 MIME 타입 (jpeg, png, webp만 허용) / 파일 크기 15MB 초과")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PreAuthorize("hasRole('USER')")
-    @PostMapping("/generate-image")
-    public CommonResponse<ImageGenerateRespDto> generateImage(@RequestBody @Valid ImageGenerateReqDto dto) {
-        List<String> imageUrls = humanPromptService.generateImage(dto.getHistoryId(), dto.getPromptText());
+    @PostMapping(value = "/generate-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public CommonResponse<ImageGenerateRespDto> generateImage(
+            @RequestParam(required = false) Long historyId,
+            @NotBlank @RequestParam String promptText,
+            @RequestParam(required = false) MultipartFile referenceImage) {
+        List<String> imageUrls = humanPromptService.generateImage(historyId, promptText, referenceImage);
         return CommonResponse.success(ImageGenerateRespDto.builder().imageUrls(imageUrls).build());
     }
 }

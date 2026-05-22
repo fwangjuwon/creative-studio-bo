@@ -20,6 +20,8 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryO
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -59,7 +62,26 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class HumanPromptServiceImpl implements HumanPromptService {
+public class HumanPromptServiceImpl extends AbstractImagePromptService implements HumanPromptService {
+
+    @Override
+    protected ImageGenerationService imageGenerationService() {
+        return imageGenerationService;
+    }
+
+    @Override
+    protected String buildReferenceGuide(String userPrompt) {
+        return "Use the provided reference image as the visual guide for the product/object only. "
+                + "Strictly preserve all of the following from the reference: "
+                + "(1) exact product shape, silhouette, and overall form without any distortion; "
+                + "(2) original proportions and scale of the product; "
+                + "(3) surface texture, material finish, and fine structural details; "
+                + "(4) color palette and tonal values of the product itself. "
+                + "Generate the human subject newly according to the text prompt below, "
+                + "and make the person interact naturally with the referenced product. "
+                + userPrompt;
+    }
+
 
     private final HumanPromptStepMapper humanPromptStepMapper;
     private final HumanPromptAttrMapper humanPromptAttrMapper;
@@ -265,16 +287,23 @@ public class HumanPromptServiceImpl implements HumanPromptService {
 
     @Override
     @Transactional
-    public List<String> generateImage(Long historyId, String promptText) {
-        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 생성
-        List<String> imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
+    public List<String> generateImage(Long historyId, String promptText, MultipartFile referenceImage) {
+        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        List<String> imageUrls;
+        ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
+        if (refImage != null) {
+            imageUrls = generateImagesWithReference(
+                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
+        } else {
+            imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
+        }
 
         // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
         if (historyId != null) {
             try {
                 String imageUrlsJson = objectMapper.writeValueAsString(imageUrls);
                 promptHistoryMapper.updateImageUrl(historyId, imageUrlsJson, SecurityUtil.getCurrentLoginId());
-                log.info("이미지 URL 이력 업데이트 완료 — historyId={}, urls={}", historyId, imageUrlsJson);
+                log.info("인물 이미지 URL 이력 업데이트 완료 — historyId={}, urls={}", historyId, imageUrlsJson);
             } catch (JsonProcessingException e) {
                 log.warn("이미지 URL JSON 직렬화 실패 — 첫 번째 URL만 저장. historyId={}", historyId, e);
                 promptHistoryMapper.updateImageUrl(historyId, imageUrls.get(0), SecurityUtil.getCurrentLoginId());

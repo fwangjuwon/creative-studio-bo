@@ -6,7 +6,6 @@ import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.service.CategoryService;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
@@ -34,6 +33,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,6 +45,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 /**
@@ -81,6 +82,9 @@ public class PromptServiceTest {
 
     @MockitoBean
     private GeminiService geminiService;
+
+    @MockitoBean
+    private ImageGenerationService imageGenerationService;
 
     private static final String MOCK_PROMPT = "A professional product photo of high-quality Korean ginseng, studio lighting, warm tones.";
 
@@ -710,62 +714,34 @@ public class PromptServiceTest {
     }
 
     // ================================================================
-    // 상품 이미지 생성 — 참조 이미지 검증
+    // 상품 이미지 생성 — 참조 이미지 오케스트레이션
+    // (참조 이미지 검증 규칙은 ImageValidationUtilTest 가 소유)
     // ================================================================
 
     @Test
-    @DisplayName("[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (text/plain)")
-    void 예외_상품_이미지_생성_허용되지않는_MIME타입() {
+    @DisplayName("[성공] 상품 이미지 생성 - 참조 이미지 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
+    void 성공_상품_이미지_생성_참조이미지_가이드_워딩_적용() throws IOException {
+        given(imageGenerationService.generateImageMime(any(), any(), any()))
+                .willReturn("/images/test-uuid.jpg");
+
         MultipartFile file = mock(MultipartFile.class);
         given(file.isEmpty()).willReturn(false);
         given(file.getSize()).willReturn(1024L);
-        given(file.getContentType()).willReturn("text/plain");
+        given(file.getContentType()).willReturn("image/jpeg");
+        given(file.getBytes()).willReturn(new byte[]{1, 2, 3});
 
-        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
-    }
+        List<String> imageUrls = promptService.generateGoodsImage(null, MOCK_PROMPT, file);
 
-    @Test
-    @DisplayName("[예외] 상품 이미지 생성 - 허용되지 않는 MIME 타입 (application/x-sh)")
-    void 예외_상품_이미지_생성_허용되지않는_MIME타입_sh() {
-        MultipartFile file = mock(MultipartFile.class);
-        given(file.isEmpty()).willReturn(false);
-        given(file.getSize()).willReturn(1024L);
-        given(file.getContentType()).willReturn("application/x-sh");
+        assertThat(imageUrls).hasSize(3);
+        assertThat(imageUrls).allMatch(u -> u.endsWith("/images/test-uuid.jpg"));
 
-        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
-    }
-
-    @Test
-    @DisplayName("[예외] 상품 이미지 생성 - Content-Type null")
-    void 예외_상품_이미지_생성_ContentType_null() {
-        MultipartFile file = mock(MultipartFile.class);
-        given(file.isEmpty()).willReturn(false);
-        given(file.getSize()).willReturn(1024L);
-        given(file.getContentType()).willReturn(null);
-
-        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.INVALID_IMAGE_MIME_TYPE));
-    }
-
-    @Test
-    @DisplayName("[예외] 상품 이미지 생성 - 파일 크기 15MB 초과")
-    void 예외_상품_이미지_생성_파일크기_초과() {
-        MultipartFile file = mock(MultipartFile.class);
-        given(file.isEmpty()).willReturn(false);
-        given(file.getSize()).willReturn(16 * 1024 * 1024L); // 16MB
-
-        assertThatThrownBy(() -> promptService.generateGoodsImage(null, "test prompt", file))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.IMAGE_TOO_LARGE));
+        ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
+        verify(imageGenerationService, times(3))
+                .generateImageMime(promptCaptor.capture(), any(), any());
+        String capturedPrompt = promptCaptor.getValue();
+        assertThat(capturedPrompt)
+                .startsWith("Use the provided reference image as the primary visual guide.")
+                .endsWith(MOCK_PROMPT);
     }
 
     // ================================================================
