@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nsmall.ns_creative_studio_bo.common.config.GeminiProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
@@ -152,6 +153,79 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         }
     }
 
+    private static final String FUSION_SYSTEM_PROMPT = """
+            [Role]
+            You are a high-performance visual synthesis engine (Nano Banana 2) specialized in combining two reference images to create seamless 'interaction' scenes at a professional Commercial Photography level.
+
+            [Core Mission]
+            Your primary objective is to output a natural composite image that preserves 100% of the visual identity of both the Person (Reference_1) and the Product (Reference_2), strictly adhering to the laws of physics.
+
+            [Prompt Reconstruction & Interaction Logic]
+            Analyze the user's instructions and reconstruct them into a sophisticated internal prompt based on the following rules:
+
+            1. Identity & Branding Preservation
+               - Reference_Image_1 (Person): CRITICAL — Treat this image as a strict biometric identity reference. The following must match 100%: exact eye shape and color, nose shape, mouth and lip shape, jawline, skin tone, skin texture, unique facial features (moles, wrinkles, etc.), hairstyle, and hair color. Do NOT generate a similar-looking person. Reproduce the EXACT individual from Reference_Image_1.
+               - Reference_Image_2 (Product): Never damage or alter the package design, logo, or brand colors. For brand integrity, ensure the logo is always sharp and oriented toward the camera.
+
+            2. Action-Specific Physics & Interaction
+               - 'Holding': Describe the anatomical detail of finger joints firmly grasping the product's edges and thickness. Reflect subtle muscle tension in the hand according to the product's weight.
+               - 'Eating/Tasting': Position the product near the mouth and synthesize vivid expressions (e.g., a bright smile, appetizing gaze). Express subtle cheek contours if food is being held in the mouth.
+               - 'Pointing/Presenting': Have the person support the product with one hand while pointing at the logo or key features with the index finger. Connect the gaze naturally between the product and the camera.
+               - 'Hugging/Embracing': Bring the product close to the chest to show attachment. Render realistic fabric wrinkles and compression where the arms and product meet.
+               - 'Opening/Using': Depict dynamic hand movements and precise fingertip action involved in opening a package. Add a sense of liveliness by slightly exposing the contents.
+
+            3. Cinematic Quality & Environment
+               - Unified Lighting: Even if the reference images have different lighting, apply a single, unified studio lighting setup to eliminate discrepancies in shadows and highlights.
+               - Focus & Depth: Ensure the person's face and product logo are in sharp focus, while applying natural bokeh (background blur) to create depth.
+               - Quality: Maintain 8K resolution, ultra-detailed textures, and a hyper-realistic commercial photography aesthetic.
+
+            4. Anti-Hallucination & Physical Integrity
+               - Anatomical Integrity: Strictly ensure the person has exactly 5 fingers. Prohibit abnormal joint angles or the generation of extra limbs (Negative constraint).
+               - Anti-Floating: Ensure the product does not appear to be floating. Generate precise contact shadows and physical pressure at the points of interaction.
+               - Anti-Distortion: Exclude any duplication of persons or objects. Prevent logo text corruption or any alteration of brand typography.
+
+            5. Final Exclusions
+               - Do not generate any artificial text, dates, or watermarks on the background or product unless explicitly requested by the user. Output only the visual composite.
+        """;
+
+    @Override
+    public List<String> generateFusionImages(String userMessage,
+                                             byte[] personImageBytes, String personMimeType,
+                                             byte[] productImageBytes, String productMimeType,
+                                             int count) {
+        log.debug("NanoBanana 합성 이미지 {}개 병렬 생성 시작", count);
+
+        String personBase64  = Base64.getEncoder().encodeToString(personImageBytes);
+        String productBase64 = Base64.getEncoder().encodeToString(productImageBytes);
+
+        NbRequest requestBody = new NbRequest(
+                new NbSystemInstruction(List.of(new NbPart(FUSION_SYSTEM_PROMPT))),
+                List.of(new NbContent("user", List.of(
+                        new NbPart("Reference_Image_1 (인물):"),
+                        new NbPart(null, new NbInlineData(personMimeType, personBase64)),
+                        new NbPart("Reference_Image_2 (상품):"),
+                        new NbPart(null, new NbInlineData(productMimeType, productBase64)),
+                        new NbPart(userMessage)
+                ))),
+                new NbGenerationConfig(List.of("IMAGE"))
+        );
+
+        List<CompletableFuture<String>> futures = IntStream.range(0, count)
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> callAndSave(requestBody)))
+                .toList();
+
+        try {
+            List<String> imageUrls = futures.stream()
+                    .map(CompletableFuture::join)
+                    .toList();
+            log.info("NanoBanana 합성 이미지 {}개 병렬 생성 완료 — urls: {}", count, imageUrls);
+            return imageUrls;
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof BizException bizEx) throw bizEx;
+            throw e;
+        }
+    }
+
     private ImageGenerationErrorCode resolveImageErrorCode(int statusCode) {
         return switch (statusCode) {
             case 429 -> ImageGenerationErrorCode.IMAGE_GENERATION_RATE_LIMITED;
@@ -187,9 +261,18 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     // ================================================================
 
     private record NbRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            @JsonProperty("system_instruction") NbSystemInstruction systemInstruction,
             List<NbContent> contents,
             @JsonProperty("generationConfig") NbGenerationConfig generationConfig
-    ) {}
+    ) {
+        // 기존 코드 호환 — systemInstruction 없는 생성자
+        NbRequest(List<NbContent> contents, NbGenerationConfig generationConfig) {
+            this(null, contents, generationConfig);
+        }
+    }
+
+    private record NbSystemInstruction(List<NbPart> parts) {}
 
     private record NbGenerationConfig(
             @JsonProperty("responseModalities") List<String> responseModalities
