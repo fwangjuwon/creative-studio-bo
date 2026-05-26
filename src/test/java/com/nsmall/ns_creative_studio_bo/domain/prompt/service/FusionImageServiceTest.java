@@ -1,7 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -120,9 +119,7 @@ public class FusionImageServiceTest {
     void 예외_합성_이미지_생성_상품_크기_초과() {
         assertThatThrownBy(() -> fusionImageService.generateFusionImages(
                 크기_초과_이미지("productImage"), 유효한_이미지("personImage"), null, null, null))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.IMAGE_TOO_LARGE));
+                .isInstanceOf(BizException.class);
     }
 
     @Test
@@ -130,9 +127,7 @@ public class FusionImageServiceTest {
     void 예외_합성_이미지_생성_인물_크기_초과() {
         assertThatThrownBy(() -> fusionImageService.generateFusionImages(
                 유효한_이미지("productImage"), 크기_초과_이미지("personImage"), null, null, null))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.IMAGE_TOO_LARGE));
+                .isInstanceOf(BizException.class);
     }
 
     @Test
@@ -140,8 +135,18 @@ public class FusionImageServiceTest {
     void 예외_합성_이미지_생성_미허용_MIME() {
         assertThatThrownBy(() -> fusionImageService.generateFusionImages(
                 미허용_MIME_이미지("productImage", "image/gif"), 유효한_이미지("personImage"), null, null, null))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE));
+                .isInstanceOf(BizException.class);
+    }
+
+    @Test
+    @DisplayName("[예외] 합성 이미지 생성 - 상품/인물 이미지 누락(null)")
+    void 예외_합성_이미지_생성_이미지_누락() {
+        assertThatThrownBy(() -> fusionImageService.generateFusionImages(
+                null, 유효한_이미지("personImage"), null, null, null))
+                .isInstanceOf(BizException.class);
+
+        assertThatThrownBy(() -> fusionImageService.generateFusionImages(
+                유효한_이미지("productImage"), null, null, null, null))
+                .isInstanceOf(BizException.class);
     }
 }

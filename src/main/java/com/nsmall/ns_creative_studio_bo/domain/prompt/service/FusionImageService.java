@@ -8,7 +8,7 @@ import java.util.List;
  * 합성 이미지 생성 서비스 인터페이스
  *
  * <pre>
- * 상품 이미지 + 인물 이미지 두 장을 받아 NanaBanana(Gemini 이미지 모델)로
+ * 상품 이미지 + 인물 이미지 두 장을 받아 NanoBanana(Gemini 이미지 모델)로
  * 자연스러운 합성 이미지를 생성하고 접근 가능한 절대 URL 목록을 반환한다.
  * </pre>
  *

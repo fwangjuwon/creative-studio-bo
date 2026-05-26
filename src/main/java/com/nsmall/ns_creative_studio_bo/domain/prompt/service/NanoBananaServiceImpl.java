@@ -164,7 +164,13 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             Analyze the user's instructions and reconstruct them into a sophisticated internal prompt based on the following rules:
 
             1. Identity & Branding Preservation
-               - Reference_Image_1 (Person): CRITICAL — Treat this image as a strict biometric identity reference. The following must match 100%: exact eye shape and color, nose shape, mouth and lip shape, jawline, skin tone, skin texture, unique facial features (moles, wrinkles, etc.), hairstyle, and hair color. Do NOT generate a similar-looking person. Reproduce the EXACT individual from Reference_Image_1.
+               - Reference_Image_1 (Person): ABSOLUTE CONSTRAINT — Treat this image as a strict biometric identity reference. Every visual characteristic must be reproduced with 100% fidelity:
+                 * Ethnicity & Nationality: NEVER alter, re-interpret, or generalize the person's ethnic background, racial characteristics, or nationality. The output person must visually belong to the EXACT same ethnic group as shown in Reference_Image_1. This is a non-negotiable constraint.
+                 * Facial anatomy: exact eye shape, color, and spacing; nose bridge and tip; lip shape and thickness; jawline; ear shape
+                 * Skin: exact skin tone (RGB-level accuracy), skin texture, undertone, unique markings (moles, freckles, wrinkles, scars)
+                 * Hair: identical hairstyle, color, texture, and hairline
+                 * Body type: preserve body proportions, build, and stature as shown in Reference_Image_1
+                 * Do NOT generate a "similar-looking" person. Do NOT idealize or generalize any features. Reproduce the EXACT individual from Reference_Image_1 with zero deviation.
                - Reference_Image_2 (Product): Never damage or alter the package design, logo, or brand colors. For brand integrity, ensure the logo is always sharp and oriented toward the camera.
 
             2. Action-Specific Physics & Interaction

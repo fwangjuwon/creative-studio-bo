@@ -25,6 +25,8 @@ import java.util.List;
  * @since 2026-05-19
  */
 @Tag(name = "FusionImage", description = "상품+인물 합성 이미지 생성 API")
+@SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasRole('USER')")
 @RestController
 @RequestMapping("/api/prompts/fusion")
 @RequiredArgsConstructor
@@ -36,13 +38,11 @@ public class FusionImageController {
             summary = "합성 이미지 생성 (NanoBanana)",
             description = "상품 이미지와 인물 이미지를 NanoBanana(gemini-3-pro-image-preview)로 합성하여 " +
                           "이미지를 생성하고 접근 URL 목록을 반환한다. " +
-                          "허용 MIME 타입: jpeg, png, webp / 최대 파일 크기: 15MB",
-            security = @SecurityRequirement(name = "bearerAuth")
+                          "허용 MIME 타입: jpeg, png, webp / 최대 파일 크기: 15MB"
     )
     @ApiResponse(responseCode = "200", description = "합성 이미지 생성 성공")
     @ApiResponse(responseCode = "400", description = "이미지 누락 / 허용되지 않는 MIME 타입 / 파일 크기 15MB 초과")
     @ApiResponse(responseCode = "401", description = "인증 필요")
-    @PreAuthorize("hasRole('USER')")
     @PostMapping(value = "/generate-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public CommonResponse<ImageGenerateRespDto> generateFusionImage(
             @RequestParam MultipartFile productImage,
