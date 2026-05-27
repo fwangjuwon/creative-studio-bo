@@ -1,11 +1,29 @@
 # TODO
 
-> 상태: 🚧 feat/sort-order-auto-increment 진행 중
-> 최종 업데이트: 2026-05-20 (정렬순서 자동 증가 기능 개발 중)
+> 상태: 🚧 refactor/user-controller-security-requirement 진행 중
+> 최종 업데이트: 2026-05-27 (UserController 컨벤션 정합 및 테스트 보완)
 
 ---
 
 ## 진행 중
+
+### refactor/user-controller-security-requirement. UserController 컨벤션 정합 및 테스트 보완
+
+> `UserController`의 `@SecurityRequirement(name = "bearerAuth")` 선언 위치를
+> 각 `@Operation(security = ...)` 인라인에서 클래스 레벨 단일 선언으로 변경.
+> `UserControllerTest` 접근 권한 케이스 누락분 전수 추가.
+
+- [x] `UserController` — `@SecurityRequirement(name = "bearerAuth")` 클래스 레벨로 이동, 메서드별 인라인 선언 제거
+  - `@PreAuthorize("hasRole('ADMIN')")` 는 `GET /me/usage`(USER 권한)가 혼재하므로 메서드 레벨 유지
+- [x] `UserControllerTest` — 접근 권한 케이스 보완 (기존 28개 → 42개)
+  - `GET /me/usage` — USER 200, MANAGER 200, ADMIN 200, 비로그인 401
+  - `/me/usage` 200 테스트: `@WithMockUser` 대신 `.with(user(customUserDetails(...)))` 패턴 적용
+    (`@AuthenticationPrincipal CustomUserDetails` 타입 불일치로 NPE 방지)
+  - ADMIN 전용 GET 엔드포인트 403 전수 보완: `GET /users`, `GET /users/{id}`, `GET /{id}/usage`, `GET /usage`
+  - `POST /api/users` USER 403 추가 (기존에 MANAGER만 있었음)
+- [x] 테스트 최종 확인
+
+---
 
 ### feat/sort-order-auto-increment. 태그/인물속성 정렬순서 자동 증가
 
