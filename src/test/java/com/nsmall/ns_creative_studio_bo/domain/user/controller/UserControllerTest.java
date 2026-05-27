@@ -1,6 +1,8 @@
 package com.nsmall.ns_creative_studio_bo.domain.user.controller;
 
 import com.nsmall.ns_creative_studio_bo.common.SecuritySetupTest;
+import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
+import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.service.UserService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,11 +13,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * User 컨트롤러 — Validation 실패 케이스
+ * User 컨트롤러 — Validation / 접근 권한 케이스
  *
  * @author iamjy
  * @since 2026-04-17
@@ -26,6 +29,12 @@ public class UserControllerTest extends SecuritySetupTest {
     @MockitoBean UserService userService;
 
     private static final String BASE_URL = "/api/users";
+
+    /** 역할(role)별 CustomUserDetails 생성 헬퍼 */
+    private CustomUserDetails customUserDetails(String role) {
+        User user = User.builder().id(1L).loginId("testuser").role(role).useYn("Y").build();
+        return new CustomUserDetails(user);
+    }
 
     // ============================================================
     // POST /api/users — 사용자 생성
@@ -247,8 +256,55 @@ public class UserControllerTest extends SecuritySetupTest {
     }
 
     // ============================================================
+    // GET /api/users/me/usage — 내 사용량 조회
+    // ============================================================
+
+    @Test
+    @DisplayName("[200] 내 사용량 조회 - USER 권한 허용")
+    void 내사용량_조회_USER권한_200() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/me/usage")
+                        .with(user(customUserDetails("USER"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[200] 내 사용량 조회 - MANAGER 권한 허용")
+    void 내사용량_조회_MANAGER권한_200() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/me/usage")
+                        .with(user(customUserDetails("MANAGER"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[200] 내 사용량 조회 - ADMIN 권한 허용")
+    void 내사용량_조회_ADMIN권한_200() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/me/usage")
+                        .with(user(customUserDetails("ADMIN"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[401] 내 사용량 조회 - 비로그인")
+    void 내사용량_조회_비로그인_401() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/me/usage"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ============================================================
     // 403 권한
     // ============================================================
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 사용자 생성 - USER 권한")
+    void 사용자_생성_USER권한_403() throws Exception {
+        mockMvc.perform(post(BASE_URL)
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"loginId": "user1", "password": "pass123", "name": "홍길동", "role": "USER", "dailyLimit": 10}
+                                """))
+                .andExpect(status().isForbidden());
+    }
 
     @Test
     @WithMockUser(roles = "MANAGER")
@@ -259,6 +315,38 @@ public class UserControllerTest extends SecuritySetupTest {
                         .content("""
                                 {"loginId": "user1", "password": "pass123", "name": "홍길동", "role": "ADMIN", "dailyLimit": 10}
                                 """))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 사용자 단건 조회 - USER 권한")
+    void 사용자_단건조회_USER권한_403() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[403] 사용자 단건 조회 - MANAGER 권한")
+    void 사용자_단건조회_MANAGER권한_403() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 사용자 목록 조회 - USER 권한")
+    void 사용자_목록조회_USER권한_403() throws Exception {
+        mockMvc.perform(get(BASE_URL))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[403] 사용자 목록 조회 - MANAGER 권한")
+    void 사용자_목록조회_MANAGER권한_403() throws Exception {
+        mockMvc.perform(get(BASE_URL))
                 .andExpect(status().isForbidden());
     }
 
@@ -299,6 +387,38 @@ public class UserControllerTest extends SecuritySetupTest {
     @DisplayName("[403] 사용자 삭제 - MANAGER 권한")
     void 사용자_삭제_MANAGER권한_403() throws Exception {
         mockMvc.perform(delete(BASE_URL + "/{id}", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 특정 회원 사용량 조회 - USER 권한")
+    void 특정회원_사용량조회_USER권한_403() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/{id}/usage", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[403] 특정 회원 사용량 조회 - MANAGER 권한")
+    void 특정회원_사용량조회_MANAGER권한_403() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/{id}/usage", 1L))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    @DisplayName("[403] 전체 회원 사용량 목록 조회 - USER 권한")
+    void 전체회원_사용량목록조회_USER권한_403() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/usage"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "MANAGER")
+    @DisplayName("[403] 전체 회원 사용량 목록 조회 - MANAGER 권한")
+    void 전체회원_사용량목록조회_MANAGER권한_403() throws Exception {
+        mockMvc.perform(get(BASE_URL + "/usage"))
                 .andExpect(status().isForbidden());
     }
 

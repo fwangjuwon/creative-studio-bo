@@ -30,6 +30,7 @@ import java.util.Optional;
  * @since 2026-02-26
  */
 @Tag(name = "User", description = "회원 관리 API")
+@SecurityRequirement(name = "bearerAuth")
 @Validated
 @RestController
 @RequestMapping("/api/users")
@@ -38,8 +39,7 @@ public class UserController {
 
     private final UserService userService;
 
-    @Operation(summary = "회원 생성", description = "ADMIN 전용",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "회원 생성", description = "ADMIN 전용")
     @ApiResponse(responseCode = "200", description = "회원 생성 성공")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
@@ -49,8 +49,7 @@ public class UserController {
         return CommonResponse.success(userService.createUser(dto));
     }
 
-    @Operation(summary = "회원 단건 조회", description = "ADMIN 전용 — 존재하지 않는 id면 200 + data: null 반환",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "회원 단건 조회", description = "ADMIN 전용 — 존재하지 않는 id면 200 + data: null 반환")
     @ApiResponse(responseCode = "200", description = "조회 성공 (미존재 시 data: null)")
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
@@ -60,8 +59,7 @@ public class UserController {
         return CommonResponse.success(result.orElse(null));
     }
 
-    @Operation(summary = "회원 목록 조회", description = "ADMIN 전용 — name / teamName / role 검색 조건 선택 가능",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "회원 목록 조회", description = "ADMIN 전용 — name / teamName / role 검색 조건 선택 가능")
     @ApiResponse(responseCode = "200", description = "목록 조회 성공")
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
@@ -70,8 +68,7 @@ public class UserController {
         return CommonResponse.success(userService.getUsers(searchDto));
     }
 
-    @Operation(summary = "회원 수정", description = "ADMIN 전용 — useYn(Y/N)으로 계정 활성화/비활성화(ban) 가능",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "회원 수정", description = "ADMIN 전용 — useYn(Y/N)으로 계정 활성화/비활성화(ban) 가능")
     @ApiResponse(responseCode = "200", description = "수정 성공")
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
@@ -82,8 +79,7 @@ public class UserController {
         return CommonResponse.success(userService.updateUser(id, dto));
     }
 
-    @Operation(summary = "회원 삭제", description = "ADMIN 전용",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "회원 삭제", description = "ADMIN 전용")
     @ApiResponse(responseCode = "200", description = "삭제 성공")
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
@@ -93,9 +89,7 @@ public class UserController {
         return CommonResponse.success();
     }
 
-    @Operation(summary = "내 사용량 조회",
-            description = "오늘 사용 횟수 및 남은 횟수 확인. USER / MANAGER / ADMIN 모든 인증 사용자 허용.",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "내 사용량 조회", description = "오늘 사용 횟수 및 남은 횟수 확인. USER / MANAGER / ADMIN 모든 인증 사용자 허용.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @GetMapping("/me/usage")
@@ -104,8 +98,7 @@ public class UserController {
         return CommonResponse.success(userService.getUserUsage(userDetails.getId()));
     }
 
-    @Operation(summary = "특정 회원 사용량 조회", description = "ADMIN 전용",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "특정 회원 사용량 조회", description = "ADMIN 전용")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
@@ -114,9 +107,7 @@ public class UserController {
         return CommonResponse.success(userService.getUserUsage(id));
     }
 
-    @Operation(summary = "전체 회원 사용량 목록 조회",
-            description = "ADMIN 전용 — 전체 회원의 금일 사용 횟수 및 남은 횟수를 단일 쿼리로 반환",
-            security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "전체 회원 사용량 목록 조회", description = "ADMIN 전용 — 전체 회원의 금일 사용 횟수 및 남은 횟수를 단일 쿼리로 반환")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @ApiResponse(responseCode = "403", description = "권한 없음 (ADMIN 전용)")
     @PreAuthorize("hasRole('ADMIN')")
