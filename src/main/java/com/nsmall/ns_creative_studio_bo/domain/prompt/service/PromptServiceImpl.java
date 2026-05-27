@@ -16,6 +16,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtil;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryPathDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
@@ -156,6 +157,11 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
                 .imageAspectRatio(dto.getImageAspectRatio())
                 .purpose(dto.getPurpose())
                 .additionalNotes(dto.getAdditionalNotes())
+                .textContent(dto.getTextContent())
+                .textColor(dto.getTextColor())
+                .textPositionTagId(dto.getTextPositionTagId())
+                .textSizeTagId(dto.getTextSizeTagId())
+                .textStyleTagId(dto.getTextStyleTagId())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -296,17 +302,34 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
     @Override
     @Transactional
     public List<String> generateGoodsImage(Long historyId, String promptText, MultipartFile referenceImage) {
-        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        // 1. 텍스트 오버레이 지시사항 조합 — historyId가 있으면 이력에서 오버레이 설정 조회
+        String finalPrompt = promptText;
+        if (historyId != null) {
+            PromptHistory history = promptHistoryMapper.selectById(historyId).orElse(null);
+            if (history != null) {
+                String position = resolveTagValue(history.getTextPositionTagId());
+                String size     = resolveTagValue(history.getTextSizeTagId());
+                String style    = resolveTagValue(history.getTextStyleTagId());
+                String overlayInstruction = TextOverlayUtil.buildInstruction(
+                        history.getTextContent(), position, size, style, history.getTextColor());
+                if (overlayInstruction != null) {
+                    finalPrompt = promptText + "\n\n" + overlayInstruction;
+                    log.debug("텍스트 오버레이 지시사항 주입 — historyId={}", historyId);
+                }
+            }
+        }
+
+        // 2. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
         List<String> imageUrls;
         ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
         if (refImage != null) {
             imageUrls = generateImagesWithReference(
-                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
+                    finalPrompt, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
         } else {
-            imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
+            imageUrls = imageGenerationService.generateImages(finalPrompt, PromptConstants.IMAGE_GENERATE_COUNT);
         }
 
-        // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
+        // 3. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
         if (historyId != null) {
             try {
                 String imageUrlsJson = objectMapper.writeValueAsString(imageUrls);
@@ -322,6 +345,14 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
         return imageUrls.stream()
                 .map(path -> imageBaseUrl + path)
                 .toList();
+    }
+
+    /**
+     * 태그 ID로 tag_value를 조회한다. null이거나 tag_value가 없으면 null 반환.
+     */
+    private String resolveTagValue(Long tagId) {
+        if (tagId == null) return null;
+        return tagMapper.selectById(tagId).map(Tag::getTagValue).orElse(null);
     }
 
     @Override

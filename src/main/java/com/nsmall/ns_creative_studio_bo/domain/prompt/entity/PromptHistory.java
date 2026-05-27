@@ -40,6 +40,14 @@ public class PromptHistory {
     private String imageAspectRatio; // 선택한 이미지 종횡비 (예: "16:9", "1:1", nullable)
     private String purpose;          // 생성 목적 (선택, 상품·인물 공통)
     private String additionalNotes;  // 추가 지시 사항 (선택, 상품·인물 공통)
+
+    // 텍스트 오버레이
+    private String textContent;        // 삽입할 텍스트 내용 (없으면 null)
+    private String textColor;          // 텍스트 색상 자유 입력 (없으면 null)
+    private Long textPositionTagId;    // 논리 FK → tag.id (텍스트 위치)
+    private Long textSizeTagId;        // 논리 FK → tag.id (텍스트 크기)
+    private Long textStyleTagId;       // 논리 FK → tag.id (글자체 느낌)
+
     private String initRegiPic;
     private LocalDateTime initRegiDttm;
     private String finalRvisPic;

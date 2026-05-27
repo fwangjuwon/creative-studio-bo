@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
  * <pre>
  * 태그 그룹 (예: 인물, 분위기)
  * is_multi_select: 복수 선택 가능 여부 (true = 복수, false = 단일)
+ * type: 'PROMPT' | 'TEXT_OVERLAY'
  * </pre>
  *
  * @author jjhoo8936
@@ -28,6 +29,7 @@ public class TagGroup {
     private String name;
     private Boolean isMultiSelect;
     private Integer sortOrder;
+    private String type;  // 'PROMPT' | 'TEXT_OVERLAY'
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;

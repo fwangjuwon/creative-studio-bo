@@ -8,6 +8,7 @@
             name,
             is_multi_select,
             <if test="sortOrder != null">sort_order,</if>
+            type,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -16,6 +17,7 @@
             #{name},
             #{isMultiSelect},
             <if test="sortOrder != null">#{sortOrder},</if>
+            COALESCE(#{type}, 'PROMPT'),
             #{initRegiPic},
             #{initRegiDttm},
             #{finalRvisPic},
@@ -29,6 +31,7 @@
             name,
             is_multi_select,
             sort_order,
+            type,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
@@ -43,11 +46,30 @@
             name,
             is_multi_select,
             sort_order,
+            type,
             init_regi_pic,
             init_regi_dttm,
             final_rvis_pic,
             final_rvis_dttm
         FROM tag_group
+        ORDER BY sort_order ASC NULLS LAST, id ASC
+    </select>
+
+    <select id="selectListByType" resultType="TagGroup">
+        SELECT
+            id,
+            name,
+            is_multi_select,
+            sort_order,
+            type,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM tag_group
+        <if test="type != null and type != ''">
+            WHERE type = #{type}
+        </if>
         ORDER BY sort_order ASC NULLS LAST, id ASC
     </select>
 
@@ -71,6 +93,9 @@
             </if>
             <if test="sortOrder != null">
                 sort_order = #{sortOrder},
+            </if>
+            <if test="type != null and type != ''">
+                type = #{type},
             </if>
             final_rvis_pic = #{finalRvisPic},
             final_rvis_dttm = #{finalRvisDttm}

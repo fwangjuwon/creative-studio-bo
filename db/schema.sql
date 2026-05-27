@@ -83,6 +83,7 @@ CREATE TABLE tag_group (
     name             VARCHAR(100)    NOT NULL,
     is_multi_select  BOOLEAN         NOT NULL DEFAULT FALSE,
     sort_order       INT             NOT NULL DEFAULT 0,
+    type             VARCHAR(30)     NOT NULL DEFAULT 'PROMPT', -- 'PROMPT' | 'TEXT_OVERLAY'
     init_regi_pic    VARCHAR(50),
     init_regi_dttm   TIMESTAMP,
     final_rvis_pic   VARCHAR(50),
@@ -127,6 +128,11 @@ CREATE TABLE prompt_history (
     image_aspect_ratio VARCHAR(10),                    -- 선택한 이미지 종횡비 (예: '16:9', '1:1', NULL이면 미선택)
     purpose          TEXT,                              -- 인물 프롬프트 생성 목적 (상품은 NULL)
     additional_notes TEXT,                              -- 인물 프롬프트 추가 지시사항 (상품은 NULL)
+    text_content         VARCHAR(500),                 -- 텍스트 오버레이 내용 (없으면 NULL)
+    text_color           VARCHAR(100),                 -- 텍스트 색상 (자유 입력, 없으면 NULL)
+    text_position_tag_id BIGINT,                       -- 논리 FK → tag.id (텍스트 위치)
+    text_size_tag_id     BIGINT,                       -- 논리 FK → tag.id (텍스트 크기)
+    text_style_tag_id    BIGINT,                       -- 논리 FK → tag.id (글자체 느낌)
     init_regi_pic    VARCHAR(50),
     init_regi_dttm   TIMESTAMP,
     final_rvis_pic   VARCHAR(50),

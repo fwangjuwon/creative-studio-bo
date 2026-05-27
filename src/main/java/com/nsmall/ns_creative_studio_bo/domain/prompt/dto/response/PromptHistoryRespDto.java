@@ -62,6 +62,13 @@ public class PromptHistoryRespDto {
     /** 인물별 선택 옵션 그룹 목록 (personIndex -1=공통, 0~N=인물 인덱스) */
     private List<PersonOptionGroupDto> personOptions;
 
+    // 텍스트 오버레이 (공통)
+    private String textContent;
+    private String textColor;
+    private Long textPositionTagId;
+    private Long textSizeTagId;
+    private Long textStyleTagId;
+
     /**
      * 인물별 선택 옵션 그룹 DTO
      */
@@ -135,6 +142,11 @@ public class PromptHistoryRespDto {
                 .categoryPath(categoryPath)
                 .tagIds(tagIds)
                 .tagNames(tagNames)
+                .textContent(history.getTextContent())
+                .textColor(history.getTextColor())
+                .textPositionTagId(history.getTextPositionTagId())
+                .textSizeTagId(history.getTextSizeTagId())
+                .textStyleTagId(history.getTextStyleTagId())
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())
@@ -162,6 +174,11 @@ public class PromptHistoryRespDto {
                 .purpose(history.getPurpose())
                 .additionalNotes(history.getAdditionalNotes())
                 .personOptions(personOptions)
+                .textContent(history.getTextContent())
+                .textColor(history.getTextColor())
+                .textPositionTagId(history.getTextPositionTagId())
+                .textSizeTagId(history.getTextSizeTagId())
+                .textStyleTagId(history.getTextStyleTagId())
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())

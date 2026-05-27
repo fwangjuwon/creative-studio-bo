@@ -54,6 +54,7 @@ public class TagGroupServiceImpl implements TagGroupService {
                 .name(dto.getName())
                 .isMultiSelect(dto.getIsMultiSelect())
                 .sortOrder(sortOrder)
+                .type(dto.getType())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -75,6 +76,13 @@ public class TagGroupServiceImpl implements TagGroupService {
     @Override
     public List<TagGroupRespDto> getTagGroups() {
         return tagGroupMapper.selectList().stream()
+                .map(TagGroupRespDto::from)
+                .toList();
+    }
+
+    @Override
+    public List<TagGroupRespDto> getTagGroups(String type) {
+        return tagGroupMapper.selectListByType(type).stream()
                 .map(TagGroupRespDto::from)
                 .toList();
     }
@@ -103,6 +111,7 @@ public class TagGroupServiceImpl implements TagGroupService {
                 .name(dto.getName())
                 .isMultiSelect(dto.getIsMultiSelect())
                 .sortOrder(dto.getSortOrder())
+                .type(dto.getType())
                 .finalRvisPic(requesterId)
                 .finalRvisDttm(LocalDateTime.now())
                 .build();

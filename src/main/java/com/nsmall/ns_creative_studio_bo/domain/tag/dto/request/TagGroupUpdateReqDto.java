@@ -28,4 +28,7 @@ public class TagGroupUpdateReqDto {
     private Boolean isMultiSelect;
 
     private Integer sortOrder;
+
+    /** 태그 그룹 유형 (선택). 'PROMPT' | 'TEXT_OVERLAY' */
+    private String type;
 }

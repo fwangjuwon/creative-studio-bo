@@ -21,6 +21,13 @@ public interface TagGroupService {
 
     List<TagGroupRespDto> getTagGroups();
 
+    /**
+     * type 필터로 태그 그룹 목록 조회.
+     *
+     * @param type 'PROMPT' | 'TEXT_OVERLAY' | null(전체)
+     */
+    List<TagGroupRespDto> getTagGroups(String type);
+
     TagGroupRespDto updateTagGroup(Long id, TagGroupUpdateReqDto dto);
 
     void deleteTagGroup(Long id);
