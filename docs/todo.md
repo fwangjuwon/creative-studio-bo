@@ -1,11 +1,39 @@
 # TODO
 
-> 상태: 🚧 refactor/user-controller-security-requirement 진행 중
-> 최종 업데이트: 2026-05-27 (UserController 컨벤션 정합 및 테스트 보완)
+> 상태: ✅ 진행 중인 브랜치 없음
+> 최종 업데이트: 2026-05-27 (feat/sort-order-auto-increment 완료)
 
 ---
 
 ## 진행 중
+
+없음
+
+---
+
+## 기술 부채 (TODO)
+
+없음
+
+---
+
+## 완료
+
+### feat/sort-order-auto-increment. 태그/인물속성 정렬순서 자동 증가
+
+> 태그·인물속성 생성 시 `sort_order`(및 `step_number`)를 직접 입력하지 않아도
+> 현재 스코프 내 최대값 + 1로 자동 세팅하는 기능.
+
+- [x] BO — TagGroup, Tag, HumanPromptAttr, HumanPromptOption: `selectMaxSortOrder` Mapper 추가 + Service 자동 세팅
+- [x] BO — HumanPromptStep: `selectMaxStepNumber` + `existsByStepNumber` 추가, stepCode 자동 생성 (stepNumber 기반 알파벳)
+- [x] BO — Create DTO: sortOrder/stepNumber/stepCode `@NotNull` 제거 → 선택 사항으로 변경
+- [x] BO — `DUPLICATE_STEP_NUMBER` 에러코드 추가
+- [x] BO — 서비스 테스트: 각 도메인 자동증가/연속증가 테스트 추가
+- [x] FO — TagView: 태그 추가 폼 sortOrder 자동증가 UI 반영 (선택사항 힌트)
+- [x] FO — HumanPromptStructureView: Step/Attr/Option 추가 폼 자동증가 UI 반영
+- [x] FO — stepCode 입력 필드 숨김 (BO 자동 생성)
+
+---
 
 ### refactor/user-controller-security-requirement. UserController 컨벤션 정합 및 테스트 보완
 
@@ -21,34 +49,8 @@
     (`@AuthenticationPrincipal CustomUserDetails` 타입 불일치로 NPE 방지)
   - ADMIN 전용 GET 엔드포인트 403 전수 보완: `GET /users`, `GET /users/{id}`, `GET /{id}/usage`, `GET /usage`
   - `POST /api/users` USER 403 추가 (기존에 MANAGER만 있었음)
-- [x] 테스트 최종 확인
 
 ---
-
-### feat/sort-order-auto-increment. 태그/인물속성 정렬순서 자동 증가
-
-> 태그·인물속성 생성 시 `sort_order`(및 `step_number`)를 직접 입력하지 않아도
-> 현재 스코프 내 최대값 + 1로 자동 세팅하는 기능.
-
-- [x] BO — TagGroup, Tag, HumanPromptAttr, HumanPromptOption: `selectMaxSortOrder` Mapper 추가 + Service 자동 세팅
-- [x] BO — HumanPromptStep: `selectMaxStepNumber` + `existsByStepNumber` 추가, stepCode 자동 생성 (stepNumber 기반 알파벳)
-- [x] BO — Create DTO: sortOrder/stepNumber/stepCode `@NotNull` 제거 → 선택 사항으로 변경
-- [x] BO — `DUPLICATE_STEP_NUMBER` 에러코드 추가
-- [x] BO — 서비스 테스트: 각 도메인 자동증가/연속증가 테스트 추가
-- [x] FO — TagView: 태그 추가 폼 sortOrder 자동증가 UI 반영 (선택사항 힌트)
-- [x] FO — HumanPromptStructureView: Step/Attr/Option 추가 폼 자동증가 UI 반영
-- [x] FO — stepCode 입력 필드 숨김 (BO 자동 생성)
-- [ ] 테스트 최종 확인
-
----
-
-## 기술 부채 (TODO)
-
-없음
-
----
-
-## 완료
 
 ### feat/dto-field-validation. DTO 필드 길이 검증 및 컨트롤러 파라미터 검증 강화
 
