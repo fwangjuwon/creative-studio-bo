@@ -20,6 +20,7 @@ public interface FusionImageService {
     /**
      * 상품 이미지와 인물 이미지를 합성하여 이미지 URL 목록을 반환한다.
      *
+     * @param userId           요청 사용자 ID (일일 한도 체크 + 이력 저장)
      * @param productImage     상품 참조 이미지 (필수)
      * @param personImage      인물 참조 이미지 (필수)
      * @param pose             포즈/행동 지시사항 (nullable)
@@ -27,6 +28,6 @@ public interface FusionImageService {
      * @param imageAspectRatio 이미지 비율 (nullable, 예: "1:1", "9:16")
      * @return 생성된 합성 이미지 절대 URL 목록
      */
-    List<String> generateFusionImages(MultipartFile productImage, MultipartFile personImage,
+    List<String> generateFusionImages(Long userId, MultipartFile productImage, MultipartFile personImage,
                                       String pose, String instruction, String imageAspectRatio);
 }

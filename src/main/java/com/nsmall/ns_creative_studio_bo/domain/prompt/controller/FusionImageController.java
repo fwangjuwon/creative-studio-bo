@@ -1,6 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
+import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.ImageGenerateRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.FusionImageService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -45,6 +47,7 @@ public class FusionImageController {
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PostMapping(value = "/generate-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public CommonResponse<ImageGenerateRespDto> generateFusionImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
             @RequestParam MultipartFile productImage,
             @RequestParam MultipartFile personImage,
             @RequestParam(required = false) String pose,
@@ -52,7 +55,7 @@ public class FusionImageController {
             @RequestParam(required = false) String imageAspectRatio) {
 
         List<String> imageUrls = fusionImageService.generateFusionImages(
-                productImage, personImage, pose, instruction, imageAspectRatio);
+                userDetails.getId(), productImage, personImage, pose, instruction, imageAspectRatio);
 
         return CommonResponse.success(ImageGenerateRespDto.builder().imageUrls(imageUrls).build());
     }

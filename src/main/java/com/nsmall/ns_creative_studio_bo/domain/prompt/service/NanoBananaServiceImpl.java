@@ -155,43 +155,47 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
 
     private static final String FUSION_SYSTEM_PROMPT = """
             [Role]
-            You are a high-performance visual synthesis engine (Nano Banana 2) specialized in combining two reference images to create seamless 'interaction' scenes at a professional Commercial Photography level.
+            You are a conservative reference-image editing and compositing engine.
+            This is not a free character generation task. The input person image is the identity source.
+
+            [Priority Order]
+            1. Preserve the exact person from Reference_Image_1.
+            2. Preserve the exact product from Reference_Image_2.
+            3. Follow the requested pose, action, background, and aspect ratio only when they do not conflict with 1 or 2.
 
             [Core Mission]
-            Your primary objective is to output a natural composite image that preserves 100% of the visual identity of both the Person (Reference_1) and the Product (Reference_2), strictly adhering to the laws of physics.
+            Create one natural commercial-photo composite where the same person from Reference_Image_1 interacts with the same product from Reference_Image_2.
+            If any user instruction would require changing the person's identity, ignore that part and keep the original identity.
 
-            [Prompt Reconstruction & Interaction Logic]
-            Analyze the user's instructions and reconstruct them into a sophisticated internal prompt based on the following rules:
+            [Identity Preservation]
+            - Treat Reference_Image_1 as the authoritative identity reference.
+            - Keep the same face, facial proportions, eye shape, nose, lips, jawline, skin tone, visible marks, hairstyle, hair color, hairline, body proportions, and apparent age.
+            - Do not beautify, average, stylize, recast, swap, de-age, age, or generate a similar-looking substitute.
+            - Do not infer or change background, ethnicity, nationality, or demographic traits. Copy only the visible person-specific traits from the reference image.
+            - The output must look like an edited photo of the input person, not a newly generated model inspired by that person.
 
-            1. Identity & Branding Preservation
-               - Reference_Image_1 (Person): ABSOLUTE CONSTRAINT — Treat this image as a strict biometric identity reference. Every visual characteristic must be reproduced with 100% fidelity:
-                 * Ethnicity & Nationality: NEVER alter, re-interpret, or generalize the person's ethnic background, racial characteristics, or nationality. The output person must visually belong to the EXACT same ethnic group as shown in Reference_Image_1. This is a non-negotiable constraint.
-                 * Facial anatomy: exact eye shape, color, and spacing; nose bridge and tip; lip shape and thickness; jawline; ear shape
-                 * Skin: exact skin tone (RGB-level accuracy), skin texture, undertone, unique markings (moles, freckles, wrinkles, scars)
-                 * Hair: identical hairstyle, color, texture, and hairline
-                 * Body type: preserve body proportions, build, and stature as shown in Reference_Image_1
-                 * Do NOT generate a "similar-looking" person. Do NOT idealize or generalize any features. Reproduce the EXACT individual from Reference_Image_1 with zero deviation.
-               - Reference_Image_2 (Product): Never damage or alter the package design, logo, or brand colors. For brand integrity, ensure the logo is always sharp and oriented toward the camera.
+            [Product Preservation]
+            - Treat Reference_Image_2 as the authoritative product reference.
+            - Preserve product shape, packaging, color, logo placement, typography, and visible design details.
+            - Keep the product physically plausible in the person's hand, near the body, or in the requested interaction.
+            - If Reference_Image_2 contains a mannequin, model, hanger, stand, background, or display body, use it only to understand the product. Do not copy that body, head, face, pose, or scene into the output.
 
-            2. Action-Specific Physics & Interaction
-               - 'Holding': Describe the anatomical detail of finger joints firmly grasping the product's edges and thickness. Reflect subtle muscle tension in the hand according to the product's weight.
-               - 'Eating/Tasting': Position the product near the mouth and synthesize vivid expressions (e.g., a bright smile, appetizing gaze). Express subtle cheek contours if food is being held in the mouth.
-               - 'Pointing/Presenting': Have the person support the product with one hand while pointing at the logo or key features with the index finger. Connect the gaze naturally between the product and the camera.
-               - 'Hugging/Embracing': Bring the product close to the chest to show attachment. Render realistic fabric wrinkles and compression where the arms and product meet.
-               - 'Opening/Using': Depict dynamic hand movements and precise fingertip action involved in opening a package. Add a sense of liveliness by slightly exposing the contents.
+            [Scale & Body Proportion]
+            - Build the final scene around the person from Reference_Image_1, using their natural head-to-body ratio and body proportions.
+            - Do not paste the person's face or head onto the body from Reference_Image_2.
+            - Do not enlarge the head, shrink the body, or mix body parts between references.
+            - Resize and position the product to fit the person's real body scale and the requested interaction.
+            - For apparel, render the garment as worn by the person from Reference_Image_1, tailored to that person's body proportions, while preserving the garment's color, material, silhouette, and design details.
+            - If the product is a garment photographed on another body or mannequin, remove the original wearer/mannequin and transfer only the garment onto the reference person.
 
-            3. Cinematic Quality & Environment
-               - Unified Lighting: Even if the reference images have different lighting, apply a single, unified studio lighting setup to eliminate discrepancies in shadows and highlights.
-               - Focus & Depth: Ensure the person's face and product logo are in sharp focus, while applying natural bokeh (background blur) to create depth.
-               - Quality: Maintain 8K resolution, ultra-detailed textures, and a hyper-realistic commercial photography aesthetic.
+            [Interaction & Physics]
+            - Make contact points realistic: fingers wrap around product edges, pressure is visible where hands or arms touch the product, and contact shadows anchor the product.
+            - Maintain normal anatomy: one person only, no duplicated faces, no extra limbs, no extra fingers, no broken joints.
+            - Keep the person's face and the product/logo clear and in focus.
 
-            4. Anti-Hallucination & Physical Integrity
-               - Anatomical Integrity: Strictly ensure the person has exactly 5 fingers. Prohibit abnormal joint angles or the generation of extra limbs (Negative constraint).
-               - Anti-Floating: Ensure the product does not appear to be floating. Generate precise contact shadows and physical pressure at the points of interaction.
-               - Anti-Distortion: Exclude any duplication of persons or objects. Prevent logo text corruption or any alteration of brand typography.
-
-            5. Final Exclusions
-               - Do not generate any artificial text, dates, or watermarks on the background or product unless explicitly requested by the user. Output only the visual composite.
+            [Style]
+            - Use unified studio lighting and a clean commercial photography look.
+            - Avoid artificial text, dates, watermarks, or unrelated background elements.
         """;
 
     @Override
@@ -207,10 +211,21 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         NbRequest requestBody = new NbRequest(
                 new NbSystemInstruction(List.of(new NbPart(FUSION_SYSTEM_PROMPT))),
                 List.of(new NbContent("user", List.of(
-                        new NbPart("Reference_Image_1 (인물):"),
+                        new NbPart("""
+                                Reference_Image_1: PERSON IDENTITY SOURCE.
+                                Use this exact person as the only allowed person in the output.
+                                """),
                         new NbPart(null, new NbInlineData(personMimeType, personBase64)),
-                        new NbPart("Reference_Image_2 (상품):"),
+                        new NbPart("""
+                                Reference_Image_2: PRODUCT SOURCE.
+                                Use this exact product as the only allowed product in the output.
+                                """),
                         new NbPart(null, new NbInlineData(productMimeType, productBase64)),
+                        new NbPart("""
+                                Task: Create a reference-based composite/edit, not a new person.
+                                Final check before output: the face must still match Reference_Image_1 more than any generic model.
+                                Also check scale: preserve the person's natural head-to-body proportions and fit the product to the person, never the person to the product image.
+                                """),
                         new NbPart(userMessage)
                 ))),
                 new NbGenerationConfig(List.of("IMAGE"))

@@ -1,16 +1,23 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.PromptHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -18,10 +25,12 @@ import java.util.List;
  *
  * <pre>
  * 처리 흐름:
- *   1. 상품/인물 이미지 유효성 검증 (ImageValidationUtil 공용)
- *   2. pose + instruction + imageAspectRatio로 user message 구성
- *   3. ImageGenerationService.generateFusionImages() 호출
- *   4. 상대 경로 → 절대 URL 변환 후 반환
+ *   1. 일일 한도 체크 (PromptHelper)
+ *   2. 상품/인물 이미지 유효성 검증 (ImageValidationUtil 공용)
+ *   3. pose + instruction + imageAspectRatio로 user message 구성
+ *   4. ImageGenerationService.generateFusionImages() 호출
+ *   5. PromptHistory 저장
+ *   6. 상대 경로 → 절대 URL 변환 후 반환 (PromptHelper)
  * </pre>
  *
  * @author gaeddo
@@ -33,13 +42,17 @@ import java.util.List;
 public class FusionImageServiceImpl implements FusionImageService {
 
     private final ImageGenerationService imageGenerationService;
-
-    @Value("${image.base-url}")
-    private String imageBaseUrl;
+    private final PromptHistoryMapper promptHistoryMapper;
+    private final PromptHelper promptHelper;
 
     @Override
-    public List<String> generateFusionImages(MultipartFile productImage, MultipartFile personImage,
+    @Transactional
+    public List<String> generateFusionImages(Long userId, MultipartFile productImage, MultipartFile personImage,
                                              String pose, String instruction, String imageAspectRatio) {
+        // 1. 사용자 조회 + 일일 한도 체크
+        promptHelper.checkDailyLimit(userId);
+
+        // 2. 이미지 유효성 검증
         ValidatedImage validatedProduct = ImageValidationUtil.validate(productImage);
         ValidatedImage validatedPerson  = ImageValidationUtil.validate(personImage);
 
@@ -47,6 +60,7 @@ public class FusionImageServiceImpl implements FusionImageService {
             throw new BizException(ImageGenerationErrorCode.FUSION_IMAGE_REQUIRED);
         }
 
+        // 3. userMessage 구성 + 이미지 생성 (상대 경로 반환)
         String userMessage = buildUserMessage(pose, instruction, imageAspectRatio);
 
         log.debug("합성 이미지 생성 요청 — pose={}, instruction={}, aspectRatio={}",
@@ -59,28 +73,40 @@ public class FusionImageServiceImpl implements FusionImageService {
                 PromptConstants.IMAGE_GENERATE_COUNT
         );
 
-        return imageUrls.stream()
-                .map(path -> imageBaseUrl + path)
-                .toList();
+        // 4. PromptHistory 저장
+        LocalDateTime now = LocalDateTime.now();
+        String requesterId = SecurityUtil.getCurrentLoginId();
+        String imageUrlsJson = promptHelper.serializeImageUrls(imageUrls);
+
+        PromptHistory history = PromptHistory.builder()
+                .userId(userId)
+                .promptType(PromptType.FUSION.name())
+                .promptStyle(PromptStyle.NANO_BANANA.name())
+                .promptText(userMessage)
+                .imageUrl(imageUrlsJson)
+                .imageAspectRatio(imageAspectRatio)
+                .initRegiPic(requesterId)
+                .initRegiDttm(now)
+                .finalRvisPic(requesterId)
+                .finalRvisDttm(now)
+                .build();
+
+        promptHistoryMapper.insert(history);
+
+        // 5. 절대 URL로 변환 후 반환
+        return promptHelper.toAbsoluteUrls(imageUrls);
     }
 
     /**
      * pose, instruction, imageAspectRatio를 조합하여 NanoBanana에 전달할 user message를 구성한다.
      *
      * <pre>
-     * 모든 요청에 인물 동일성 유지 요구를 prefix로 삽입한다.
-     * 병렬로 여러 이미지를 독립 생성하는 특성상 매 요청마다 명시적으로 강제해야
-     * 국적·민족·외형이 달라지는 변동성을 억제할 수 있다.
+     * identity/product 보존 규칙은 NanoBananaServiceImpl의 system_instruction에 두고,
+     * 여기서는 사용자가 선택한 합성 지시만 전달한다.
      * </pre>
      */
     private String buildUserMessage(String pose, String instruction, String imageAspectRatio) {
         StringBuilder sb = new StringBuilder();
-
-        // 인물 동일성 유지 — 병렬 독립 생성 시 국적/외형 변동 억제
-        sb.append("STRICT IDENTITY REQUIREMENT: ")
-          .append("The person in the output MUST be the EXACT same individual as shown in Reference_Image_1. ")
-          .append("Do NOT change their ethnicity, nationality, skin tone, facial features, hairstyle, or body type in any way. ")
-          .append("Reproduce this specific person with 100% fidelity.\n\n");
 
         boolean hasSpecificInstruction = false;
         if (pose != null && !pose.isBlank()) {
@@ -96,7 +122,7 @@ public class FusionImageServiceImpl implements FusionImageService {
             hasSpecificInstruction = true;
         }
         if (!hasSpecificInstruction) {
-            sb.append("상품과 인물을 자연스럽게 합성해 주세요.");
+            sb.append("Create a natural commercial-photo composite of the exact person and exact product from the reference images.");
         }
         return sb.toString().strip();
     }
