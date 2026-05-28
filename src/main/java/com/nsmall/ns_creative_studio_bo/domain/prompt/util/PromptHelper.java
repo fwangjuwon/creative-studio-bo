@@ -84,9 +84,12 @@ public class PromptHelper {
      * </pre>
      *
      * @param imageUrls 직렬화할 이미지 URL 목록
-     * @return JSON 문자열 (예: "["/images/a.jpg","/images/b.jpg"]") 또는 첫 번째 URL
+     * @return JSON 문자열 (예: "["/images/a.jpg","/images/b.jpg"]") 또는 첫 번째 URL, 빈/null이면 "[]"
      */
     public String serializeImageUrls(List<String> imageUrls) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return "[]";
+        }
         try {
             return objectMapper.writeValueAsString(imageUrls);
         } catch (JsonProcessingException e) {
