@@ -1,7 +1,7 @@
 # TODO
 
 > 상태: 🚧 feat/fusion-image-generation 진행 중
-> 최종 업데이트: 2026-05-26 (상품+인물 합성 이미지 생성 기능 개발 중)
+> 최종 업데이트: 2026-05-27 (상품+인물 합성 이미지 생성 기능 개발 중)
 
 ---
 
@@ -13,12 +13,16 @@
 > 자연스러운 이미지를 생성하는 기능. FO에 합성 탭 추가.
 
 - [x] BO — `ImageGenerationService.generateFusionImages()` 인터페이스 추가
-- [x] BO — `NanoBananaServiceImpl.generateFusionImages()` 구현 (FUSION_SYSTEM_PROMPT + 2장 이미지 병렬 생성)
-- [x] BO — `FusionImageService` 인터페이스 + `FusionImageServiceImpl` 구현체 신규 생성
+- [x] BO — `NanoBananaServiceImpl.generateFusionImages()` 구현 (FUSION_SYSTEM_PROMPT + system_instruction 적용, 2장 이미지 병렬 생성)
+- [x] BO — `FusionImageService` 인터페이스 + `FusionImageServiceImpl` 구현체 신규 생성 (일일 한도 체크 + 이미지 유효성 검증 + 이력 저장)
 - [x] BO — `FusionImageController` 신규 생성 (`POST /api/prompts/fusion/generate-image`)
 - [x] BO — `ImageValidationUtil` 공용 유효성 검증 재사용 (MAX 15MB, jpeg/png/webp)
-- [x] BO — `FusionImageServiceTest` 신규 생성 (성공 3건 + 예외 3건)
+- [x] BO — `PromptType.FUSION` enum 값 추가
+- [x] BO — `PromptHelper` 신규 생성 — 3개 서비스 공통 로직 추출 (`checkDailyLimit` / `toAbsoluteUrls` / `serializeImageUrls` / `parseImageUrls`)
+- [x] BO — `PromptServiceImpl`, `HumanPromptServiceImpl`, `FusionImageServiceImpl` — `UserMapper`·`ObjectMapper` 직접 의존 제거, `PromptHelper` 위임으로 중복 제거
+- [x] BO — `FusionImageServiceTest` 신규 생성 (성공 3건 + 예외 5건)
 - [x] FO — `PromptNewView.vue` 합성 탭 추가 (상품/인물 이미지 업로드 + pose/instruction/imageAspectRatio)
+- [x] FO — `PromptHistoryView.vue` FUSION 타입 지원 (`promptTypeOptions` / 라벨·색상·아이콘 / 이력 카드 비율 표시)
 - [ ] 테스트 최종 확인
 
 ---
@@ -46,6 +50,24 @@
 - [x] FO — stepCode 입력 필드 숨김 (BO 자동 생성)
 
 ---
+
+### refactor/user-controller-security-requirement. UserController 컨벤션 정합 및 테스트 보완
+
+> `UserController`의 `@SecurityRequirement(name = "bearerAuth")` 선언 위치를
+> 각 `@Operation(security = ...)` 인라인에서 클래스 레벨 단일 선언으로 변경.
+> `UserControllerTest` 접근 권한 케이스 누락분 전수 추가.
+
+- [x] `UserController` — `@SecurityRequirement(name = "bearerAuth")` 클래스 레벨로 이동, 메서드별 인라인 선언 제거
+  - `@PreAuthorize("hasRole('ADMIN')")` 는 `GET /me/usage`(USER 권한)가 혼재하므로 메서드 레벨 유지
+- [x] `UserControllerTest` — 접근 권한 케이스 보완 (기존 28개 → 42개)
+  - `GET /me/usage` — USER 200, MANAGER 200, ADMIN 200, 비로그인 401
+  - `/me/usage` 200 테스트: `@WithMockUser` 대신 `.with(user(customUserDetails(...)))` 패턴 적용
+    (`@AuthenticationPrincipal CustomUserDetails` 타입 불일치로 NPE 방지)
+  - ADMIN 전용 GET 엔드포인트 403 전수 보완: `GET /users`, `GET /users/{id}`, `GET /{id}/usage`, `GET /usage`
+  - `POST /api/users` USER 403 추가 (기존에 MANAGER만 있었음)
+
+---
+
 
 ### feat/dto-field-validation. DTO 필드 길이 검증 및 컨트롤러 파라미터 검증 강화
 
