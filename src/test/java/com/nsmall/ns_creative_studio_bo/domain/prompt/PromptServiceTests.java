@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt;
 
+import com.nsmall.ns_creative_studio_bo.domain.prompt.service.FusionImageServiceTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.GeminiServiceImplTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptAttrServiceTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.service.HumanPromptOptionServiceTest;
@@ -26,7 +27,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
         HumanPromptAttrServiceTest.class,
         HumanPromptOptionServiceTest.class,
         NanoBananaServiceImplTest.class,
-        GeminiServiceImplTest.class
+        GeminiServiceImplTest.class,
+        FusionImageServiceTest.class
 })
 public class PromptServiceTests {
 }

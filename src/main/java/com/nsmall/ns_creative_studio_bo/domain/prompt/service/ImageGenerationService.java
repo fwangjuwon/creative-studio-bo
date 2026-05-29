@@ -33,4 +33,20 @@ public interface ImageGenerationService {
      * @return 생성된 이미지 접근 URL 목록
      */
     List<String> generateImages(String prompt, int count);
+
+    /**
+     * 인물 이미지 + 상품 이미지 두 장을 합성하여 이미지를 count개 병렬 생성한다.
+     *
+     * @param userMessage       합성 지시 사항 (포즈, 추가 지시사항 등)
+     * @param personImageBytes  인물 참조 이미지 바이너리
+     * @param personMimeType    인물 이미지 MIME 타입
+     * @param productImageBytes 상품 참조 이미지 바이너리
+     * @param productMimeType   상품 이미지 MIME 타입
+     * @param count             생성할 이미지 수
+     * @return 생성된 이미지 접근 URL 목록
+     */
+    List<String> generateFusionImages(String userMessage,
+                                      byte[] personImageBytes, String personMimeType,
+                                      byte[] productImageBytes, String productMimeType,
+                                      int count);
 }

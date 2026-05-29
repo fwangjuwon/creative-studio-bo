@@ -1,19 +1,35 @@
 # TODO
 
-> 상태: ✅ 진행 중인 브랜치 없음
-> 최종 업데이트: 2026-05-27 (feat/sort-order-auto-increment 완료)
+> 상태: 🚧 feat/fusion-image-generation 진행 중
+> 최종 업데이트: 2026-05-27 (상품+인물 합성 이미지 생성 기능 개발 중)
 
 ---
 
 ## 진행 중
 
-없음
+### feat/fusion-image-generation. 상품+인물 합성 이미지 생성
+
+> 상품 이미지와 인물 이미지를 NanoBanana(gemini-3-pro-image-preview)로 합성하여
+> 자연스러운 이미지를 생성하는 기능. FO에 합성 탭 추가.
+
+- [x] BO — `ImageGenerationService.generateFusionImages()` 인터페이스 추가
+- [x] BO — `NanoBananaServiceImpl.generateFusionImages()` 구현 (FUSION_SYSTEM_PROMPT + system_instruction 적용, 2장 이미지 병렬 생성)
+- [x] BO — `FusionImageService` 인터페이스 + `FusionImageServiceImpl` 구현체 신규 생성 (일일 한도 체크 + 이미지 유효성 검증 + 이력 저장)
+- [x] BO — `FusionImageController` 신규 생성 (`POST /api/prompts/fusion/generate-image`)
+- [x] BO — `ImageValidationUtil` 공용 유효성 검증 재사용 (MAX 15MB, jpeg/png/webp)
+- [x] BO — `PromptType.FUSION` enum 값 추가
+- [x] BO — `PromptHelper` 신규 생성 — 3개 서비스 공통 로직 추출 (`checkDailyLimit` / `toAbsoluteUrls` / `serializeImageUrls` / `parseImageUrls`)
+- [x] BO — `PromptServiceImpl`, `HumanPromptServiceImpl`, `FusionImageServiceImpl` — `UserMapper`·`ObjectMapper` 직접 의존 제거, `PromptHelper` 위임으로 중복 제거
+- [x] BO — `FusionImageServiceTest` 신규 생성 (성공 3건 + 예외 5건)
+- [x] FO — `PromptNewView.vue` 합성 탭 추가 (상품/인물 이미지 업로드 + pose/instruction/imageAspectRatio)
+- [x] FO — `PromptHistoryView.vue` FUSION 타입 지원 (`promptTypeOptions` / 라벨·색상·아이콘 / 이력 카드 비율 표시)
+- [ ] 테스트 최종 확인
 
 ---
 
 ## 기술 부채 (TODO)
 
-없음
+- `human_prompt_step.step_code` 컬럼 제거 — stepCode는 stepNumber 기반 자동 생성으로 대체됨. 추후 DB 컬럼 및 관련 코드(DTO, Mapper, Entity) 정리 필요.
 
 ---
 
@@ -51,6 +67,7 @@
   - `POST /api/users` USER 403 추가 (기존에 MANAGER만 있었음)
 
 ---
+
 
 ### feat/dto-field-validation. DTO 필드 길이 검증 및 컨트롤러 파라미터 검증 강화
 
