@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.mockito.BDDMockito.given;
 
 /**
@@ -33,7 +34,7 @@ import static org.mockito.BDDMockito.given;
  * @since 2026-05-28
  */
 @ExtendWith(MockitoExtension.class)
-class PromptHelperTest {
+public class PromptHelperTest {
 
     @InjectMocks
     private PromptHelper promptHelper;
@@ -73,8 +74,10 @@ class PromptHelperTest {
     void 예외_checkDailyLimit_사용자_없음() {
         given(userMapper.selectById(TEST_USER_ID)).willReturn(Optional.empty());
 
-        assertThatThrownBy(() -> promptHelper.checkDailyLimit(TEST_USER_ID))
-                .isInstanceOf(BizException.class);
+        assertThatExceptionOfType(BizException.class)
+                .isThrownBy(() -> promptHelper.checkDailyLimit(TEST_USER_ID))
+                .extracting(BizException::getErrorCode)
+                .isEqualTo(PromptErrorCode.USER_NOT_FOUND);
     }
 
     @Test
@@ -84,8 +87,10 @@ class PromptHelperTest {
         given(userMapper.selectById(TEST_USER_ID)).willReturn(Optional.of(user));
         given(promptHistoryMapper.countTodayByUserId(TEST_USER_ID)).willReturn(10);
 
-        assertThatThrownBy(() -> promptHelper.checkDailyLimit(TEST_USER_ID))
-                .isInstanceOf(BizException.class);
+        assertThatExceptionOfType(BizException.class)
+                .isThrownBy(() -> promptHelper.checkDailyLimit(TEST_USER_ID))
+                .extracting(BizException::getErrorCode)
+                .isEqualTo(PromptErrorCode.DAILY_LIMIT_EXCEEDED);
     }
 
     // ================================================================
