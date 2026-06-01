@@ -5,6 +5,7 @@ import com.nsmall.ns_creative_studio_bo.common.config.GeminiProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -72,7 +73,7 @@ public class GeminiServiceImpl implements GeminiService {
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        {{NEGATIVE_TEXT_RULE}}
         - no overexposure, no blown highlights
 
         COMPOSITION:
@@ -113,7 +114,7 @@ public class GeminiServiceImpl implements GeminiService {
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        {{NEGATIVE_TEXT_RULE}}
         - no overexposure, no blown highlights
 
         COMPOSITION:
@@ -160,7 +161,7 @@ public class GeminiServiceImpl implements GeminiService {
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        {{NEGATIVE_TEXT_RULE}}
         - no overexposure, no blown highlights
 
         HAND & ANATOMY:
@@ -194,7 +195,7 @@ public class GeminiServiceImpl implements GeminiService {
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        {{NEGATIVE_TEXT_RULE}}
         - no overexposure, no blown highlights
 
         HAND & ANATOMY:
@@ -217,6 +218,18 @@ public class GeminiServiceImpl implements GeminiService {
     /** 인물 프롬프트 생성 시 최대 출력 토큰 수 — 다인원 프롬프트 길이 대응 */
     private static final int HUMAN_PROMPT_MAX_OUTPUT_TOKENS = 4096;
 
+    /** 시스템 프롬프트 NEGATIVE 섹션 — 텍스트 오버레이 없을 때(기본) */
+    private static final String NEGATIVE_NO_TEXT =
+            "- no watermark, no text artifacts, no logo";
+
+    /** 시스템 프롬프트 NEGATIVE 섹션 — 텍스트 오버레이 요청 있을 때 */
+    private static final String NEGATIVE_KEEP_TEXT =
+            "- no watermark, no logo "
+                    + "(text overlay is intentional and must be rendered exactly as specified)";
+
+    /** 시스템 프롬프트 내 NEGATIVE 자리 치환을 위한 placeholder */
+    private static final String NEGATIVE_PLACEHOLDER = "{{NEGATIVE_TEXT_RULE}}";
+
     private final RestClient geminiRestClient;
     private final GeminiProperties geminiProperties;
 
@@ -225,7 +238,8 @@ public class GeminiServiceImpl implements GeminiService {
                                       Map<String, Map<String, List<String>>> commonStepValues,
                                       boolean isGroup,
                                       String relationship, String additionalNotes, PromptStyle promptStyle,
-                                      String imageAspectRatio) {
+                                      String imageAspectRatio,
+                                      TextOverlayInput textOverlay) {
         StringBuilder sb = new StringBuilder();
 
         // 공통 옵션 (조명/배경, 촬영기술) — 항상 먼저 기술
@@ -257,12 +271,35 @@ public class GeminiServiceImpl implements GeminiService {
         if (additionalNotes != null && !additionalNotes.isBlank()) {
             sb.append("Additional notes: ").append(additionalNotes).append("\n");
         }
+
+        boolean isMidJourney = PromptStyle.MID_JOURNEY == promptStyle;
+
+        // 텍스트 오버레이 — Gemini가 구도 단계에서부터 인지하도록 user message에 통합
+        if (textOverlay != null && textOverlay.hasContent()) {
+            String overlayText = isMidJourney
+                    ? TextOverlayUtil.buildKeywords(
+                            textOverlay.textContent(),
+                            textOverlay.positionTagValue(),
+                            textOverlay.sizeTagValue(),
+                            textOverlay.styleTagValue(),
+                            textOverlay.textColor())
+                    : TextOverlayUtil.buildNarrative(
+                            textOverlay.textContent(),
+                            textOverlay.positionTagValue(),
+                            textOverlay.sizeTagValue(),
+                            textOverlay.styleTagValue(),
+                            textOverlay.textColor());
+            sb.append("Text Overlay (must be rendered inside the image): ")
+              .append(overlayText).append("\n");
+        }
+
         sb.append("Use case: High-end commercial portrait photography");
 
         String userMessage = sb.toString();
 
-        boolean isMidJourney = PromptStyle.MID_JOURNEY == promptStyle;
-        String systemPromptText = isMidJourney ? SYSTEM_PROMPT_PERSON_MIDJOURNEY : SYSTEM_PROMPT_PERSON;
+        String baseSystemPrompt = isMidJourney ? SYSTEM_PROMPT_PERSON_MIDJOURNEY : SYSTEM_PROMPT_PERSON;
+        String systemPromptText = baseSystemPrompt.replace(NEGATIVE_PLACEHOLDER,
+                (textOverlay != null && textOverlay.hasContent()) ? NEGATIVE_KEEP_TEXT : NEGATIVE_NO_TEXT);
 
         GeminiPart systemPart = new GeminiPart(systemPromptText);
         GeminiSystemInstruction systemInstruction = new GeminiSystemInstruction(List.of(systemPart));
@@ -340,11 +377,16 @@ public class GeminiServiceImpl implements GeminiService {
     @Override
     public String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames,
                                       String imageAspectRatio, String purpose, String additionalNotes,
-                                      PromptStyle promptStyle) {
-        String userMessage = buildGoodsUserMessage(goodsCategoryName, tagNames, purpose, additionalNotes);
-
+                                      PromptStyle promptStyle,
+                                      TextOverlayInput textOverlay) {
         boolean isMidJourney = PromptStyle.MID_JOURNEY == promptStyle;
-        String systemPromptText = isMidJourney ? GOODS_SYSTEM_PROMPT_MIDJOURNEY : GOODS_SYSTEM_PROMPT;
+
+        String userMessage = buildGoodsUserMessage(
+                goodsCategoryName, tagNames, purpose, additionalNotes, textOverlay, isMidJourney);
+
+        String baseSystemPrompt = isMidJourney ? GOODS_SYSTEM_PROMPT_MIDJOURNEY : GOODS_SYSTEM_PROMPT;
+        String systemPromptText = baseSystemPrompt.replace(NEGATIVE_PLACEHOLDER,
+                (textOverlay != null && textOverlay.hasContent()) ? NEGATIVE_KEEP_TEXT : NEGATIVE_NO_TEXT);
         GeminiRequest requestBody = buildRequest(userMessage, systemPromptText);
 
         String uri = String.format("/models/%s:generateContent", geminiProperties.getModel());
@@ -410,7 +452,8 @@ public class GeminiServiceImpl implements GeminiService {
     }
 
     private String buildGoodsUserMessage(String goodsCategoryName, List<String> tagNames,
-                                         String purpose, String additionalNotes) {
+                                         String purpose, String additionalNotes,
+                                         TextOverlayInput textOverlay, boolean isMidJourney) {
         StringBuilder sb = new StringBuilder();
         sb.append("Product Category: ").append(goodsCategoryName);
         if (tagNames != null && !tagNames.isEmpty()) {
@@ -421,6 +464,23 @@ public class GeminiServiceImpl implements GeminiService {
         }
         if (additionalNotes != null && !additionalNotes.isBlank()) {
             sb.append("\nAdditional notes: ").append(additionalNotes);
+        }
+        // 텍스트 오버레이 — Gemini가 구도 단계에서부터 인지하도록 user message에 통합
+        if (textOverlay != null && textOverlay.hasContent()) {
+            String overlayText = isMidJourney
+                    ? TextOverlayUtil.buildKeywords(
+                            textOverlay.textContent(),
+                            textOverlay.positionTagValue(),
+                            textOverlay.sizeTagValue(),
+                            textOverlay.styleTagValue(),
+                            textOverlay.textColor())
+                    : TextOverlayUtil.buildNarrative(
+                            textOverlay.textContent(),
+                            textOverlay.positionTagValue(),
+                            textOverlay.sizeTagValue(),
+                            textOverlay.styleTagValue(),
+                            textOverlay.textColor());
+            sb.append("\nText Overlay (must be rendered inside the image): ").append(overlayText);
         }
         sb.append("\nUse case: High-end commercial e-commerce product photography");
         return sb.toString();

@@ -28,11 +28,13 @@ public interface GeminiService {
      * @param additionalNotes   추가 지시 사항 (nullable)
      * @param promptStyle       프롬프트 스타일 ({@link PromptStyle#NANO_BANANA}: 문장형,
      *                          {@link PromptStyle#MID_JOURNEY}: 키워드 나열형)
+     * @param textOverlay       이미지 내 삽입할 텍스트 오버레이 정보 (nullable, 없으면 미적용)
      * @return Gemini가 생성한 영문 프롬프트 텍스트
      */
     String generateGoodsPrompt(String goodsCategoryName, List<String> tagNames,
                                String imageAspectRatio, String purpose, String additionalNotes,
-                               PromptStyle promptStyle);
+                               PromptStyle promptStyle,
+                               TextOverlayInput textOverlay);
 
     /**
      * 인물별 단계 선택 기반 영문 프롬프트를 생성한다.
@@ -53,11 +55,13 @@ public interface GeminiService {
      * @param additionalNotes   추가 지시 사항 (nullable)
      * @param promptStyle       프롬프트 스타일
      * @param imageAspectRatio  이미지 비율 (nullable)
+     * @param textOverlay       이미지 내 삽입할 텍스트 오버레이 정보 (nullable, 없으면 미적용)
      * @return Gemini가 생성한 영문 프롬프트 텍스트
      */
     String generateHumanPrompt(List<Map<String, Map<String, List<String>>>> personsStepValues,
                                Map<String, Map<String, List<String>>> commonStepValues,
                                boolean isGroup,
                                String relationship, String additionalNotes, PromptStyle promptStyle,
-                               String imageAspectRatio);
+                               String imageAspectRatio,
+                               TextOverlayInput textOverlay);
 }

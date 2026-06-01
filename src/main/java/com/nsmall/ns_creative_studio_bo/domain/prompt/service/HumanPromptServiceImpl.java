@@ -22,7 +22,6 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapp
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtil;
 import com.nsmall.ns_creative_studio_bo.domain.tag.entity.Tag;
 import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
@@ -243,11 +242,15 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
         log.debug("인물 프롬프트 생성 — personCount={}, isGroup={}, commonSteps={}",
                 personsStepValues.size(), isGroup, commonStepValues.keySet());
 
-        // 6. Gemini 호출
+        // 6. Gemini 호출 — 텍스트 오버레이 정보를 함께 전달하여 Gemini가 구도/네거티브 규칙을 일관되게 생성하도록 함
         PromptStyle style = dto.getPromptStyle() != null ? dto.getPromptStyle() : PromptStyle.NANO_BANANA;
+        TextOverlayInput textOverlay = buildTextOverlayInput(
+                dto.getTextContent(), dto.getTextColor(),
+                dto.getTextPositionTagId(), dto.getTextSizeTagId(), dto.getTextStyleTagId());
         String promptText = geminiService.generateHumanPrompt(
                 personsStepValues, commonStepValues, isGroup,
-                dto.getRelationship(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio());
+                dto.getRelationship(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio(),
+                textOverlay);
 
         // 7. PromptHistory 저장
         PromptHistory history = PromptHistory.builder()
@@ -302,37 +305,36 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
         return tagMapper.selectById(tagId).map(Tag::getTagValue).orElse(null);
     }
 
+    /**
+     * 텍스트 오버레이 DTO를 구성한다. textContent가 비어 있으면 null을 반환하여 오버레이를 비활성화한다.
+     */
+    private TextOverlayInput buildTextOverlayInput(String textContent, String textColor,
+                                                   Long positionTagId, Long sizeTagId, Long styleTagId) {
+        if (textContent == null || textContent.isBlank()) return null;
+        return new TextOverlayInput(
+                textContent,
+                textColor,
+                resolveTagValue(positionTagId),
+                resolveTagValue(sizeTagId),
+                resolveTagValue(styleTagId));
+    }
+
     @Override
     @Transactional
     public List<String> generateImage(Long historyId, String promptText, MultipartFile referenceImage) {
-        // 1. 텍스트 오버레이 지시사항 조합 — historyId가 있으면 이력에서 오버레이 설정 조회
-        String finalPrompt = promptText;
-        if (historyId != null) {
-            PromptHistory history = promptHistoryMapper.selectById(historyId).orElse(null);
-            if (history != null) {
-                String position = resolveTagValue(history.getTextPositionTagId());
-                String size     = resolveTagValue(history.getTextSizeTagId());
-                String style    = resolveTagValue(history.getTextStyleTagId());
-                String overlayInstruction = TextOverlayUtil.buildInstruction(
-                        history.getTextContent(), position, size, style, history.getTextColor());
-                if (overlayInstruction != null) {
-                    finalPrompt = promptText + "\n\n" + overlayInstruction;
-                    log.debug("텍스트 오버레이 지시사항 주입 — historyId={}", historyId);
-                }
-            }
-        }
-
-        // 2. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성
+        //    (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        //    텍스트 오버레이 지시는 프롬프트 생성(1단계)에서 이미 promptText 안에 통합되어 있음.
         List<String> imageUrls;
         ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
         if (refImage != null) {
             imageUrls = generateImagesWithReference(
-                    finalPrompt, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
+                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
         } else {
-            imageUrls = imageGenerationService.generateImages(finalPrompt, PromptConstants.IMAGE_GENERATE_COUNT);
+            imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
         }
 
-        // 3. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
+        // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
         if (historyId != null) {
             try {
                 String imageUrlsJson = objectMapper.writeValueAsString(imageUrls);
