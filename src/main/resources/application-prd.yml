@@ -3,7 +3,19 @@ logging:
     root: INFO
 
 springdoc:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?currentSchema=ncs
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
   api-docs:
     enabled: false
   swagger-ui:
     enabled: false
+
+cors:
+  allowed-origins:
+    - https://nsonge.nsmall.com
+
+image:
+  base-url: https://nsonge-api.nsmall.com
