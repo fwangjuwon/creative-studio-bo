@@ -2,7 +2,7 @@ logging:
   level:
     root: INFO
 
-springdoc:
+spring:
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}?currentSchema=ncs
     username: ${POSTGRES_USER}
