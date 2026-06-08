@@ -12,6 +12,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptHistoryO
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class HumanPromptOptionServiceImpl implements HumanPromptOptionService {
 
     private final HumanPromptOptionMapper humanPromptOptionMapper;
@@ -30,6 +32,7 @@ public class HumanPromptOptionServiceImpl implements HumanPromptOptionService {
     private final HumanPromptHistoryOptionMapper humanPromptHistoryOptionMapper;
 
     @Override
+    @Transactional
     public HumanPromptOptionSimpleRespDto createOption(HumanPromptOptionCreateReqDto dto) {
         humanPromptAttrMapper.selectById(dto.getAttrId())
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.ATTR_NOT_FOUND,
@@ -66,6 +69,7 @@ public class HumanPromptOptionServiceImpl implements HumanPromptOptionService {
     }
 
     @Override
+    @Transactional
     public HumanPromptOptionSimpleRespDto updateOption(Long id, HumanPromptOptionUpdateReqDto dto) {
         HumanPromptOption existing = humanPromptOptionMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.OPTION_NOT_FOUND,
@@ -94,6 +98,7 @@ public class HumanPromptOptionServiceImpl implements HumanPromptOptionService {
     }
 
     @Override
+    @Transactional
     public void deleteOption(Long id) {
         humanPromptOptionMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.OPTION_NOT_FOUND,

@@ -35,6 +35,29 @@
 
 ## 완료
 
+### refactor/add-transactional. 서비스 레이어 @Transactional 일괄 적용
+
+> DB HA(Primary/Replica) 환경 대응.
+> `@Transactional` 없이 메서드 내 복수 쿼리를 실행하면 쿼리마다 DB 라우팅이 달라져
+> replication lag으로 null 반환 또는 중복 삽입이 발생할 수 있음.
+> Spring 권장 패턴: 클래스 레벨 `@Transactional(readOnly = true)` + CUD 메서드 `@Transactional` 오버라이드.
+
+- [x] `UserServiceImpl` — 클래스 레벨 `readOnly = true` + `createUser` / `updateUser` / `deleteUser` 오버라이드
+- [x] `CategoryServiceImpl` — 클래스 레벨 `readOnly = true` + `createCategory` / `updateCategory` / `deleteCategory` 오버라이드
+- [x] `TagGroupServiceImpl` — 클래스 레벨 `readOnly = true` + `createTagGroup` / `updateTagGroup` / `deleteTagGroup` 오버라이드
+- [x] `TagServiceImpl` — 클래스 레벨 `readOnly = true` + `createTag` / `updateTag` / `deleteTag` 오버라이드
+- [x] `HumanPromptStepServiceImpl` — 클래스 레벨 `readOnly = true` + `createStep` / `updateStep` / `deleteStep` 오버라이드
+- [x] `HumanPromptAttrServiceImpl` — 클래스 레벨 `readOnly = true` + `createAttr` / `updateAttr` / `deleteAttr` 오버라이드
+- [x] `HumanPromptOptionServiceImpl` — 클래스 레벨 `readOnly = true` + `createOption` / `updateOption` / `deleteOption` 오버라이드
+- [x] `NsistEmpMappingServiceImpl` — 클래스 레벨 `readOnly = true` + `createMapping` / `deleteMapping` 오버라이드
+- [x] `AuthServiceImpl` — 클래스 레벨 `readOnly = true` (SELECT only, CUD 없음)
+- [x] `PromptServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지, `getPromptHistories` 적용)
+- [x] `HumanPromptServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지, `getSteps` 적용)
+- [x] `FusionImageServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지)
+- [x] 코딩 컨벤션 문서화 — `.cursor/rules/coding-convention.mdc`, `CLAUDE.md`, `GEMINI.md` `@Transactional` 패턴 섹션 추가
+
+---
+
 ### feat/sort-order-auto-increment. 태그/인물속성 정렬순서 자동 증가
 
 > 태그·인물속성 생성 시 `sort_order`(및 `step_number`)를 직접 입력하지 않아도

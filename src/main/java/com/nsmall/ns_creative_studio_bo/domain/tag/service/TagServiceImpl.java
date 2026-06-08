@@ -12,6 +12,7 @@ import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagGroupMapper;
 import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TagServiceImpl implements TagService {
 
     private final TagMapper tagMapper;
@@ -32,6 +34,7 @@ public class TagServiceImpl implements TagService {
     private final GoodsPromptHistoryTagMapper goodsPromptHistoryTagMapper;
 
     @Override
+    @Transactional
     public TagRespDto createTag(TagCreateReqDto dto) {
         tagGroupMapper.selectById(dto.getTagGroupId())
                 .orElseThrow(() -> new BizException(TagErrorCode.TAG_GROUP_NOT_FOUND,
@@ -87,6 +90,7 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
+    @Transactional
     public TagRespDto updateTag(Long id, TagUpdateReqDto dto) {
         Tag existing = tagMapper.selectById(id)
                 .orElseThrow(() -> new BizException(TagErrorCode.TAG_NOT_FOUND,
@@ -121,6 +125,7 @@ public class TagServiceImpl implements TagService {
     }
 
     @Override
+    @Transactional
     public void deleteTag(Long id) {
         tagMapper.selectById(id)
                 .orElseThrow(() -> new BizException(TagErrorCode.TAG_NOT_FOUND,
