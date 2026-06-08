@@ -60,6 +60,7 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class HumanPromptServiceImpl extends AbstractImagePromptService implements HumanPromptService {
 
     @Override

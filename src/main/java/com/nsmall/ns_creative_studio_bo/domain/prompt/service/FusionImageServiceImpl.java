@@ -39,6 +39,7 @@ import java.util.List;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class FusionImageServiceImpl implements FusionImageService {
 
     private final ImageGenerationService imageGenerationService;
