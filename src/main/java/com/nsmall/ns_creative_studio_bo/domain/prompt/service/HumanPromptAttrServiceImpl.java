@@ -12,6 +12,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptOptionMa
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -23,6 +24,7 @@ import java.time.LocalDateTime;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
 
     private final HumanPromptAttrMapper humanPromptAttrMapper;
@@ -30,6 +32,7 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
     private final HumanPromptOptionMapper humanPromptOptionMapper;
 
     @Override
+    @Transactional
     public HumanPromptAttrSimpleRespDto createAttr(HumanPromptAttrCreateReqDto dto) {
         humanPromptStepMapper.selectById(dto.getStepId())
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.STEP_NOT_FOUND,
@@ -68,6 +71,7 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
     }
 
     @Override
+    @Transactional
     public HumanPromptAttrSimpleRespDto updateAttr(Long id, HumanPromptAttrUpdateReqDto dto) {
         HumanPromptAttr existing = humanPromptAttrMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.ATTR_NOT_FOUND,
@@ -107,6 +111,7 @@ public class HumanPromptAttrServiceImpl implements HumanPromptAttrService {
     }
 
     @Override
+    @Transactional
     public void deleteAttr(Long id) {
         HumanPromptAttr existing = humanPromptAttrMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.ATTR_NOT_FOUND,

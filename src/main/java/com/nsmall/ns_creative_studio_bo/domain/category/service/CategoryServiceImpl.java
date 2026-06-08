@@ -12,6 +12,7 @@ import com.nsmall.ns_creative_studio_bo.domain.category.mapper.CategoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +27,7 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
 
     /** 하위 타입 → 기대되는 부모 타입 매핑 (MCS 부모=LCS, SCS 부모=MCS) */
@@ -38,6 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final PromptHistoryMapper promptHistoryMapper;
 
     @Override
+    @Transactional
     public CategoryRespDto createCategory(CategoryCreateReqDto dto) {
         boolean isLcs = CategoryType.LCS == dto.getCategoryType();
 
@@ -108,6 +111,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public CategoryRespDto updateCategory(Long id, CategoryUpdateReqDto dto) {
         Category existing = categoryMapper.selectById(id)
                 .orElseThrow(() -> new BizException(CategoryErrorCode.CATEGORY_NOT_FOUND,
@@ -142,6 +146,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public void deleteCategory(Long id) {
         categoryMapper.selectById(id)
                 .orElseThrow(() -> new BizException(CategoryErrorCode.CATEGORY_NOT_FOUND,

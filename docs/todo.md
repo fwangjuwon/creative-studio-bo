@@ -40,14 +40,37 @@
 > ADMIN만 호출 가능했던 `PUT /api/users/{id}` 대신,
 > 인증된 모든 사용자가 본인 비밀번호를 직접 변경할 수 있는 전용 엔드포인트 추가.
 
-- [x] `UserErrorCode` — `EMPTY_PASSWORD (U004)` 추가
 - [x] `UserMapper` — `updatePassword(id, password, finalRvisPic)` 전용 메서드 추가
 - [x] `UserMapper.xml` — `updatePassword` 전용 쿼리 추가 (`final_rvis_dttm = NOW()` 사용)
 - [x] `UserService` — `changePassword(Long userId, String newPassword)` 인터페이스 선언
-- [x] `UserServiceImpl` — `changePassword` 구현 (빈값 검증 → USER_NOT_FOUND → BCrypt 인코딩 → updatePassword)
+- [x] `UserServiceImpl` — `changePassword` 구현 (`@Transactional` 적용, USER_NOT_FOUND → BCrypt 인코딩 → updatePassword)
 - [x] `UserController` — `PATCH /api/users/me/password` 엔드포인트 추가 (`@AuthenticationPrincipal`로 본인 id 추출, 모든 인증 사용자 허용)
 - [x] `UserServiceTest` — 비밀번호 변경 3케이스 추가 (BCrypt 검증 / 빈값 예외 / 미존재 예외)
 - [x] `UserControllerTest` — 접근 제어 4케이스 추가 (USER·MANAGER·ADMIN 200 / 비로그인 401)
+
+---
+
+### refactor/add-transactional. 서비스 레이어 @Transactional 일괄 적용
+
+> DB HA(Primary/Replica) 환경 대응.
+> `@Transactional` 없이 메서드 내 복수 쿼리를 실행하면 쿼리마다 DB 라우팅이 달라져
+> replication lag으로 null 반환 또는 중복 삽입이 발생할 수 있음.
+> Spring 권장 패턴: 클래스 레벨 `@Transactional(readOnly = true)` + CUD 메서드 `@Transactional` 오버라이드.
+
+- [x] `UserServiceImpl` — 클래스 레벨 `readOnly = true` + `createUser` / `updateUser` / `deleteUser` 오버라이드
+- [x] `CategoryServiceImpl` — 클래스 레벨 `readOnly = true` + `createCategory` / `updateCategory` / `deleteCategory` 오버라이드
+- [x] `TagGroupServiceImpl` — 클래스 레벨 `readOnly = true` + `createTagGroup` / `updateTagGroup` / `deleteTagGroup` 오버라이드
+- [x] `TagServiceImpl` — 클래스 레벨 `readOnly = true` + `createTag` / `updateTag` / `deleteTag` 오버라이드
+- [x] `HumanPromptStepServiceImpl` — 클래스 레벨 `readOnly = true` + `createStep` / `updateStep` / `deleteStep` 오버라이드
+- [x] `HumanPromptAttrServiceImpl` — 클래스 레벨 `readOnly = true` + `createAttr` / `updateAttr` / `deleteAttr` 오버라이드
+- [x] `HumanPromptOptionServiceImpl` — 클래스 레벨 `readOnly = true` + `createOption` / `updateOption` / `deleteOption` 오버라이드
+- [x] `NsistEmpMappingServiceImpl` — 클래스 레벨 `readOnly = true` + `createMapping` / `deleteMapping` 오버라이드
+- [x] `AuthServiceImpl` — 클래스 레벨 `readOnly = true` (SELECT only, CUD 없음)
+- [x] `PromptServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지, `getPromptHistories` 적용)
+- [x] `HumanPromptServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지, `getSteps` 적용)
+- [x] `FusionImageServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지)
+- [x] 코딩 컨벤션 문서화 — `.cursor/rules/coding-convention.mdc`, `CLAUDE.md`, `GEMINI.md` `@Transactional` 패턴 섹션 추가
+>>>>>>> main
 
 ---
 

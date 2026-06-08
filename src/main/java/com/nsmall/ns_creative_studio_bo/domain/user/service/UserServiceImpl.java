@@ -14,6 +14,7 @@ import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +28,7 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserMapper userMapper;
@@ -34,6 +36,7 @@ public class UserServiceImpl implements UserService {
     private final PromptHistoryMapper promptHistoryMapper;
 
     @Override
+    @Transactional
     public UserRespDto createUser(UserCreateReqDto dto) {
         userMapper.selectByLoginId(dto.getLoginId()).ifPresent(u -> {
             throw new BizException(UserErrorCode.DUPLICATE_LOGIN_ID);
@@ -75,6 +78,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserRespDto updateUser(Long id, UserUpdateReqDto dto) {
         User existing = userMapper.selectById(id)
                 .orElseThrow(() -> new BizException(UserErrorCode.USER_NOT_FOUND, "회원을 찾을 수 없습니다. id=" + id));
@@ -105,11 +109,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void changePassword(Long userId, String newPassword) {
-        if (newPassword == null || newPassword.isBlank()) {
-            throw new BizException(UserErrorCode.EMPTY_PASSWORD);
-        }
-
         userMapper.selectById(userId)
                 .orElseThrow(() -> new BizException(UserErrorCode.USER_NOT_FOUND));
 
@@ -117,6 +118,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public void deleteUser(Long id) {
         userMapper.selectById(id)
                 .orElseThrow(() -> new BizException(UserErrorCode.USER_NOT_FOUND, "회원을 찾을 수 없습니다. id=" + id));
