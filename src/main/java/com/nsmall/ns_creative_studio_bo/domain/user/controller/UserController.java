@@ -89,6 +89,15 @@ public class UserController {
         return CommonResponse.success();
     }
 
+    @Operation(summary = "내 비밀번호 변경", description = "USER / MANAGER / ADMIN 모든 인증 사용자 허용. Request body에 새 비밀번호를 plain text로 전송.")
+    @ApiResponse(responseCode = "200", description = "변경 성공")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @PatchMapping("/me/password")
+    public CommonResponse<Void> changeMyPassword(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody String newPassword) {
+        userService.changePassword(userDetails.getId(), newPassword);
+        return CommonResponse.success();
+    }
+
     @Operation(summary = "내 사용량 조회", description = "오늘 사용 횟수 및 남은 횟수 확인. USER / MANAGER / ADMIN 모든 인증 사용자 허용.")
     @ApiResponse(responseCode = "200", description = "조회 성공")
     @ApiResponse(responseCode = "401", description = "인증 필요")

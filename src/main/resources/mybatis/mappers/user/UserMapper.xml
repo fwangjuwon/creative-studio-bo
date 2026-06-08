@@ -121,6 +121,14 @@
         WHERE id = #{id}
     </update>
 
+    <update id="updatePassword">
+        UPDATE "user"
+        SET password       = #{password},
+            final_rvis_pic = #{finalRvisPic},
+            final_rvis_dttm = NOW()
+        WHERE id = #{id}
+    </update>
+
     <delete id="deleteById">
         DELETE FROM "user"
         WHERE id = #{id}

@@ -1,7 +1,7 @@
 # TODO
 
 > 상태: 🚧 feat/fusion-image-generation 진행 중
-> 최종 업데이트: 2026-05-27 (상품+인물 합성 이미지 생성 기능 개발 중)
+> 최종 업데이트: 2026-06-08 (본인 비밀번호 변경 API 추가)
 
 ---
 
@@ -34,6 +34,22 @@
 ---
 
 ## 완료
+
+### feat/user-self-password-change. 본인 비밀번호 변경 API 추가
+
+> ADMIN만 호출 가능했던 `PUT /api/users/{id}` 대신,
+> 인증된 모든 사용자가 본인 비밀번호를 직접 변경할 수 있는 전용 엔드포인트 추가.
+
+- [x] `UserErrorCode` — `EMPTY_PASSWORD (U004)` 추가
+- [x] `UserMapper` — `updatePassword(id, password, finalRvisPic)` 전용 메서드 추가
+- [x] `UserMapper.xml` — `updatePassword` 전용 쿼리 추가 (`final_rvis_dttm = NOW()` 사용)
+- [x] `UserService` — `changePassword(Long userId, String newPassword)` 인터페이스 선언
+- [x] `UserServiceImpl` — `changePassword` 구현 (빈값 검증 → USER_NOT_FOUND → BCrypt 인코딩 → updatePassword)
+- [x] `UserController` — `PATCH /api/users/me/password` 엔드포인트 추가 (`@AuthenticationPrincipal`로 본인 id 추출, 모든 인증 사용자 허용)
+- [x] `UserServiceTest` — 비밀번호 변경 3케이스 추가 (BCrypt 검증 / 빈값 예외 / 미존재 예외)
+- [x] `UserControllerTest` — 접근 제어 4케이스 추가 (USER·MANAGER·ADMIN 200 / 비로그인 401)
+
+---
 
 ### feat/sort-order-auto-increment. 태그/인물속성 정렬순서 자동 증가
 

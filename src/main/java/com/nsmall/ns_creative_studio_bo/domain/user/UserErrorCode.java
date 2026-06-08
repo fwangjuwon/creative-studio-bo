@@ -17,7 +17,8 @@ public enum UserErrorCode implements ErrorCode {
 
     DUPLICATE_LOGIN_ID("U001", "이미 사용 중인 로그인 아이디입니다.", HttpStatus.BAD_REQUEST.value()),
     USER_NOT_FOUND("U002", "회원을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST.value()),
-    USER_BANNED("U003", "비활성화된 계정입니다.", HttpStatus.UNAUTHORIZED.value());
+    USER_BANNED("U003", "비활성화된 계정입니다.", HttpStatus.UNAUTHORIZED.value()),
+    EMPTY_PASSWORD("U004", "새 비밀번호를 입력해주세요.", HttpStatus.BAD_REQUEST.value());
 
     private final String code;
     private final String message;

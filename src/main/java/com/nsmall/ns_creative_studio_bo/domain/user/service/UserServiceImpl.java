@@ -105,6 +105,18 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void changePassword(Long userId, String newPassword) {
+        if (newPassword == null || newPassword.isBlank()) {
+            throw new BizException(UserErrorCode.EMPTY_PASSWORD);
+        }
+
+        userMapper.selectById(userId)
+                .orElseThrow(() -> new BizException(UserErrorCode.USER_NOT_FOUND));
+
+        userMapper.updatePassword(userId, passwordEncoder.encode(newPassword), SecurityUtil.getCurrentLoginId());
+    }
+
+    @Override
     public void deleteUser(Long id) {
         userMapper.selectById(id)
                 .orElseThrow(() -> new BizException(UserErrorCode.USER_NOT_FOUND, "회원을 찾을 수 없습니다. id=" + id));

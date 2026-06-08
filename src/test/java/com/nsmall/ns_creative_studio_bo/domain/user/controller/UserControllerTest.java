@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.http.MediaType.TEXT_PLAIN;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -253,6 +254,49 @@ public class UserControllerTest extends SecuritySetupTest {
     void 사용자_삭제_id_양수아님_400(long id) throws Exception {
         mockMvc.perform(delete(BASE_URL + "/{id}", id))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ============================================================
+    // PATCH /api/users/me/password — 내 비밀번호 변경
+    // ============================================================
+
+    @Test
+    @DisplayName("[200] 내 비밀번호 변경 - USER 권한 허용")
+    void 내비밀번호_변경_USER권한_200() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(TEXT_PLAIN)
+                        .content("newPassword123!")
+                        .with(user(customUserDetails("USER"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[200] 내 비밀번호 변경 - MANAGER 권한 허용")
+    void 내비밀번호_변경_MANAGER권한_200() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(TEXT_PLAIN)
+                        .content("newPassword123!")
+                        .with(user(customUserDetails("MANAGER"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[200] 내 비밀번호 변경 - ADMIN 권한 허용")
+    void 내비밀번호_변경_ADMIN권한_200() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(TEXT_PLAIN)
+                        .content("newPassword123!")
+                        .with(user(customUserDetails("ADMIN"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[401] 내 비밀번호 변경 - 비로그인")
+    void 내비밀번호_변경_비로그인_401() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(TEXT_PLAIN)
+                        .content("newPassword123!"))
+                .andExpect(status().isUnauthorized());
     }
 
     // ============================================================
