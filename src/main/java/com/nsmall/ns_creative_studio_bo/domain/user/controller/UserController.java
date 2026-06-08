@@ -3,6 +3,7 @@ package com.nsmall.ns_creative_studio_bo.domain.user.controller;
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
 import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserPasswordUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserSearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserUpdateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.response.UserRespDto;
@@ -86,6 +87,16 @@ public class UserController {
     @DeleteMapping("/{id}")
     public CommonResponse<Void> deleteUser(@PathVariable @Positive Long id) {
         userService.deleteUser(id);
+        return CommonResponse.success();
+    }
+
+    @Operation(summary = "내 비밀번호 변경", description = "USER / MANAGER / ADMIN 모든 인증 사용자 허용. 비밀번호 8자 이상 16자 이하.")
+    @ApiResponse(responseCode = "200", description = "변경 성공")
+    @ApiResponse(responseCode = "400", description = "유효성 검증 실패 (빈 값 또는 길이 위반)")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @PatchMapping("/me/password")
+    public CommonResponse<Void> changeMyPassword(@AuthenticationPrincipal CustomUserDetails userDetails, @RequestBody @Valid UserPasswordUpdateReqDto dto) {
+        userService.changePassword(userDetails.getId(), dto.getNewPassword());
         return CommonResponse.success();
     }
 

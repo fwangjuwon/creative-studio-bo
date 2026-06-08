@@ -1,7 +1,7 @@
 # TODO
 
 > 상태: 🚧 feat/fusion-image-generation 진행 중
-> 최종 업데이트: 2026-05-27 (상품+인물 합성 이미지 생성 기능 개발 중)
+> 최종 업데이트: 2026-06-08 (본인 비밀번호 변경 API 추가)
 
 ---
 
@@ -35,6 +35,22 @@
 
 ## 완료
 
+### feat/user-self-password-change. 본인 비밀번호 변경 API 추가
+
+> ADMIN만 호출 가능했던 `PUT /api/users/{id}` 대신,
+> 인증된 모든 사용자가 본인 비밀번호를 직접 변경할 수 있는 전용 엔드포인트 추가.
+
+- [x] `UserPasswordUpdateReqDto` — 신규 생성 (`newPassword` 단일 필드, `@NotBlank` + `@Size(min=8, max=16)`)
+- [x] `UserMapper` — `updatePassword(id, password, finalRvisPic)` 전용 메서드 추가
+- [x] `UserMapper.xml` — `updatePassword` 전용 쿼리 추가 (`final_rvis_dttm = NOW()` 사용)
+- [x] `UserService` — `changePassword(Long userId, String newPassword)` 인터페이스 선언
+- [x] `UserServiceImpl` — `changePassword` 구현 (`@Transactional` 적용, USER_NOT_FOUND → BCrypt 인코딩 → updatePassword)
+- [x] `UserController` — `PATCH /api/users/me/password` 엔드포인트 추가 (`@RequestBody @Valid UserPasswordUpdateReqDto`, `@AuthenticationPrincipal`로 본인 id 추출, 모든 인증 사용자 허용)
+- [x] `UserServiceTest` — 비밀번호 변경 2케이스 추가 (BCrypt 검증 / 미존재 예외)
+- [x] `UserControllerTest` — 접근 제어 4케이스 + 검증 실패 2케이스 추가 (USER·MANAGER·ADMIN 200 / 비로그인 401 / 빈값 400 / 길이위반 400)
+
+---
+
 ### refactor/add-transactional. 서비스 레이어 @Transactional 일괄 적용
 
 > DB HA(Primary/Replica) 환경 대응.
@@ -55,6 +71,7 @@
 - [x] `HumanPromptServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지, `getSteps` 적용)
 - [x] `FusionImageServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지)
 - [x] 코딩 컨벤션 문서화 — `.cursor/rules/coding-convention.mdc`, `CLAUDE.md`, `GEMINI.md` `@Transactional` 패턴 섹션 추가
+>>>>>>> main
 
 ---
 

@@ -256,6 +256,83 @@ public class UserControllerTest extends SecuritySetupTest {
     }
 
     // ============================================================
+    // PATCH /api/users/me/password — 내 비밀번호 변경
+    // ============================================================
+
+    @Test
+    @DisplayName("[200] 내 비밀번호 변경 - USER 권한 허용")
+    void 내비밀번호_변경_USER권한_200() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": "useruser"}
+                                """)
+                        .with(user(customUserDetails("USER"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[200] 내 비밀번호 변경 - MANAGER 권한 허용")
+    void 내비밀번호_변경_MANAGER권한_200() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": "managermanager"}
+                                """)
+                        .with(user(customUserDetails("MANAGER"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[200] 내 비밀번호 변경 - ADMIN 권한 허용")
+    void 내비밀번호_변경_ADMIN권한_200() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": "adminadmin"}
+                                """)
+                        .with(user(customUserDetails("ADMIN"))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[400] 내 비밀번호 변경 - newPassword 빈 값")
+    void 내비밀번호_변경_빈값_400() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": ""}
+                                """)
+                        .with(user(customUserDetails("USER"))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"short", "wjsmsqudtlsdlqslek"})
+    @DisplayName("[400] 내 비밀번호 변경 - 길이 위반 (7자 이하 / 17자 이상)")
+    void 내비밀번호_변경_길이위반_400(String password) throws Exception {
+        String body = """
+                {"newPassword": "%s"}
+                """.formatted(password);
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(APPLICATION_JSON)
+                        .content(body)
+                        .with(user(customUserDetails("USER"))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("[401] 내 비밀번호 변경 - 비로그인")
+    void 내비밀번호_변경_비로그인_401() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": "wjswogh"}
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ============================================================
     // GET /api/users/me/usage — 내 사용량 조회
     // ============================================================
 
