@@ -17,7 +17,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -426,18 +425,6 @@ public class UserServiceTest {
         User user = userMapper.selectById(created.getId()).orElseThrow();
         assertThat(passwordEncoder.matches(newPassword, user.getPassword())).isTrue();
         assertThat(passwordEncoder.matches("testPassword123!", user.getPassword())).isFalse();
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"", "   "})
-    @Transactional
-    @Rollback
-    @DisplayName("[예외] 비밀번호 변경 - 빈 비밀번호")
-    void 예외_비밀번호_변경_빈_비밀번호(String blankPassword) {
-        assertThatThrownBy(() -> userService.changePassword(1L, blankPassword))
-                .isInstanceOf(BizException.class)
-                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
-                        .isEqualTo(UserErrorCode.EMPTY_PASSWORD));
     }
 
     @Test

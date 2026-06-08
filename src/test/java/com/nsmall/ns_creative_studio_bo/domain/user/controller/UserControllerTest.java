@@ -13,7 +13,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON;
-import static org.springframework.http.MediaType.TEXT_PLAIN;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -264,8 +263,10 @@ public class UserControllerTest extends SecuritySetupTest {
     @DisplayName("[200] 내 비밀번호 변경 - USER 권한 허용")
     void 내비밀번호_변경_USER권한_200() throws Exception {
         mockMvc.perform(patch(BASE_URL + "/me/password")
-                        .contentType(TEXT_PLAIN)
-                        .content("newPassword123!")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": "useruser"}
+                                """)
                         .with(user(customUserDetails("USER"))))
                 .andExpect(status().isOk());
     }
@@ -274,8 +275,10 @@ public class UserControllerTest extends SecuritySetupTest {
     @DisplayName("[200] 내 비밀번호 변경 - MANAGER 권한 허용")
     void 내비밀번호_변경_MANAGER권한_200() throws Exception {
         mockMvc.perform(patch(BASE_URL + "/me/password")
-                        .contentType(TEXT_PLAIN)
-                        .content("newPassword123!")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": "managermanager"}
+                                """)
                         .with(user(customUserDetails("MANAGER"))))
                 .andExpect(status().isOk());
     }
@@ -284,18 +287,48 @@ public class UserControllerTest extends SecuritySetupTest {
     @DisplayName("[200] 내 비밀번호 변경 - ADMIN 권한 허용")
     void 내비밀번호_변경_ADMIN권한_200() throws Exception {
         mockMvc.perform(patch(BASE_URL + "/me/password")
-                        .contentType(TEXT_PLAIN)
-                        .content("newPassword123!")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": "adminadmin"}
+                                """)
                         .with(user(customUserDetails("ADMIN"))))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("[400] 내 비밀번호 변경 - newPassword 빈 값")
+    void 내비밀번호_변경_빈값_400() throws Exception {
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": ""}
+                                """)
+                        .with(user(customUserDetails("USER"))))
+                .andExpect(status().isBadRequest());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"short", "wjsmsqudtlsdlqslek"})
+    @DisplayName("[400] 내 비밀번호 변경 - 길이 위반 (7자 이하 / 17자 이상)")
+    void 내비밀번호_변경_길이위반_400(String password) throws Exception {
+        String body = """
+                {"newPassword": "%s"}
+                """.formatted(password);
+        mockMvc.perform(patch(BASE_URL + "/me/password")
+                        .contentType(APPLICATION_JSON)
+                        .content(body)
+                        .with(user(customUserDetails("USER"))))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
     @DisplayName("[401] 내 비밀번호 변경 - 비로그인")
     void 내비밀번호_변경_비로그인_401() throws Exception {
         mockMvc.perform(patch(BASE_URL + "/me/password")
-                        .contentType(TEXT_PLAIN)
-                        .content("newPassword123!"))
+                        .contentType(APPLICATION_JSON)
+                        .content("""
+                                {"newPassword": "wjswogh"}
+                                """))
                 .andExpect(status().isUnauthorized());
     }
 
