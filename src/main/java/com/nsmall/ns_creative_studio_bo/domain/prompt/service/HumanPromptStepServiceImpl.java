@@ -11,6 +11,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptAttrMapp
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -22,12 +23,14 @@ import java.time.LocalDateTime;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class HumanPromptStepServiceImpl implements HumanPromptStepService {
 
     private final HumanPromptStepMapper humanPromptStepMapper;
     private final HumanPromptAttrMapper humanPromptAttrMapper;
 
     @Override
+    @Transactional
     public HumanPromptStepSimpleRespDto createStep(HumanPromptStepCreateReqDto dto) {
         if (humanPromptStepMapper.existsByName(dto.getName(), null)) {
             throw new BizException(HumanPromptErrorCode.DUPLICATE_STEP_NAME,
@@ -82,6 +85,7 @@ public class HumanPromptStepServiceImpl implements HumanPromptStepService {
     }
 
     @Override
+    @Transactional
     public HumanPromptStepSimpleRespDto updateStep(Long id, HumanPromptStepUpdateReqDto dto) {
         humanPromptStepMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.STEP_NOT_FOUND,
@@ -116,6 +120,7 @@ public class HumanPromptStepServiceImpl implements HumanPromptStepService {
     }
 
     @Override
+    @Transactional
     public void deleteStep(Long id) {
         humanPromptStepMapper.selectById(id)
                 .orElseThrow(() -> new BizException(HumanPromptErrorCode.STEP_NOT_FOUND,

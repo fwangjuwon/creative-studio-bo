@@ -11,6 +11,7 @@ import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagGroupMapper;
 import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,12 +25,14 @@ import java.util.Optional;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class TagGroupServiceImpl implements TagGroupService {
 
     private final TagGroupMapper tagGroupMapper;
     private final TagMapper tagMapper;
 
     @Override
+    @Transactional
     public TagGroupRespDto createTagGroup(TagGroupCreateReqDto dto) {
 
         // sortOrder 미입력 시 현재 최대값 + 1 자동 세팅
@@ -80,6 +83,7 @@ public class TagGroupServiceImpl implements TagGroupService {
     }
 
     @Override
+    @Transactional
     public TagGroupRespDto updateTagGroup(Long id, TagGroupUpdateReqDto dto) {
         tagGroupMapper.selectById(id)
                 .orElseThrow(() -> new BizException(TagGroupErrorCode.TAG_GROUP_NOT_FOUND,
@@ -115,6 +119,7 @@ public class TagGroupServiceImpl implements TagGroupService {
     }
 
     @Override
+    @Transactional
     public void deleteTagGroup(Long id) {
         tagGroupMapper.selectById(id)
                 .orElseThrow(() -> new BizException(TagGroupErrorCode.TAG_GROUP_NOT_FOUND,
