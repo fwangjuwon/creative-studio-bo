@@ -22,7 +22,7 @@ import static org.mockito.Mockito.mock;
  * @author iamjy
  * @since 2026-05-20
  */
-class ImageValidationUtilTest {
+public class ImageValidationUtilTest {
 
     @Test
     @DisplayName("[성공] 검증 - null 입력 → null 반환")

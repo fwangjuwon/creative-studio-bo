@@ -28,6 +28,9 @@ public interface UserMapper {
 
     void update(User user);
 
+    void updatePassword(@Param("id") Long id, @Param("password") String password,
+                        @Param("finalRvisPic") String finalRvisPic);
+
     void deleteById(@Param("id") Long id);
 
     List<UserUsageRespDto> selectListWithTodayUsage();

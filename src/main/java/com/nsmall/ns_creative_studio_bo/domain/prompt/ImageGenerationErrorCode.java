@@ -24,7 +24,8 @@ public enum ImageGenerationErrorCode implements ErrorCode {
     IMAGE_GENERATION_RATE_LIMITED("IG007", "이미지 생성 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()),
     IMAGE_GENERATION_AUTH_FAILED("IG008", "이미지 생성 서비스 인증에 실패했습니다. 관리자에게 문의해 주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()),
     IMAGE_GENERATION_UNAVAILABLE("IG009", "이미지 생성 서비스가 일시적으로 이용 불가합니다. 잠시 후 다시 시도해 주세요.", HttpStatus.INTERNAL_SERVER_ERROR.value()),
-    IMAGE_READ_FAILED("IG010", "참조 이미지를 읽을 수 없습니다.", HttpStatus.BAD_REQUEST.value());
+    IMAGE_READ_FAILED("IG010", "참조 이미지를 읽을 수 없습니다.", HttpStatus.BAD_REQUEST.value()),
+    FUSION_IMAGE_REQUIRED("IG011", "합성 이미지 생성에는 상품 이미지와 인물 이미지가 모두 필요합니다.", HttpStatus.BAD_REQUEST.value());
 
     private final String code;
     private final String message;

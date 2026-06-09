@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt;
 
+import com.nsmall.ns_creative_studio_bo.domain.prompt.controller.FusionImageControllerTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.controller.HumanPromptAttrControllerTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.controller.HumanPromptControllerTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.controller.HumanPromptOptionControllerTest;
@@ -20,7 +21,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
         PromptControllerTest.class,
         HumanPromptControllerTest.class,
         HumanPromptAttrControllerTest.class,
-        HumanPromptOptionControllerTest.class
+        HumanPromptOptionControllerTest.class,
+        FusionImageControllerTest.class
 })
 public class PromptControllerTests {
 }

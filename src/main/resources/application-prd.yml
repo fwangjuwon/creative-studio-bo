@@ -2,8 +2,36 @@ logging:
   level:
     root: INFO
 
+spring:
+  datasource:
+    primary:
+      jdbc-url: jdbc:postgresql://${POSTGRES_PRIMARY}:${POSTGRES_PORT}/${POSTGRES_DB}?currentSchema=ncs&targetServerType=primary&socketTimeout=30000
+      username: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        pool-name: ncs-primary-Hikaripool
+        maximum-pool-size: 20
+        max-lifetime: 300000
+    secondary:
+      jdbc-url: jdbc:postgresql://${POSTGRES_SECONDARY}:${POSTGRES_PORT}/${POSTGRES_DB}?currentSchema=ncs&targetServerType=prefer-secondary&socketTimeout=30000
+      username: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+      hikari:
+        pool-name: ncs-secondary-Hikaripool
+        maximum-pool-size: 20
+        max-lifetime: 300000
+
 springdoc:
   api-docs:
     enabled: false
   swagger-ui:
     enabled: false
+
+cors:
+  allowed-origins:
+    - https://nsonge.nsmall.com
+
+image:
+  base-url: https://nsonge-api.nsmall.com

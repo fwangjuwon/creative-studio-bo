@@ -408,6 +408,36 @@ public class UserServiceTest {
         assertThat(result.getRemainingCount()).isEqualTo(0);
     }
 
+    // ============================================================
+    // 비밀번호 변경
+    // ============================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 비밀번호 변경 - 변경 후 BCrypt 검증")
+    void 성공_비밀번호_변경_BCrypt_검증() {
+        UserRespDto created = userService.createUser(기본_생성_DTO(TEST_ID_PREFIX + "chpw"));
+        String newPassword = "changed456!";
+
+        userService.changePassword(created.getId(), newPassword);
+
+        User user = userMapper.selectById(created.getId()).orElseThrow();
+        assertThat(passwordEncoder.matches(newPassword, user.getPassword())).isTrue();
+        assertThat(passwordEncoder.matches("testPassword123!", user.getPassword())).isFalse();
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[예외] 비밀번호 변경 - 미존재 회원")
+    void 예외_비밀번호_변경_미존재() {
+        assertThatThrownBy(() -> userService.changePassword(Long.MAX_VALUE, "newPassword123!"))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(UserErrorCode.USER_NOT_FOUND));
+    }
+
     @Test
     @DisplayName("[예외] 사용량 조회 - 미존재 유저")
     void 예외_사용량_조회_미존재_유저() {

@@ -190,14 +190,27 @@ LCS 목록 조회 → MCS 목록 조회(parent_id=LCS.id) → SCS 최종 선택
 // ✅ 인터페이스
 public interface UserService { ... }
 
-// ✅ 구현체
+// ✅ 구현체 — @Transactional(readOnly = true) 클래스 레벨 필수
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService { ... }
+@Transactional(readOnly = true)
+public class UserServiceImpl implements UserService {
+
+    // 조회 메서드 — 클래스 기본값 상속 (별도 어노테이션 불필요)
+    public Optional<UserRespDto> getUser(Long id) { ... }
+
+    // CUD 메서드 — 쓰기 트랜잭션으로 오버라이드
+    @Transactional
+    public UserRespDto createUser(UserCreateReqDto dto) { ... }
+}
 
 // Controller 주입 — 반드시 인터페이스 타입으로
 private final UserService userService;
 ```
+
+> **`@Transactional` 패턴 규칙**: 클래스 레벨 `readOnly = true` 기본값 + CUD 메서드에 `@Transactional` 오버라이드.
+> HA(Primary/Replica) 환경에서 트랜잭션 없이 복수 쿼리를 실행하면 쿼리마다 DB 라우팅이 달라져 의도치 않은 동작(replication lag으로 null 반환, 중복 삽입 등)이 발생한다.
+> 외부 API 전용 서비스(`GeminiServiceImpl`, `NanoBananaServiceImpl`)는 DB 커넥션이 없으므로 적용 대상 아님.
 
 ### DTO 네이밍 규칙
 

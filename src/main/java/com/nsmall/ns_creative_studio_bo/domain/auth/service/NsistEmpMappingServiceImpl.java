@@ -10,6 +10,7 @@ import com.nsmall.ns_creative_studio_bo.domain.auth.mapper.NsistEmpMappingMapper
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,12 +23,14 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class NsistEmpMappingServiceImpl implements NsistEmpMappingService {
 
     private final NsistEmpMappingMapper nsistEmpMappingMapper;
     private final UserMapper userMapper;
 
     @Override
+    @Transactional
     public NsistEmpMappingRespDto createMapping(NsistEmpMappingCreateReqDto dto) {
         nsistEmpMappingMapper.selectByEmpCd(dto.getEmpCd()).ifPresent(m -> {
             throw new BizException(NsistEmpMappingErrorCode.DUPLICATE_EMP_CD);
@@ -62,6 +65,7 @@ public class NsistEmpMappingServiceImpl implements NsistEmpMappingService {
     }
 
     @Override
+    @Transactional
     public void deleteMapping(String empCd) {
         nsistEmpMappingMapper.selectByEmpCd(empCd).orElseThrow(() ->
                 new BizException(NsistEmpMappingErrorCode.MAPPING_NOT_FOUND));

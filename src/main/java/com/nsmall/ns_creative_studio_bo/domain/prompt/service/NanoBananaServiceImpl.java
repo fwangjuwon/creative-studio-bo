@@ -1,5 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nsmall.ns_creative_studio_bo.common.config.GeminiProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
@@ -152,6 +153,100 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         }
     }
 
+    private static final String FUSION_SYSTEM_PROMPT = """
+            [Role]
+            You are a conservative reference-image editing and compositing engine.
+            This is not a free character generation task. The input person image is the identity source.
+
+            [Priority Order]
+            1. Preserve the exact person from Reference_Image_1.
+            2. Preserve the exact product from Reference_Image_2.
+            3. Follow the requested pose, action, background, and aspect ratio only when they do not conflict with 1 or 2.
+
+            [Core Mission]
+            Create one natural commercial-photo composite where the same person from Reference_Image_1 interacts with the same product from Reference_Image_2.
+            If any user instruction would require changing the person's identity, ignore that part and keep the original identity.
+
+            [Identity Preservation]
+            - Treat Reference_Image_1 as the authoritative identity reference.
+            - Keep the same face, facial proportions, eye shape, nose, lips, jawline, skin tone, visible marks, hairstyle, hair color, hairline, body proportions, and apparent age.
+            - Do not beautify, average, stylize, recast, swap, de-age, age, or generate a similar-looking substitute.
+            - Do not infer or change background, ethnicity, nationality, or demographic traits. Copy only the visible person-specific traits from the reference image.
+            - The output must look like an edited photo of the input person, not a newly generated model inspired by that person.
+
+            [Product Preservation]
+            - Treat Reference_Image_2 as the authoritative product reference.
+            - Preserve product shape, packaging, color, logo placement, typography, and visible design details.
+            - Keep the product physically plausible in the person's hand, near the body, or in the requested interaction.
+            - If Reference_Image_2 contains a mannequin, model, hanger, stand, background, or display body, use it only to understand the product. Do not copy that body, head, face, pose, or scene into the output.
+
+            [Scale & Body Proportion]
+            - Build the final scene around the person from Reference_Image_1, using their natural head-to-body ratio and body proportions.
+            - Do not paste the person's face or head onto the body from Reference_Image_2.
+            - Do not enlarge the head, shrink the body, or mix body parts between references.
+            - Resize and position the product to fit the person's real body scale and the requested interaction.
+            - For apparel, render the garment as worn by the person from Reference_Image_1, tailored to that person's body proportions, while preserving the garment's color, material, silhouette, and design details.
+            - If the product is a garment photographed on another body or mannequin, remove the original wearer/mannequin and transfer only the garment onto the reference person.
+
+            [Interaction & Physics]
+            - Make contact points realistic: fingers wrap around product edges, pressure is visible where hands or arms touch the product, and contact shadows anchor the product.
+            - Maintain normal anatomy: one person only, no duplicated faces, no extra limbs, no extra fingers, no broken joints.
+            - Keep the person's face and the product/logo clear and in focus.
+
+            [Style]
+            - Use unified studio lighting and a clean commercial photography look.
+            - Avoid artificial text, dates, watermarks, or unrelated background elements.
+        """;
+
+    @Override
+    public List<String> generateFusionImages(String userMessage,
+                                             byte[] personImageBytes, String personMimeType,
+                                             byte[] productImageBytes, String productMimeType,
+                                             int count) {
+        log.debug("NanoBanana 합성 이미지 {}개 병렬 생성 시작", count);
+
+        String personBase64  = Base64.getEncoder().encodeToString(personImageBytes);
+        String productBase64 = Base64.getEncoder().encodeToString(productImageBytes);
+
+        NbRequest requestBody = new NbRequest(
+                new NbSystemInstruction(List.of(new NbPart(FUSION_SYSTEM_PROMPT))),
+                List.of(new NbContent("user", List.of(
+                        new NbPart("""
+                                Reference_Image_1: PERSON IDENTITY SOURCE.
+                                Use this exact person as the only allowed person in the output.
+                                """),
+                        new NbPart(null, new NbInlineData(personMimeType, personBase64)),
+                        new NbPart("""
+                                Reference_Image_2: PRODUCT SOURCE.
+                                Use this exact product as the only allowed product in the output.
+                                """),
+                        new NbPart(null, new NbInlineData(productMimeType, productBase64)),
+                        new NbPart("""
+                                Task: Create a reference-based composite/edit, not a new person.
+                                Final check before output: the face must still match Reference_Image_1 more than any generic model.
+                                Also check scale: preserve the person's natural head-to-body proportions and fit the product to the person, never the person to the product image.
+                                """),
+                        new NbPart(userMessage)
+                ))),
+                new NbGenerationConfig(List.of("IMAGE"))
+        );
+
+        List<CompletableFuture<String>> futures = IntStream.range(0, count)
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> callAndSave(requestBody)))
+                .toList();
+
+        try {
+            List<String> imageUrls = futures.stream()
+                    .map(CompletableFuture::join)
+                    .toList();
+            log.info("NanoBanana 합성 이미지 {}개 병렬 생성 완료 — urls: {}", count, imageUrls);
+            return imageUrls;
+        } catch (CompletionException e) {
+            if (e.getCause() instanceof BizException bizEx) throw bizEx;
+            throw e;
+        }
+    }
+
     private ImageGenerationErrorCode resolveImageErrorCode(int statusCode) {
         return switch (statusCode) {
             case 429 -> ImageGenerationErrorCode.IMAGE_GENERATION_RATE_LIMITED;
@@ -187,9 +282,18 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     // ================================================================
 
     private record NbRequest(
+            @JsonInclude(JsonInclude.Include.NON_NULL)
+            @JsonProperty("system_instruction") NbSystemInstruction systemInstruction,
             List<NbContent> contents,
             @JsonProperty("generationConfig") NbGenerationConfig generationConfig
-    ) {}
+    ) {
+        // 기존 코드 호환 — systemInstruction 없는 생성자
+        NbRequest(List<NbContent> contents, NbGenerationConfig generationConfig) {
+            this(null, contents, generationConfig);
+        }
+    }
+
+    private record NbSystemInstruction(List<NbPart> parts) {}
 
     private record NbGenerationConfig(
             @JsonProperty("responseModalities") List<String> responseModalities

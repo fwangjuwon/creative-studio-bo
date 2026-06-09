@@ -1,7 +1,6 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
@@ -22,6 +21,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.HumanPromptStepMapp
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.PromptHelper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtil;
 import com.nsmall.ns_creative_studio_bo.domain.tag.entity.Tag;
 import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagMapper;
@@ -65,6 +65,7 @@ import java.util.Map;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class HumanPromptServiceImpl extends AbstractImagePromptService implements HumanPromptService {
 
     @Override
@@ -95,7 +96,7 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
     private final TagMapper tagMapper;
     private final GeminiService geminiService;
     private final ImageGenerationService imageGenerationService;
-    private final ObjectMapper objectMapper;
+    private final PromptHelper promptHelper;
 
     @Value("${image.base-url}")
     private String imageBaseUrl;
@@ -109,16 +110,7 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
     @Transactional
     public PromptHistoryRespDto createPrompt(Long userId, HumanPromptCreateReqDto dto) {
         // 1. 사용자 조회 + 일일 한도 체크
-        User user = userMapper.selectById(userId)
-                .orElseThrow(() -> new BizException(PromptErrorCode.USER_NOT_FOUND,
-                        "사용자를 찾을 수 없습니다. userId=" + userId));
-
-        int todayCount = promptHistoryMapper.countTodayByUserId(userId);
-        if (todayCount >= user.getDailyLimit()) {
-            log.warn("일일 한도 초과 — userId={}, todayCount={}, dailyLimit={}",
-                    userId, todayCount, user.getDailyLimit());
-            throw new BizException(PromptErrorCode.DAILY_LIMIT_EXCEEDED);
-        }
+        promptHelper.checkDailyLimit(userId);
 
         // 2. 모드 판별 — 6명 이상(단체) vs 1~5명(개별)
         boolean isGroup = Boolean.TRUE.equals(dto.getIsGroup());
@@ -334,19 +326,12 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
 
         // 3. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
         if (historyId != null) {
-            try {
-                String imageUrlsJson = objectMapper.writeValueAsString(imageUrls);
-                promptHistoryMapper.updateImageUrl(historyId, imageUrlsJson, SecurityUtil.getCurrentLoginId());
-                log.info("인물 이미지 URL 이력 업데이트 완료 — historyId={}, urls={}", historyId, imageUrlsJson);
-            } catch (JsonProcessingException e) {
-                log.warn("이미지 URL JSON 직렬화 실패 — 첫 번째 URL만 저장. historyId={}", historyId, e);
-                promptHistoryMapper.updateImageUrl(historyId, imageUrls.get(0), SecurityUtil.getCurrentLoginId());
-            }
+            String imageUrlsJson = promptHelper.serializeImageUrls(imageUrls);
+            promptHistoryMapper.updateImageUrl(historyId, imageUrlsJson, SecurityUtil.getCurrentLoginId());
+            log.info("인물 이미지 URL 이력 업데이트 완료 — historyId={}, urls={}", historyId, imageUrlsJson);
         }
 
         // 3. 응답에는 절대 URL로 조립하여 반환
-        return imageUrls.stream()
-                .map(path -> imageBaseUrl + path)
-                .toList();
+        return promptHelper.toAbsoluteUrls(imageUrls);
     }
 }

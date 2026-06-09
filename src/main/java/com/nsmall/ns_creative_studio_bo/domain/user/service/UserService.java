@@ -40,4 +40,7 @@ public interface UserService {
      * DB JOIN 단일 쿼리로 처리 (N+1 없음)
      */
     List<UserUsageRespDto> getUserUsageList();
+
+    /** 본인 비밀번호 변경 */
+    void changePassword(Long userId, String newPassword);
 }
