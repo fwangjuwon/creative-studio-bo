@@ -209,7 +209,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - 정상 케이스 (1명 개별 모드)")
     void 성공_인물_프롬프트_생성_정상() {
-        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("human_user_ok", "USER", "팀A", 5);
@@ -229,7 +229,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - 일일 한도 미만")
     void 성공_인물_프롬프트_생성_일일한도_미만() {
-        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("human_user_limit", "USER", "팀A", 3);
@@ -247,7 +247,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - promptStyle MID_JOURNEY 명시 저장")
     void 성공_인물_프롬프트_생성_promptStyle_MID_JOURNEY() {
-        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("human_style_mj", "USER", "팀A", 5);
@@ -270,7 +270,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - additionalNotes 저장 및 응답 포함")
     void 성공_인물_프롬프트_생성_additionalNotes_포함() {
-        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("notes_user", "USER", "팀A", 5);
@@ -293,7 +293,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 인물 프롬프트 생성 - 2명 개별 모드 + 관계 입력")
     void 성공_인물_프롬프트_생성_2명_관계_포함() {
-        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("human_2persons", "USER", "팀A", 5);
@@ -395,7 +395,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 이력 조회 - PERSON 이력에 personOptions/additionalNotes 포함")
     void 성공_이력_조회_PERSON_신규필드_포함() {
-        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("hist_person_detail", "USER", "팀G", 10);
@@ -450,7 +450,7 @@ public class HumanPromptServiceTest {
     @DisplayName("[성공] attrName 분리 - 1명 복수 attr 선택 시 Gemini 인자가 attrName별로 분리됨")
     @SuppressWarnings("unchecked")
     void 성공_attrName_분리_복수_attr_Gemini_인자_구조_검증() {
-        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("attr_split_user", "USER", "팀AttrTest", 5);
@@ -468,7 +468,7 @@ public class HumanPromptServiceTest {
         ArgumentCaptor<List<Map<String, Map<String, List<String>>>>> personsCaptor =
                 ArgumentCaptor.forClass(List.class);
         verify(geminiService).generateHumanPrompt(
-                personsCaptor.capture(), any(), anyBoolean(), any(), any(), any(), any());
+                personsCaptor.capture(), any(), anyBoolean(), any(), any(), any(), any(), any());
 
         List<Map<String, Map<String, List<String>>>> capturedPersons = personsCaptor.getValue();
 
@@ -505,7 +505,7 @@ public class HumanPromptServiceTest {
     @DisplayName("[성공] attrName 분리 - 공통 옵션도 attrName별로 분리되어 Gemini에 전달됨")
     @SuppressWarnings("unchecked")
     void 성공_attrName_분리_공통_옵션_Gemini_인자_구조_검증() {
-        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any()))
+        given(geminiService.generateHumanPrompt(any(), any(), anyBoolean(), any(), any(), any(), any(), any()))
                 .willReturn(MOCK_PROMPT);
 
         UserRespDto user = 유저_생성("common_attr_split_user", "USER", "팀CommonAttr", 5);
@@ -532,7 +532,7 @@ public class HumanPromptServiceTest {
         ArgumentCaptor<Map<String, Map<String, List<String>>>> commonCaptor =
                 ArgumentCaptor.forClass(Map.class);
         verify(geminiService).generateHumanPrompt(
-                any(), commonCaptor.capture(), anyBoolean(), any(), any(), any(), any());
+                any(), commonCaptor.capture(), anyBoolean(), any(), any(), any(), any(), any());
 
         Map<String, Map<String, List<String>>> capturedCommon = commonCaptor.getValue();
 
