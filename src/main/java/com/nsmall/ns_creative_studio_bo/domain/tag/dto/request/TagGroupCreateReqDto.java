@@ -28,7 +28,4 @@ public class TagGroupCreateReqDto {
     private Boolean isMultiSelect;
 
     private Integer sortOrder;
-
-    /** 태그 그룹 유형 (선택, 기본값: PROMPT). 'PROMPT' | 'TEXT_OVERLAY' */
-    private String type;
 }

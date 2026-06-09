@@ -20,15 +20,7 @@ public interface TagGroupMapper {
 
     Optional<TagGroup> selectById(@Param("id") Long id);
 
-    /** 전체 태그 그룹 목록 조회 */
     List<TagGroup> selectList();
-
-    /**
-     * type으로 필터링된 태그 그룹 목록 조회.
-     *
-     * @param type 'PROMPT' | 'TEXT_OVERLAY' | null(전체)
-     */
-    List<TagGroup> selectListByType(@Param("type") String type);
 
     boolean existsByName(@Param("name") String name, @Param("excludeId") Long excludeId);
 

@@ -52,15 +52,13 @@ public class TagGroupController {
         return CommonResponse.success(tagGroupService.getTagGroup(id).orElse(null));
     }
 
-    @Operation(summary = "태그 그룹 전체 목록 조회",
-            description = "인증된 모든 사용자 허용. type 파라미터로 필터링 가능 ('PROMPT' | 'TEXT_OVERLAY'). 미입력 시 전체 반환.",
+    @Operation(summary = "태그 그룹 전체 목록 조회", description = "인증된 모든 사용자 허용",
             security = @SecurityRequirement(name = "bearerAuth"))
     @ApiResponse(responseCode = "200", description = "목록 조회 성공")
     @PreAuthorize("hasRole('USER')")
     @GetMapping
-    public CommonResponse<List<TagGroupRespDto>> getTagGroups(
-            @RequestParam(required = false) String type) {
-        return CommonResponse.success(tagGroupService.getTagGroups(type));
+    public CommonResponse<List<TagGroupRespDto>> getTagGroups() {
+        return CommonResponse.success(tagGroupService.getTagGroups());
     }
 
     @Operation(summary = "태그 그룹 수정", description = "MANAGER 이상 — name, isMultiSelect, sortOrder 수정 가능",
