@@ -4,8 +4,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.util;
  * 이미지 텍스트 오버레이 Gemini 지시사항 생성 유틸리티
  *
  * <pre>
- * DB의 tag_value(Gemini 친화적 영문 설명)를 받아 Gemini 프롬프트 생성 단계에서 사용하는
- * 텍스트 오버레이 지시사항 문자열을 생성한다.
+ * 텍스트 내용만 받아 AI가 이미지 분위기에 맞게 자동으로 스타일/위치/크기를 결정하도록 지시한다.
  * textContent가 null/blank이면 null을 반환하여 텍스트 오버레이 없이 처리한다.
  * </pre>
  *
@@ -17,43 +16,34 @@ public class TextOverlayUtil {
     private TextOverlayUtil() {}
 
     /**
-     * 텍스트 오버레이 정보를 Gemini 프롬프트 지시사항 문자열로 변환한다.
-     *
-     * <pre>
-     * position, size, style 값은 DB tag_value(영문 설명)를 그대로 사용한다.
-     * 예: position = "positioned in the top-left corner"
-     *     size     = "small text (approximately 3~5% of image height)"
-     *     style    = "natural handwriting-style (Script) font"
-     * </pre>
+     * 텍스트 오버레이 지시사항을 생성한다.
+     * AI가 이미지 전체 분위기와 구도에 맞게 폰트 스타일, 크기, 위치, 색상을 자동 결정한다.
      *
      * @param textContent 삽입할 텍스트 내용 (null/blank이면 null 반환)
-     * @param position    위치 설명 (DB tag_value, nullable)
-     * @param size        크기 설명 (DB tag_value, nullable)
-     * @param style       글자체 설명 (DB tag_value, nullable)
-     * @param color       텍스트 색상 (자유 입력, nullable)
      * @return Gemini 프롬프트에 포함할 지시사항 문자열, textContent 없으면 null
      */
-    public static String buildInstruction(String textContent, String position,
-                                          String size, String style, String color) {
+    public static String buildInstruction(String textContent) {
         if (textContent == null || textContent.isBlank()) return null;
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("Text Overlay Request:");
-        sb.append("\n  - Text: \"").append(textContent.strip()).append("\"");
-        if (position != null && !position.isBlank()) {
-            sb.append("\n  - Position: ").append(position);
-        }
-        if (size != null && !size.isBlank()) {
-            sb.append("\n  - Size: ").append(size);
-        }
-        if (style != null && !style.isBlank()) {
-            sb.append("\n  - Style: ").append(style);
-        }
-        if (color != null && !color.isBlank()) {
-            sb.append("\n  - Color: ").append(color);
-        }
-        sb.append("\n  Note: Integrate the text naturally into the scene composition, " +
-                  "making it look like an intentional design element that blends with the background.");
-        return sb.toString();
+        return "Text Overlay Request:" +
+               "\n  - Text: \"" + textContent.strip() + "\"" +
+                "\n  - Ensure the exact spelling of the text is rendered correctly and remains highly legible." +
+               "\n  - Automatically choose the most suitable font style, size, placement, and color" +
+               " that harmonizes naturally with the overall mood, composition, and visual tone of the image." +
+               "\n  - The text should feel like an intentional design element, not an afterthought.";
+    }
+
+    /**
+     * 텍스트 오버레이 suffix 문자열을 생성한다.
+     * AI가 이미지 분위기에 맞게 텍스트를 자연스럽게 통합하도록 지시한다.
+     *
+     * @param textContent 삽입할 텍스트 내용 (null/blank이면 null 반환)
+     * @return 프롬프트 suffix 문자열, textContent 없으면 null
+     */
+    public static String buildSuffix(String textContent) {
+        if (textContent == null || textContent.isBlank()) return null;
+
+        return "Naturally integrate the text \"" + textContent.strip() + "\" into the image." +
+               " Choose the font style, size, placement, and color that best complements the overall mood and composition.";
     }
 }

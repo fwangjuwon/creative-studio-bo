@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt;
 
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtilTest;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.PromptHelperTest;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtilTest;
 import org.junit.platform.suite.api.SelectClasses;
 import org.junit.platform.suite.api.Suite;
 import org.junit.platform.suite.api.SuiteDisplayName;
@@ -16,7 +17,8 @@ import org.junit.platform.suite.api.SuiteDisplayName;
 @SuiteDisplayName("Prompt 단위 테스트")
 @SelectClasses({
         PromptHelperTest.class,
-        ImageValidationUtilTest.class
+        ImageValidationUtilTest.class,
+        TextOverlayUtilTest.class
 })
 public class PromptUnitTests {
 }

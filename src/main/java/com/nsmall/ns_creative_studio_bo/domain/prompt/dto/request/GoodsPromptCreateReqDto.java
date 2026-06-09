@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -46,10 +47,7 @@ public class GoodsPromptCreateReqDto {
     private String purpose;          // 생성 목적 (선택)
     private String additionalNotes;  // 추가 지시 사항 (선택)
 
-    // 텍스트 오버레이 (이미지 생성 시 텍스트 삽입 — 모두 선택)
+    // 텍스트 오버레이 — 입력 시 AI가 이미지 분위기에 맞게 자동 처리
+    @Size(max = 500, message = "텍스트 문구는 500자 이하여야 합니다.")
     private String textContent;      // 삽입할 텍스트 내용 (없으면 오버레이 비활성화)
-    private String textColor;        // 텍스트 색상 자유 입력 (없으면 null)
-    private Long textPositionTagId;  // 텍스트 위치 태그 ID (tag.id)
-    private Long textSizeTagId;      // 텍스트 크기 태그 ID (tag.id)
-    private Long textStyleTagId;     // 글자체 느낌 태그 ID (tag.id)
 }

@@ -133,6 +133,12 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
         String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames,
                 dto.getImageAspectRatio(), dto.getPurpose(), dto.getAdditionalNotes(), promptStyle);
 
+        // 텍스트 오버레이 suffix — AI가 이미지 분위기에 맞게 자동 처리
+        String textOverlaySuffix = TextOverlayUtil.buildSuffix(dto.getTextContent());
+        if (textOverlaySuffix != null) {
+            promptText = promptText.strip() + " " + textOverlaySuffix;
+        }
+
         // 5. PromptHistory 저장
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
@@ -147,10 +153,6 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
                 .purpose(dto.getPurpose())
                 .additionalNotes(dto.getAdditionalNotes())
                 .textContent(dto.getTextContent())
-                .textColor(dto.getTextColor())
-                .textPositionTagId(dto.getTextPositionTagId())
-                .textSizeTagId(dto.getTextSizeTagId())
-                .textStyleTagId(dto.getTextStyleTagId())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -296,11 +298,7 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
         if (historyId != null) {
             PromptHistory history = promptHistoryMapper.selectById(historyId).orElse(null);
             if (history != null) {
-                String position = resolveTagValue(history.getTextPositionTagId());
-                String size     = resolveTagValue(history.getTextSizeTagId());
-                String style    = resolveTagValue(history.getTextStyleTagId());
-                String overlayInstruction = TextOverlayUtil.buildInstruction(
-                        history.getTextContent(), position, size, style, history.getTextColor());
+                String overlayInstruction = TextOverlayUtil.buildInstruction(history.getTextContent());
                 if (overlayInstruction != null) {
                     finalPrompt = promptText + "\n\n" + overlayInstruction;
                     log.debug("텍스트 오버레이 지시사항 주입 — historyId={}", historyId);
@@ -327,14 +325,6 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
 
         // 3. 응답에는 절대 URL로 조립하여 반환
         return promptHelper.toAbsoluteUrls(imageUrls);
-    }
-
-    /**
-     * 태그 ID로 tag_value를 조회한다. null이거나 tag_value가 없으면 null 반환.
-     */
-    private String resolveTagValue(Long tagId) {
-        if (tagId == null) return null;
-        return tagMapper.selectById(tagId).map(Tag::getTagValue).orElse(null);
     }
 
     @Override

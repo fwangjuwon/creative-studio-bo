@@ -385,36 +385,3 @@ INSERT INTO tag (tag_group_id, name, sort_order, init_regi_pic, init_regi_dttm, 
 ((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '통강조',     5, 'system', NOW(), 'system', NOW(), '365:825'),
 ((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '미디어월80', 6, 'system', NOW(), 'system', NOW(), '9216:1728'),
 ((SELECT id FROM tag_group WHERE name = '이미지 사이즈'), '미디어월150',7, 'system', NOW(), 'system', NOW(), '12288:1728');
-
--- =============================================================================
--- 텍스트 오버레이 태그 그룹 (TEXT_OVERLAY — 상품/인물 공통)
--- tag_value: NanoBanana 이미지 생성 시 TextOverlayUtil에서 사용하는 영문 지시사항
--- =============================================================================
-INSERT INTO tag_group (name, is_multi_select, sort_order, type, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-('텍스트 위치', FALSE, 1, 'TEXT_OVERLAY', 'system', NOW(), 'system', NOW()),
-('텍스트 크기', FALSE, 2, 'TEXT_OVERLAY', 'system', NOW(), 'system', NOW()),
-('글자체 느낌', FALSE, 3, 'TEXT_OVERLAY', 'system', NOW(), 'system', NOW());
-
--- 텍스트 위치 (단일선택)
-INSERT INTO tag (tag_group_id, name, sort_order, tag_value, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '텍스트 위치'), '왼쪽 상단',   1, 'positioned in the top-left corner',     'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '텍스트 위치'), '중앙 상단',   2, 'positioned at the top center',           'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '텍스트 위치'), '오른쪽 상단', 3, 'positioned in the top-right corner',    'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '텍스트 위치'), '중앙',        4, 'positioned at the center of the image',  'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '텍스트 위치'), '왼쪽 하단',   5, 'positioned in the bottom-left corner',  'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '텍스트 위치'), '중앙 하단',   6, 'positioned at the bottom center',        'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '텍스트 위치'), '오른쪽 하단', 7, 'positioned in the bottom-right corner', 'system', NOW(), 'system', NOW());
-
--- 텍스트 크기 (단일선택)
-INSERT INTO tag (tag_group_id, name, sort_order, tag_value, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '텍스트 크기'), '작게', 1, 'small text (approximately 3~5% of image height)',   'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '텍스트 크기'), '보통', 2, 'medium text (approximately 8~12% of image height)', 'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '텍스트 크기'), '크게', 3, 'large text (approximately 15~20% of image height)', 'system', NOW(), 'system', NOW());
-
--- 글자체 느낌 (단일선택)
-INSERT INTO tag (tag_group_id, name, sort_order, tag_value, init_regi_pic, init_regi_dttm, final_rvis_pic, final_rvis_dttm) VALUES
-((SELECT id FROM tag_group WHERE name = '글자체 느낌'), '산세리프(고딕)',  1, 'clean sans-serif font with a modern and professional feel',         'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '글자체 느낌'), '세리프',          2, 'elegant serif font with a classic and sophisticated feel',           'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '글자체 느낌'), '필기체',          3, 'natural handwriting-style Script font with a personal and warm feel','system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '글자체 느낌'), '굵은 고딕',       4, 'bold sans-serif font with strong and impactful character',           'system', NOW(), 'system', NOW()),
-((SELECT id FROM tag_group WHERE name = '글자체 느낌'), '장식체',          5, 'decorative display font with unique and eye-catching character',     'system', NOW(), 'system', NOW());

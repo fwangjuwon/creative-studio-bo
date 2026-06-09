@@ -17,10 +17,10 @@ import java.util.List;
  * <pre>
  * promptType에 따라 유효한 필드가 다르다.
  *
- * PRODUCT: categoryId, categoryPath, tagIds, tagNames 사용
- *          additionalNotes, personOptions 는 null
+ * PRODUCT: categoryId, categoryPath, tagIds, tagNames, purpose, additionalNotes 사용
+ *          personOptions 는 null
  *
- * PERSON : additionalNotes, personOptions 사용
+ * PERSON : purpose, additionalNotes, personOptions 사용
  *          categoryId, categoryPath, tagIds, tagNames 는 null
  *          personOptions: personIndex -1(공통), 0 이상(인물 인덱스) 로 그룹핑
  *
@@ -64,10 +64,6 @@ public class PromptHistoryRespDto {
 
     // 텍스트 오버레이 (공통)
     private String textContent;
-    private String textColor;
-    private Long textPositionTagId;
-    private Long textSizeTagId;
-    private Long textStyleTagId;
 
     /**
      * 인물별 선택 옵션 그룹 DTO
@@ -123,6 +119,7 @@ public class PromptHistoryRespDto {
      * @param categoryPath  "식품 > 건강식품 > 인삼" 형태의 카테고리 전체 경로
      * @param tagNames      선택한 태그 한국어명 목록
      * @param imageBaseUrl  이미지 서빙 기준 URL (예: https://bo.nsmall.com)
+     *                      purpose, additionalNotes, textContent 는 history 에서 직접 매핑
      */
     public static PromptHistoryRespDto fromGoods(PromptHistory history,
                                                  String categoryPath,
@@ -142,11 +139,9 @@ public class PromptHistoryRespDto {
                 .categoryPath(categoryPath)
                 .tagIds(tagIds)
                 .tagNames(tagNames)
+                .purpose(history.getPurpose())
+                .additionalNotes(history.getAdditionalNotes())
                 .textContent(history.getTextContent())
-                .textColor(history.getTextColor())
-                .textPositionTagId(history.getTextPositionTagId())
-                .textSizeTagId(history.getTextSizeTagId())
-                .textStyleTagId(history.getTextStyleTagId())
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())
@@ -175,10 +170,6 @@ public class PromptHistoryRespDto {
                 .additionalNotes(history.getAdditionalNotes())
                 .personOptions(personOptions)
                 .textContent(history.getTextContent())
-                .textColor(history.getTextColor())
-                .textPositionTagId(history.getTextPositionTagId())
-                .textSizeTagId(history.getTextSizeTagId())
-                .textStyleTagId(history.getTextStyleTagId())
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())

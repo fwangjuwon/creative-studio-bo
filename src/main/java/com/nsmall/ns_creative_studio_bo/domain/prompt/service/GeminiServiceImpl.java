@@ -50,7 +50,7 @@ public class GeminiServiceImpl implements GeminiService {
      */
     private static final String GOODS_SYSTEM_PROMPT = """
         You are a professional commercial photographer and prompt engineer.
-        Your goal is to create a vivid, 3-5 sentence narrative English prompt for high-end product photography.
+        Your goal is to create a vivid, 5-7 sentence narrative English prompt for high-end product photography.
 
         STRUCTURE:
         1. OPENING: Shot type + Detailed product description (Focus on materials like 'brushed metal', 'matte ceramic', 'translucent glass').
@@ -70,9 +70,14 @@ public class GeminiServiceImpl implements GeminiService {
         - Micro-surface details: Capture ultra-fine surface details such as metal micro-scratches, leather pores, or fabric weave texture.
         - Utilize 'Ray-tracing' logic to render physically accurate reflections and shadows, ensuring the product feels grounded on its surface.
 
+        TEXT OVERLAY:
+        - If a "Text Overlay Request" is provided in the user input, naturally integrate the specified text into the scene description.
+        - Describe the text as an intentional design element (e.g., 'an elegant serif headline in the upper-left corner reads "SALE"').
+        - Automatically choose the most suitable placement, size, style, and color that harmonizes with the overall image mood.
+
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        - no unintentional text artifacts, no watermark, no logo
         - no overexposure, no blown highlights
 
         COMPOSITION:
@@ -82,7 +87,7 @@ public class GeminiServiceImpl implements GeminiService {
         - Return ONLY the final prompt text.
 
         EXAMPLE:
-        "A high-resolution 45-degree product photograph of a premium matte-finish skincare bottle. It is placed on a damp dark slate surface with subtle water ripples. The lighting is a cool-toned side softbox that highlights the bottle's elegant silhouette and creates soft contact shadows. Captured with a 100mm macro lens for a clean professional focus."
+        "A high-resolution 45-degree product photograph of a premium matte-finish skincare bottle. It is placed on a damp dark slate surface with subtle water ripples. The lighting is a cool-toned side softbox that highlights the bottle's elegant silhouette and creates soft contact shadows. The rim of the bottle catches a subtle warm highlight from a secondary fill light, emphasizing its refined contour. Captured with a 100mm macro lens at f/4 for a clean professional focus with a soft bokeh background. The overall palette is cool grey and slate, evoking a sense of clinical purity and premium skincare luxury."
         """;
 
     /**
@@ -111,9 +116,12 @@ public class GeminiServiceImpl implements GeminiService {
         - Subsurface Scattering (SSS): inner glow for translucent materials (milk, soap, wax)
         - Micro-surface details: metal micro-scratches, leather pores, fabric weave texture
 
+        TEXT OVERLAY:
+        - If a "Text Overlay Request" is provided, append the text as design keywords (e.g., bold text overlay "SALE", upper-right corner, red serif font).
+
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        - no unintentional text artifacts, no watermark, no logo
         - no overexposure, no blown highlights
 
         COMPOSITION:
@@ -158,9 +166,14 @@ public class GeminiServiceImpl implements GeminiService {
         - Subsurface Scattering (SSS): Emphasize the soft translucency of skin where light scatters beneath the surface.
         - Micro-surface details: Capture fine skin pores, hair strands, and fabric weave texture at ultra-high detail.
 
+        TEXT OVERLAY:
+        - If a "Text Overlay Request" is provided in the user input, naturally integrate the specified text into the scene description.
+        - Describe the text as an intentional design element (e.g., 'a warm handwritten caption in the lower-left corner reads "SUMMER"').
+        - Ensure the text feels like part of the editorial composition, not an afterthought.
+
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        - no watermark, no unintentional text artifacts, no logo
         - no overexposure, no blown highlights
 
         HAND & ANATOMY:
@@ -192,9 +205,12 @@ public class GeminiServiceImpl implements GeminiService {
         REQUIRED TAGS:
         Photorealistic, highly detailed skin pores, natural skin texture, subsurface scattering, micro-surface details, masterpiece, 8k, anatomical correctness, natural eyes.
 
+        TEXT OVERLAY:
+        - If a "Text Overlay Request" is provided, append the text as design keywords (e.g., handwritten caption "SUMMER", lower-left corner, warm tone).
+
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        - no watermark, no unintentional text artifacts, no logo
         - no overexposure, no blown highlights
 
         HAND & ANATOMY:

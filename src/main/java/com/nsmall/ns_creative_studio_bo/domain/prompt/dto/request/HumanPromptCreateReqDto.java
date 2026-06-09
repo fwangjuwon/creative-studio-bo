@@ -79,15 +79,8 @@ public class HumanPromptCreateReqDto {
     /** 이미지 비율 (선택, 예: "1:1", "4:3", "16:9", "9:16") */
     private String imageAspectRatio;
 
-    // 텍스트 오버레이 (이미지 생성 시 텍스트 삽입)
+    // 텍스트 오버레이 — 입력 시 AI가 이미지 분위기에 맞게 자동 처리
     /** 삽입할 텍스트 내용 (없으면 오버레이 비활성화) */
+    @Size(max = 500, message = "텍스트 문구는 500자 이하여야 합니다.")
     private String textContent;
-    /** 텍스트 색상 자유 입력 (없으면 null) */
-    private String textColor;
-    /** 텍스트 위치 태그 ID (tag.id) */
-    private Long textPositionTagId;
-    /** 텍스트 크기 태그 ID (tag.id) */
-    private Long textSizeTagId;
-    /** 글자체 느낌 태그 ID (tag.id) */
-    private Long textStyleTagId;
 }

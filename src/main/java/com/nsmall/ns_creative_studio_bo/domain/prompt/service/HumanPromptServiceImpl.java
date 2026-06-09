@@ -23,8 +23,6 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.PromptHelper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtil;
-import com.nsmall.ns_creative_studio_bo.domain.tag.entity.Tag;
-import com.nsmall.ns_creative_studio_bo.domain.tag.mapper.TagMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -93,7 +91,6 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
     private final HumanPromptHistoryOptionMapper humanPromptHistoryOptionMapper;
     private final PromptHistoryMapper promptHistoryMapper;
     private final UserMapper userMapper;
-    private final TagMapper tagMapper;
     private final GeminiService geminiService;
     private final ImageGenerationService imageGenerationService;
     private final PromptHelper promptHelper;
@@ -241,6 +238,12 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
                 personsStepValues, commonStepValues, isGroup,
                 dto.getRelationship(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio());
 
+        // 텍스트 오버레이 suffix — AI가 이미지 분위기에 맞게 자동 처리
+        String textOverlaySuffix = TextOverlayUtil.buildSuffix(dto.getTextContent());
+        if (textOverlaySuffix != null) {
+            promptText = promptText.strip() + " " + textOverlaySuffix;
+        }
+
         // 7. PromptHistory 저장
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
@@ -253,10 +256,6 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
                 .purpose(null)
                 .additionalNotes(dto.getAdditionalNotes())
                 .textContent(dto.getTextContent())
-                .textColor(dto.getTextColor())
-                .textPositionTagId(dto.getTextPositionTagId())
-                .textSizeTagId(dto.getTextSizeTagId())
-                .textStyleTagId(dto.getTextStyleTagId())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -286,14 +285,6 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
         return PromptHistoryRespDto.fromHuman(history, List.of(), imageBaseUrl);
     }
 
-    /**
-     * 태그 ID로 tag_value를 조회한다. null이거나 tag_value가 없으면 null 반환.
-     */
-    private String resolveTagValue(Long tagId) {
-        if (tagId == null) return null;
-        return tagMapper.selectById(tagId).map(Tag::getTagValue).orElse(null);
-    }
-
     @Override
     @Transactional
     public List<String> generateImage(Long historyId, String promptText, MultipartFile referenceImage) {
@@ -302,11 +293,7 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
         if (historyId != null) {
             PromptHistory history = promptHistoryMapper.selectById(historyId).orElse(null);
             if (history != null) {
-                String position = resolveTagValue(history.getTextPositionTagId());
-                String size     = resolveTagValue(history.getTextSizeTagId());
-                String style    = resolveTagValue(history.getTextStyleTagId());
-                String overlayInstruction = TextOverlayUtil.buildInstruction(
-                        history.getTextContent(), position, size, style, history.getTextColor());
+                String overlayInstruction = TextOverlayUtil.buildInstruction(history.getTextContent());
                 if (overlayInstruction != null) {
                     finalPrompt = promptText + "\n\n" + overlayInstruction;
                     log.debug("텍스트 오버레이 지시사항 주입 — historyId={}", historyId);

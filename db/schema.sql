@@ -129,10 +129,6 @@ CREATE TABLE prompt_history (
     purpose          TEXT,                              -- 인물 프롬프트 생성 목적 (상품은 NULL)
     additional_notes TEXT,                              -- 인물 프롬프트 추가 지시사항 (상품은 NULL)
     text_content         VARCHAR(500),                 -- 텍스트 오버레이 내용 (없으면 NULL)
-    text_color           VARCHAR(100),                 -- 텍스트 색상 (자유 입력, 없으면 NULL)
-    text_position_tag_id BIGINT,                       -- 논리 FK → tag.id (텍스트 위치)
-    text_size_tag_id     BIGINT,                       -- 논리 FK → tag.id (텍스트 크기)
-    text_style_tag_id    BIGINT,                       -- 논리 FK → tag.id (글자체 느낌)
     init_regi_pic    VARCHAR(50),
     init_regi_dttm   TIMESTAMP,
     final_rvis_pic   VARCHAR(50),

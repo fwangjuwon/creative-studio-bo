@@ -42,11 +42,7 @@ public class PromptHistory {
     private String additionalNotes;  // 추가 지시 사항 (선택, 상품·인물 공통)
 
     // 텍스트 오버레이
-    private String textContent;        // 삽입할 텍스트 내용 (없으면 null)
-    private String textColor;          // 텍스트 색상 자유 입력 (없으면 null)
-    private Long textPositionTagId;    // 논리 FK → tag.id (텍스트 위치)
-    private Long textSizeTagId;        // 논리 FK → tag.id (텍스트 크기)
-    private Long textStyleTagId;       // 논리 FK → tag.id (글자체 느낌)
+    private String textContent;        // 삽입할 텍스트 내용 (없으면 null) — AI가 이미지 분위기에 맞게 자동 처리
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;
