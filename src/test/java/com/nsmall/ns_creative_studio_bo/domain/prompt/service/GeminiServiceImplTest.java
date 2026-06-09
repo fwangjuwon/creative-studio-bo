@@ -78,7 +78,7 @@ public class GeminiServiceImplTest {
                         new HttpHeaders(), new byte[0], null));
 
         assertThatThrownBy(() -> geminiService.generateGoodsPrompt(
-                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA, null))
+                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.GEMINI_RATE_LIMITED));
@@ -93,7 +93,7 @@ public class GeminiServiceImplTest {
                         new HttpHeaders(), new byte[0], null));
 
         assertThatThrownBy(() -> geminiService.generateGoodsPrompt(
-                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA, null))
+                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.GEMINI_AUTH_FAILED));
@@ -108,7 +108,7 @@ public class GeminiServiceImplTest {
                         new HttpHeaders(), new byte[0], null));
 
         assertThatThrownBy(() -> geminiService.generateGoodsPrompt(
-                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA, null))
+                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.GEMINI_UNAVAILABLE));
@@ -123,7 +123,7 @@ public class GeminiServiceImplTest {
                         new HttpHeaders(), new byte[0], null));
 
         assertThatThrownBy(() -> geminiService.generateGoodsPrompt(
-                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA, null))
+                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.GEMINI_UNAVAILABLE));
@@ -138,7 +138,7 @@ public class GeminiServiceImplTest {
                         new HttpHeaders(), new byte[0], null));
 
         assertThatThrownBy(() -> geminiService.generateGoodsPrompt(
-                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA, null))
+                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.GEMINI_UNAVAILABLE));
@@ -151,7 +151,7 @@ public class GeminiServiceImplTest {
                 .willThrow(new ResourceAccessException("Connection refused"));
 
         assertThatThrownBy(() -> geminiService.generateGoodsPrompt(
-                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA, null))
+                "인삼", List.of(), null, null, null, PromptStyle.NANO_BANANA))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(PromptErrorCode.GEMINI_API_ERROR));
