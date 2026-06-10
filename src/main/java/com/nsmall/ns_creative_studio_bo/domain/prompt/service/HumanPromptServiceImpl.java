@@ -5,7 +5,6 @@ import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
@@ -23,8 +22,6 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.PromptHelper;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtil;
-import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
-import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -90,7 +87,6 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
     private final HumanPromptOptionMapper humanPromptOptionMapper;
     private final HumanPromptHistoryOptionMapper humanPromptHistoryOptionMapper;
     private final PromptHistoryMapper promptHistoryMapper;
-    private final UserMapper userMapper;
     private final GeminiService geminiService;
     private final ImageGenerationService imageGenerationService;
     private final PromptHelper promptHelper;
@@ -288,30 +284,17 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
     @Override
     @Transactional
     public List<String> generateImage(Long historyId, String promptText, MultipartFile referenceImage) {
-        // 1. 텍스트 오버레이 지시사항 조합 — historyId가 있으면 이력에서 오버레이 설정 조회
-        String finalPrompt = promptText;
-        if (historyId != null) {
-            PromptHistory history = promptHistoryMapper.selectById(historyId).orElse(null);
-            if (history != null) {
-                String overlayInstruction = TextOverlayUtil.buildInstruction(history.getTextContent());
-                if (overlayInstruction != null) {
-                    finalPrompt = promptText + "\n\n" + overlayInstruction;
-                    log.debug("텍스트 오버레이 지시사항 주입 — historyId={}", historyId);
-                }
-            }
-        }
-
-        // 2. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
         List<String> imageUrls;
         ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
         if (refImage != null) {
             imageUrls = generateImagesWithReference(
-                    finalPrompt, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
+                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
         } else {
-            imageUrls = imageGenerationService.generateImages(finalPrompt, PromptConstants.IMAGE_GENERATE_COUNT);
+            imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
         }
 
-        // 3. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
+        // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)
         if (historyId != null) {
             String imageUrlsJson = promptHelper.serializeImageUrls(imageUrls);
             promptHistoryMapper.updateImageUrl(historyId, imageUrlsJson, SecurityUtil.getCurrentLoginId());

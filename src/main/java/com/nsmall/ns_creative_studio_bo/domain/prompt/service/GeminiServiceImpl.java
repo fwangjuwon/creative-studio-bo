@@ -70,11 +70,6 @@ public class GeminiServiceImpl implements GeminiService {
         - Micro-surface details: Capture ultra-fine surface details such as metal micro-scratches, leather pores, or fabric weave texture.
         - Utilize 'Ray-tracing' logic to render physically accurate reflections and shadows, ensuring the product feels grounded on its surface.
 
-        TEXT OVERLAY:
-        - If a "Text Overlay Request" is provided in the user input, naturally integrate the specified text into the scene description.
-        - Describe the text as an intentional design element (e.g., 'an elegant serif headline in the upper-left corner reads "SALE"').
-        - Automatically choose the most suitable placement, size, style, and color that harmonizes with the overall image mood.
-
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
         - no unintentional text artifacts, no watermark, no logo
@@ -115,9 +110,6 @@ public class GeminiServiceImpl implements GeminiService {
         - Refraction & Caustics: light refraction through glass, realistic caustics on surface
         - Subsurface Scattering (SSS): inner glow for translucent materials (milk, soap, wax)
         - Micro-surface details: metal micro-scratches, leather pores, fabric weave texture
-
-        TEXT OVERLAY:
-        - If a "Text Overlay Request" is provided, append the text as design keywords (e.g., bold text overlay "SALE", upper-right corner, red serif font).
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
@@ -166,11 +158,6 @@ public class GeminiServiceImpl implements GeminiService {
         - Subsurface Scattering (SSS): Emphasize the soft translucency of skin where light scatters beneath the surface.
         - Micro-surface details: Capture fine skin pores, hair strands, and fabric weave texture at ultra-high detail.
 
-        TEXT OVERLAY:
-        - If a "Text Overlay Request" is provided in the user input, naturally integrate the specified text into the scene description.
-        - Describe the text as an intentional design element (e.g., 'a warm handwritten caption in the lower-left corner reads "SUMMER"').
-        - Ensure the text feels like part of the editorial composition, not an afterthought.
-
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
         - no watermark, no unintentional text artifacts, no logo
@@ -204,9 +191,6 @@ public class GeminiServiceImpl implements GeminiService {
 
         REQUIRED TAGS:
         Photorealistic, highly detailed skin pores, natural skin texture, subsurface scattering, micro-surface details, masterpiece, 8k, anatomical correctness, natural eyes.
-
-        TEXT OVERLAY:
-        - If a "Text Overlay Request" is provided, append the text as design keywords (e.g., handwritten caption "SUMMER", lower-left corner, warm tone).
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
