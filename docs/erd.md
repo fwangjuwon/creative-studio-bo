@@ -25,7 +25,8 @@
 | 테이블명 | Java 엔티티 | 설명 |
 |---|---|---|
 | `user` | `User` | 회원 정보, 권한, 팀명, 일일 생성 한도 |
-| `nsist_emp_mapping` | `NsistEmpMapping` | nsist 사원번호↔NCS 계정 매핑 (N:1) |
+| `nsist_emp_mapping` | `NsistEmpMapping` | nsist 사원번호↔NCS 계정 매핑 (N:1) — ADMIN/MANAGER 개인계정용 |
+| `nsist_org_mapping` | `NsistOrgMapping` | nsist 조직코드↔NCS 팀계정 매핑 (1:1) — USER 팀계정용 |
 | `category` | `Category` | 상품 카테고리 (3단계 계층: LCS→MCS→SCS) |
 | `tag_group` | `TagGroup` | 태그 묶음 (인물, 분위기 등) |
 | `tag` | `Tag` | 태그 값 (남자, 화사한 등) |
@@ -74,6 +75,38 @@ nsist 사원번호와 NCS 계정의 매핑 정보. ADMIN이 API로 관리.
 | `init_regi_dttm` | TIMESTAMP | | 등록일시 |
 | `final_rvis_pic` | VARCHAR | | 최종수정자 |
 | `final_rvis_dttm` | TIMESTAMP | | 최종수정일시 |
+
+---
+
+### `nsist_org_mapping`
+
+nsist 조직코드와 NCS 팀계정의 매핑 정보. ADMIN이 API로 관리. USER 역할 계정 전용.
+
+> `org_cd` UNIQUE — 한 조직코드는 하나의 NCS 팀계정에만 매핑된다.
+> 로그인 시 `nsist_emp_mapping`(emp_cd) 조회 우선, 없으면 이 테이블(org_cd) fallback.
+
+| 컬럼명 | 타입 | 제약 | 설명 |
+|---|---|---|---|
+| `id` | BIGINT | PK, GENERATED ALWAYS AS IDENTITY | 매핑 고유 ID |
+| `org_cd` | VARCHAR(20) | NOT NULL, UNIQUE | nsist 조직코드 (예: O000000095) |
+| `user_id` | BIGINT | NOT NULL | 논리 FK → `user.id` (팀 계정) |
+| `init_regi_pic` | VARCHAR | | 등록자 |
+| `init_regi_dttm` | TIMESTAMP | | 등록일시 |
+| `final_rvis_pic` | VARCHAR | | 최종수정자 |
+| `final_rvis_dttm` | TIMESTAMP | | 최종수정일시 |
+
+**DDL**
+```sql
+CREATE TABLE nsist_org_mapping (
+    id              BIGINT      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    org_cd          VARCHAR(20) NOT NULL UNIQUE,
+    user_id         BIGINT      NOT NULL,
+    init_regi_pic   VARCHAR(50),
+    init_regi_dttm  TIMESTAMP,
+    final_rvis_pic  VARCHAR(50),
+    final_rvis_dttm TIMESTAMP
+);
+```
 
 ---
 
@@ -304,6 +337,20 @@ erDiagram
         int sort_order
     }
 
+    NSIST_EMP_MAPPING {
+        bigint id PK
+        varchar emp_cd
+        bigint user_id
+    }
+
+    NSIST_ORG_MAPPING {
+        bigint id PK
+        varchar org_cd
+        bigint user_id
+    }
+
+    USER ||--o{ NSIST_EMP_MAPPING : "개인계정 매핑 (ADMIN/MANAGER)"
+    USER ||--o{ NSIST_ORG_MAPPING : "팀계정 매핑 (USER)"
     USER ||--o{ PROMPT_HISTORY : "생성"
     CATEGORY ||--o{ PROMPT_HISTORY : "선택됨 (SCS, 상품만)"
     CATEGORY ||--o{ CATEGORY : "parent_id (self-ref)"
