@@ -395,6 +395,7 @@ public class GeminiServiceImpl implements GeminiService {
      * - MidJourney: "--ar W:H" 형식으로 직접 전달
      * - NanoBanana: "Aspect ratio W:H." 형식으로 동적 생성 (하드코딩 없음)
      *   → DB 태그명이 무엇이든 자동 반영, Admin이 새 비율 추가 시 코드 수정 불필요
+     * - 가로:세로 비율이 4:1 이상인 경우(미디어월 등) 타일링 방지 지시 추가
      * </pre>
      *
      * @param imageAspectRatio 사용자가 선택한 이미지 비율 태그명
@@ -406,7 +407,27 @@ public class GeminiServiceImpl implements GeminiService {
         if (isMidJourney) {
             return "--ar " + imageAspectRatio;
         }
+        if (isWideRatio(imageAspectRatio)) {
+            return "Aspect ratio " + imageAspectRatio + "."
+                    + " Single panoramic composition."
+                    + " Place the product naturally in one cohesive wide scene."
+                    + " Do not tile, repeat, or duplicate the product.";
+        }
         return "Aspect ratio " + imageAspectRatio + ".";
+    }
+
+    /**
+     * 가로:세로 비율이 4:1 이상이면 true (미디어월 등 초광각 비율 감지용).
+     */
+    private boolean isWideRatio(String aspectRatio) {
+        try {
+            String[] parts = aspectRatio.split(":");
+            if (parts.length != 2) return false;
+            double ratio = Double.parseDouble(parts[0]) / Double.parseDouble(parts[1]);
+            return ratio >= 4.0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     private String buildGoodsUserMessage(String goodsCategoryName, List<String> tagNames,
