@@ -28,6 +28,7 @@ public class TagGroup {
     private String name;
     private Boolean isMultiSelect;
     private Integer sortOrder;
+    private String isFeatured;
 
     private String initRegiPic;
     private LocalDateTime initRegiDttm;
