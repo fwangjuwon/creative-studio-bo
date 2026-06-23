@@ -4,7 +4,9 @@ import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.security.JwtTokenProvider;
 import com.nsmall.ns_creative_studio_bo.domain.auth.AuthErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.request.LoginReqDto;
+import com.nsmall.ns_creative_studio_bo.domain.auth.dto.request.NsistOrgMappingCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.response.LoginRespDto;
+import com.nsmall.ns_creative_studio_bo.domain.auth.service.NsistOrgMappingService;
 import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.user.dto.request.UserUpdateReqDto;
@@ -43,6 +45,9 @@ public class AuthServiceTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private NsistOrgMappingService nsistOrgMappingService;
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
@@ -143,9 +148,36 @@ public class AuthServiceTest {
     // ================================================================
 
     @Test
-    @DisplayName("[예외] nsist SSO 로그인 - 매핑되지 않은 empCd")
-    void 예외_nsist_SSO_로그인_매핑되지않은_empCd() {
-        assertThatThrownBy(() -> authService.nsistLogin("99999", "ORG01"))
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] nsist SSO 로그인 - empCd 없을 때 orgCd fallback으로 JWT 발급")
+    void 성공_nsist_SSO_로그인_orgCd_fallback() {
+        UserRespDto user = userService.createUser(UserCreateReqDto.builder()
+                .loginId("auth_org_fallback")
+                .password("TestPass1!")
+                .name("org팀계정")
+                .role("USER")
+                .teamName("테스트팀")
+                .dailyLimit(10)
+                .build());
+
+        nsistOrgMappingService.createMapping(NsistOrgMappingCreateReqDto.builder()
+                .orgCd("TORG0001")
+                .userId(user.getId())
+                .build());
+
+        // 없는 empCd + 등록된 orgCd → fallback으로 JWT 발급
+        LoginRespDto result = authService.nsistLogin("00000", "TORG0001");
+
+        assertThat(result.getAccessToken()).isNotBlank();
+        assertThat(result.getTokenType()).isEqualTo("Bearer");
+        assertThat(jwtTokenProvider.getLoginId(result.getAccessToken())).isEqualTo(user.getLoginId());
+    }
+
+    @Test
+    @DisplayName("[예외] nsist SSO 로그인 - empCd, orgCd 모두 매핑 없음")
+    void 예외_nsist_SSO_로그인_empCd_orgCd_모두_매핑없음() {
+        assertThatThrownBy(() -> authService.nsistLogin("99999", "ZZZZZZZZ"))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(AuthErrorCode.INVALID_CREDENTIALS));

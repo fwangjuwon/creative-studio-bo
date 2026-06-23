@@ -54,7 +54,7 @@ public class AuthController {
     @GetMapping("/nsist-login")
     public CommonResponse<LoginRespDto> nsistLogin(
             @RequestParam @NotBlank(message = "사원번호는 필수입니다.") @Size(max = 6, message = "사원번호는 6자 이하여야 합니다.") String empCd,
-            @RequestParam @NotBlank(message = "조직코드는 필수입니다.") String orgCd) {
+            @RequestParam @NotBlank(message = "조직코드는 필수입니다.") @Size(max = 20, message = "조직코드는 20자 이하여야 합니다.") String orgCd) {
         return CommonResponse.success(authService.nsistLogin(empCd, orgCd));
     }
 }

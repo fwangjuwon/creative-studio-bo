@@ -7,7 +7,9 @@ import com.nsmall.ns_creative_studio_bo.domain.auth.AuthErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.request.LoginReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.auth.dto.response.LoginRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.auth.entity.NsistEmpMapping;
+import com.nsmall.ns_creative_studio_bo.domain.auth.entity.NsistOrgMapping;
 import com.nsmall.ns_creative_studio_bo.domain.auth.mapper.NsistEmpMappingMapper;
+import com.nsmall.ns_creative_studio_bo.domain.auth.mapper.NsistOrgMappingMapper;
 import com.nsmall.ns_creative_studio_bo.domain.user.UserErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.user.entity.User;
 import com.nsmall.ns_creative_studio_bo.domain.user.mapper.UserMapper;
@@ -34,6 +36,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
     private final NsistEmpMappingMapper nsistEmpMappingMapper;
+    private final NsistOrgMappingMapper nsistOrgMappingMapper;
 
     @Override
     public LoginRespDto login(LoginReqDto dto) {
@@ -58,25 +61,32 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public LoginRespDto nsistLogin(String empCd, String orgCd) {
-        NsistEmpMapping mapping = nsistEmpMappingMapper.selectByEmpCd(empCd)
-                .orElseThrow(() -> {
-                    log.warn("nsist SSO 로그인 실패 — 매핑되지 않은 empCd={}", empCd);
-                    return new BizException(AuthErrorCode.INVALID_CREDENTIALS);
+        // emp_cd 우선 조회 → 없으면 org_cd fallback
+        Long userId = nsistEmpMappingMapper.selectByEmpCd(empCd)
+                .map(NsistEmpMapping::getUserId)
+                .orElseGet(() -> {
+                    log.debug("nsist SSO — empCd 매핑 없음, orgCd fallback — empCd={}, orgCd={}", empCd, orgCd);
+                    return nsistOrgMappingMapper.selectByOrgCd(orgCd)
+                            .map(NsistOrgMapping::getUserId)
+                            .orElseThrow(() -> {
+                                log.warn("nsist SSO 로그인 실패 — empCd, orgCd 모두 매핑 없음 empCd={}, orgCd={}", empCd, orgCd);
+                                return new BizException(AuthErrorCode.INVALID_CREDENTIALS);
+                            });
                 });
 
-        User user = userMapper.selectById(mapping.getUserId())
+        User user = userMapper.selectById(userId)
                 .orElseThrow(() -> {
-                    log.warn("nsist SSO 로그인 실패 — 사용자 미존재 userId={}", mapping.getUserId());
+                    log.warn("nsist SSO 로그인 실패 — 사용자 미존재 userId={}", userId);
                     return new BizException(AuthErrorCode.INVALID_CREDENTIALS);
                 });
 
         if (!"Y".equals(user.getUseYn())) {
-            log.warn("비활성화된 계정 nsist SSO 로그인 시도 — empCd={}, loginId={}", empCd, user.getLoginId());
+            log.warn("비활성화된 계정 nsist SSO 로그인 시도 — empCd={}, orgCd={}, loginId={}", empCd, orgCd, user.getLoginId());
             throw new BizException(UserErrorCode.USER_BANNED);
         }
 
         String token = jwtTokenProvider.generateToken(user.getLoginId(), user.getRole());
-        log.info("nsist SSO 로그인 성공 — empCd={}, loginId={}, role={}", empCd, user.getLoginId(), user.getRole());
+        log.info("nsist SSO 로그인 성공 — empCd={}, orgCd={}, loginId={}, role={}", empCd, orgCd, user.getLoginId(), user.getRole());
 
         return LoginRespDto.of(token, jwtProperties.getExpiration());
     }

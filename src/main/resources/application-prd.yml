@@ -14,7 +14,7 @@ spring:
         maximum-pool-size: 20
         max-lifetime: 300000
     secondary:
-      jdbc-url: jdbc:postgresql://${POSTGRES_SECONDARY}:${POSTGRES_PORT}/${POSTGRES_DB}?currentSchema=ncs&targetServerType=prefer-secondary&socketTimeout=30000
+      jdbc-url: jdbc:postgresql://${POSTGRES_SECONDARY}:${POSTGRES_PORT}/${POSTGRES_DB}?currentSchema=ncs&targetServerType=preferSecondary&socketTimeout=30000
       username: ${POSTGRES_USER}
       password: ${POSTGRES_PASSWORD}
       driver-class-name: org.postgresql.Driver

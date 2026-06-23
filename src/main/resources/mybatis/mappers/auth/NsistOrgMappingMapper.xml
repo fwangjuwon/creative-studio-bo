@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.nsmall.ns_creative_studio_bo.domain.auth.mapper.NsistOrgMappingMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO nsist_org_mapping (
+            org_cd,
+            user_id,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        ) VALUES (
+            #{orgCd},
+            #{userId},
+            #{initRegiPic},
+            #{initRegiDttm},
+            #{finalRvisPic},
+            #{finalRvisDttm}
+        )
+    </insert>
+
+    <select id="selectByOrgCd" resultType="NsistOrgMapping">
+        SELECT
+            id,
+            org_cd,
+            user_id,
+            init_regi_pic,
+            init_regi_dttm,
+            final_rvis_pic,
+            final_rvis_dttm
+        FROM nsist_org_mapping
+        WHERE org_cd = #{orgCd}
+    </select>
+
+    <!--
+        단건 조회 — user 테이블 JOIN으로 loginId, name 포함 (insert 후 반환용)
+    -->
+    <select id="selectByOrgCdWithUser" resultType="NsistOrgMappingRespDto">
+        SELECT
+            m.id,
+            m.org_cd,
+            m.user_id,
+            u.login_id,
+            u.name,
+            m.init_regi_dttm,
+            m.final_rvis_dttm
+        FROM nsist_org_mapping m
+        JOIN "user" u ON u.id = m.user_id
+        WHERE m.org_cd = #{orgCd}
+    </select>
+
+    <!--
+        매핑 목록 조회 — user 테이블 JOIN으로 loginId, name 포함
+    -->
+    <select id="selectList" resultType="NsistOrgMappingRespDto">
+        SELECT
+            m.id,
+            m.org_cd,
+            m.user_id,
+            u.login_id,
+            u.name,
+            m.init_regi_dttm,
+            m.final_rvis_dttm
+        FROM nsist_org_mapping m
+        JOIN "user" u ON u.id = m.user_id
+        ORDER BY m.id ASC
+    </select>
+
+    <delete id="deleteByOrgCd">
+        DELETE FROM nsist_org_mapping
+        WHERE org_cd = #{orgCd}
+    </delete>
+
+</mapper>
