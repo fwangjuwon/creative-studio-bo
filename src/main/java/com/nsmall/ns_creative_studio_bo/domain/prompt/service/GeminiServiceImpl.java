@@ -301,6 +301,8 @@ public class GeminiServiceImpl implements GeminiService {
                 promptText = promptText.strip()
                         .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
                         .strip() + ", " + formatSuffix;
+            } else if (isWideRatio(imageAspectRatio)) {
+                promptText = formatSuffix + " " + promptText.strip();
             } else {
                 promptText = promptText.strip() + " " + formatSuffix;
             }
@@ -380,6 +382,8 @@ public class GeminiServiceImpl implements GeminiService {
                 promptText = promptText.strip()
                         .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
                         .strip() + ", " + formatSuffix;
+            } else if (isWideRatio(imageAspectRatio)) {
+                promptText = formatSuffix + " " + promptText.strip();
             } else {
                 promptText = promptText.strip() + " " + formatSuffix;
             }
@@ -409,9 +413,9 @@ public class GeminiServiceImpl implements GeminiService {
         }
         if (isWideRatio(imageAspectRatio)) {
             return "Aspect ratio " + imageAspectRatio + "."
-                    + " Single panoramic composition."
-                    + " Place the product naturally in one cohesive wide scene."
-                    + " Do not tile, repeat, or duplicate the product.";
+                    + " CRITICAL: This is ONE single continuous ultra-wide photograph."
+                    + " NOT a triptych. NOT a diptych. NOT a collage. NOT tiles. NOT a repeated pattern."
+                    + " The subject appears exactly once. Do not repeat any element, scene, or composition.";
         }
         return "Aspect ratio " + imageAspectRatio + ".";
     }
