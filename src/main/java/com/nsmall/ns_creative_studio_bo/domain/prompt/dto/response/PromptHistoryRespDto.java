@@ -55,6 +55,10 @@ public class PromptHistoryRespDto {
     private String categoryPath;     // "식품 > 건강식품 > 인삼"
     private List<Long> tagIds;
     private List<String> tagNames;
+    // 카테고리 드릴다운 복원용 ID 체인 (히스토리 → 생성 폼)
+    private Long lcsId;
+    private Long mcsId;
+    private Long scsId;
 
     // 인물 프롬프트 전용
     private String purpose;
@@ -75,6 +79,8 @@ public class PromptHistoryRespDto {
         /** "공통", "사람 1", "사람 2" ... */
         private String label;
         private List<String> optionNames;
+        /** 선택 옵션 ID 목록 (히스토리 → 생성 폼 복원용) */
+        private List<Long> optionIds;
     }
 
     // 감사 컬럼
@@ -121,6 +127,9 @@ public class PromptHistoryRespDto {
                                                  String categoryPath,
                                                  List<Long> tagIds,
                                                  List<String> tagNames,
+                                                 Long lcsId,
+                                                 Long mcsId,
+                                                 Long scsId,
                                                  String imageBaseUrl) {
         return PromptHistoryRespDto.builder()
                 .id(history.getId())
@@ -135,6 +144,9 @@ public class PromptHistoryRespDto {
                 .categoryPath(categoryPath)
                 .tagIds(tagIds)
                 .tagNames(tagNames)
+                .lcsId(lcsId)
+                .mcsId(mcsId)
+                .scsId(scsId)
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())
@@ -162,6 +174,32 @@ public class PromptHistoryRespDto {
                 .purpose(history.getPurpose())
                 .additionalNotes(history.getAdditionalNotes())
                 .personOptions(personOptions)
+                .initRegiPic(history.getInitRegiPic())
+                .initRegiDttm(history.getInitRegiDttm())
+                .finalRvisDttm(history.getFinalRvisDttm())
+                .build();
+    }
+
+    /**
+     * 합성(FUSION) 프롬프트 이력 응답 생성.
+     *
+     * <pre>
+     * 합성은 별도 매핑 테이블이 없어 공통 필드(promptText, imageAspectRatio, imageUrls)만 사용한다.
+     * pose/instruction은 promptText 문장 내부에 포함되어 별도 필드로 분리 저장되지 않는다.
+     * </pre>
+     *
+     * @param imageBaseUrl 이미지 서빙 기준 URL (예: https://bo.nsmall.com)
+     */
+    public static PromptHistoryRespDto fromFusion(PromptHistory history, String imageBaseUrl) {
+        return PromptHistoryRespDto.builder()
+                .id(history.getId())
+                .userId(history.getUserId())
+                .promptType(history.getPromptType())
+                .promptStyle(history.getPromptStyle())
+                .promptText(history.getPromptText())
+                .imageAspectRatio(history.getImageAspectRatio())
+                .imageUrl(history.getImageUrl())
+                .imageUrls(parseImageUrls(history.getImageUrl(), imageBaseUrl))
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())

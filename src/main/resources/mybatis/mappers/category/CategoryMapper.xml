@@ -90,7 +90,10 @@
     <select id="selectCategoryPathsByIds" resultType="CategoryPathDto">
         SELECT
             scs.id,
-            CONCAT(lcs.name, ' > ', mcs.name, ' > ', scs.name) AS category_path
+            CONCAT(lcs.name, ' > ', mcs.name, ' > ', scs.name) AS category_path,
+            lcs.id AS lcs_id,
+            mcs.id AS mcs_id,
+            scs.id AS scs_id
         FROM category scs
         JOIN category mcs ON scs.parent_id = mcs.id
         JOIN category lcs ON mcs.parent_id = lcs.id

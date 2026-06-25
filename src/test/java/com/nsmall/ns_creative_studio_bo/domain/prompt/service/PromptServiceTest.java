@@ -474,6 +474,94 @@ public class PromptServiceTest {
     }
 
     // ================================================================
+    // 이력 복원용 카테고리 ID 체인 / FUSION 분기 검증
+    // ================================================================
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 상품 프롬프트 생성 - 복원용 lcs/mcs/scs ID 체인 응답 포함")
+    void 성공_상품_프롬프트_생성_카테고리_ID체인_응답_포함() {
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("chain_resp_user", "USER", "팀A", 5);
+
+        CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("뷰티").categoryType(CategoryType.LCS).sortOrder(1000).build());
+        CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("스킨케어").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
+        CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("토너").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(scs.getId())
+                .tagIds(List.of())
+                .build();
+
+        PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
+
+        // 생성 응답도 목록 조회와 동일하게 전체 체인을 채워야 함 (히스토리 → 폼 드릴다운 복원용)
+        assertThat(result.getLcsId()).isEqualTo(lcs.getId());
+        assertThat(result.getMcsId()).isEqualTo(mcs.getId());
+        assertThat(result.getScsId()).isEqualTo(scs.getId());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 이력 조회 - PRODUCT 이력에 복원용 lcs/mcs/scs ID 체인 포함")
+    void 성공_이력_조회_PRODUCT_카테고리_ID체인_포함() {
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("chain_hist_user", "USER", "팀A", 5);
+
+        CategoryRespDto lcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("디지털").categoryType(CategoryType.LCS).sortOrder(1000).build());
+        CategoryRespDto mcs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("음향기기").categoryType(CategoryType.MCS).parentId(lcs.getId()).sortOrder(1).build());
+        CategoryRespDto scs = categoryService.createCategory(CategoryCreateReqDto.builder()
+                .name("이어폰").categoryType(CategoryType.SCS).parentId(mcs.getId()).sortOrder(1).build());
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(scs.getId())
+                .tagIds(List.of())
+                .build();
+        promptService.createGoodsPrompt(user.getId(), dto);
+
+        PageRespDto<PromptHistoryRespDto> page = promptService.getPromptHistories(검색조건(1, 100));
+        PromptHistoryRespDto found = page.items().stream()
+                .filter(h -> PromptType.PRODUCT.name().equals(h.getPromptType()))
+                .findFirst()
+                .orElseThrow();
+
+        assertThat(found.getLcsId()).isEqualTo(lcs.getId());
+        assertThat(found.getMcsId()).isEqualTo(mcs.getId());
+        assertThat(found.getScsId()).isEqualTo(scs.getId());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 이력 조회 - FUSION 이력은 공통 필드만으로 매핑 (PERSON 경로 미적용)")
+    void 성공_이력_조회_FUSION_공통필드만_반환() {
+        UserRespDto user = 유저_생성("fusion_hist_user", "USER", "팀A", 10);
+
+        // FUSION은 카테고리/매핑 테이블 없이 공통 필드(promptText 등)만 사용
+        히스토리_직접_삽입_상세(user.getId(), null, "fusion_usr", PromptType.FUSION, PromptStyle.NANO_BANANA);
+
+        PageRespDto<PromptHistoryRespDto> page = promptService.getPromptHistories(검색조건(1, 100));
+        PromptHistoryRespDto found = page.items().stream()
+                .filter(h -> PromptType.FUSION.name().equals(h.getPromptType()))
+                .findFirst()
+                .orElseThrow();
+
+        // fromFusion 분기 — 크래시 없이 공통 필드 반환, 카테고리/인물 옵션은 비어 있어야 함
+        assertThat(found.getPromptText()).isEqualTo("direct insert prompt");
+        assertThat(found.getCategoryPath()).isNull();
+        assertThat(found.getPersonOptions()).isNull();
+    }
+
+    // ================================================================
     // 히스토리 조회 — 페이징
     // ================================================================
 

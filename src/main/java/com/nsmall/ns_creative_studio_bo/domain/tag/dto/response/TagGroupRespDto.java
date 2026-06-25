@@ -24,7 +24,6 @@ public class TagGroupRespDto {
     private String name;
     private Boolean isMultiSelect;
     private Integer sortOrder;
-    private String isFeatured;
     private LocalDateTime initRegiDttm;
     private LocalDateTime finalRvisDttm;
 
@@ -34,7 +33,6 @@ public class TagGroupRespDto {
                 .name(tagGroup.getName())
                 .isMultiSelect(tagGroup.getIsMultiSelect())
                 .sortOrder(tagGroup.getSortOrder())
-                .isFeatured(tagGroup.getIsFeatured())
                 .initRegiDttm(tagGroup.getInitRegiDttm())
                 .finalRvisDttm(tagGroup.getFinalRvisDttm())
                 .build();
