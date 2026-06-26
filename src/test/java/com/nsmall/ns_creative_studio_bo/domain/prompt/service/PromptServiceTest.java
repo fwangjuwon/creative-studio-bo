@@ -395,6 +395,50 @@ public class PromptServiceTest {
         assertThat(result.getTagNames()).containsExactlyInAnyOrder("화사한", "여자");
     }
 
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 상품 프롬프트 생성 - purpose/additionalNotes 저장 및 응답 포함")
+    void 성공_상품_프롬프트_생성_purpose_additionalNotes_응답_포함() {
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("purpose_resp_user", "USER", "팀A", 5);
+        CategoryRespDto scs = SCS_카테고리_생성("목적추가지시");
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(scs.getId())
+                .tagIds(List.of())
+                .purpose("샴푸 광고용 포스터")
+                .additionalNotes("찰랑이는 머릿결이 나오게 해줘")
+                .build();
+
+        PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
+
+        assertThat(result.getPurpose()).isEqualTo("샴푸 광고용 포스터");
+        assertThat(result.getAdditionalNotes()).isEqualTo("찰랑이는 머릿결이 나오게 해줘");
+    }
+
+    @Test
+    @Transactional
+    @Rollback
+    @DisplayName("[성공] 상품 프롬프트 생성 - textContent 저장 및 응답 포함")
+    void 성공_상품_프롬프트_생성_textContent_응답_포함() {
+        given(geminiService.generateGoodsPrompt(any(), any(), any(), any(), any(), any())).willReturn(MOCK_PROMPT);
+
+        UserRespDto user = 유저_생성("textcontent_resp_user", "USER", "팀A", 5);
+        CategoryRespDto scs = SCS_카테고리_생성("텍스트문구");
+
+        GoodsPromptCreateReqDto dto = GoodsPromptCreateReqDto.builder()
+                .goodsCategoryId(scs.getId())
+                .tagIds(List.of())
+                .textContent("ns살롱헤어")
+                .build();
+
+        PromptHistoryRespDto result = promptService.createGoodsPrompt(user.getId(), dto);
+
+        assertThat(result.getTextContent()).isEqualTo("ns살롱헤어");
+    }
+
     // ================================================================
     // 히스토리 조회 — 권한별 범위
     // ================================================================

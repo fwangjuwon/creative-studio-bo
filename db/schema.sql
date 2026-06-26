@@ -128,6 +128,8 @@ CREATE TABLE prompt_history (
     image_aspect_ratio VARCHAR(10),                    -- 선택한 이미지 종횡비 (예: '16:9', '1:1', NULL이면 미선택)
     purpose          TEXT,                              -- 인물 프롬프트 생성 목적 (상품은 NULL)
     additional_notes TEXT,                              -- 인물 프롬프트 추가 지시사항 (상품은 NULL)
+    text_content         VARCHAR(500),                 -- 텍스트 오버레이 메인 텍스트 (없으면 NULL)
+    disclaimer_text      VARCHAR(300),                 -- 텍스트 오버레이 단서 문구 (없으면 NULL, FUSION·TEXT_OVL 공통)
     init_regi_pic    VARCHAR(50),
     init_regi_dttm   TIMESTAMP,
     final_rvis_pic   VARCHAR(50),

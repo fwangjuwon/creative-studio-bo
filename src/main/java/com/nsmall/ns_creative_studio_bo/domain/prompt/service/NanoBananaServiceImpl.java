@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.IntStream;
 
 /**
@@ -64,6 +65,19 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         return callAndSave(requestBody);
     }
 
+    private static final String TEXT_OVERLAY_SYSTEM_PROMPT = """
+            [Role]
+            You are a precise marketing image text compositor.
+            Your only task is to add the specified text to an existing finished image without altering anything else.
+
+            [Core Rules]
+            1. PRESERVE the original image exactly — do not change composition, layout, colors, lighting, existing text, logos, or any visual elements.
+            2. ADD only the text explicitly specified in the user message.
+            3. Choose font style, color, size, and placement that harmonizes with the existing image mood and design, as if the text was part of the original design.
+            4. Use only commercially free fonts (e.g. Google Fonts, Open Font License). Do not use proprietary or paid fonts.
+            5. Render every character with exact spelling and correct typography.
+            """;
+
     @Override
     public String generateImageMime(String prompt, byte[] imageBytes, String mimeType) {
         log.debug("NanoBanana 이미지 생성 호출 (참조 이미지 포함) — model: {}", geminiProperties.getImageModel());
@@ -79,6 +93,45 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         );
 
         return callAndSave(requestBody);
+    }
+
+    private String generateTextOverlayImage(String prompt, byte[] imageBytes, String mimeType) {
+        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+
+        NbRequest requestBody = new NbRequest(
+                new NbSystemInstruction(List.of(new NbPart(TEXT_OVERLAY_SYSTEM_PROMPT))),
+                List.of(new NbContent("user", List.of(
+                        new NbPart(prompt),
+                        new NbPart(null, new NbInlineData(mimeType, base64Image))
+                ))),
+                new NbGenerationConfig(List.of("IMAGE"))
+        );
+
+        return callAndSave(requestBody);
+    }
+
+    @Override
+    public List<String> generateTextOverlayImages(String prompt, byte[] imageBytes, String mimeType, int count) {
+        log.debug("NanoBanana 텍스트 합성 이미지 {}개 병렬 생성 시작", count);
+
+        CopyOnWriteArrayList<String> savedUrls = new CopyOnWriteArrayList<>();
+        List<CompletableFuture<String>> futures = IntStream.range(0, count)
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> {
+                    String url = generateTextOverlayImage(prompt, imageBytes, mimeType);
+                    savedUrls.add(url);
+                    return url;
+                }))
+                .toList();
+
+        try {
+            List<String> imageUrls = futures.stream().map(CompletableFuture::join).toList();
+            log.info("NanoBanana 텍스트 합성 이미지 {}개 병렬 생성 완료 — urls: {}", count, imageUrls);
+            return imageUrls;
+        } catch (CompletionException e) {
+            savedUrls.forEach(this::deleteImageFile);
+            if (e.getCause() instanceof BizException bizEx) throw bizEx;
+            throw e;
+        }
     }
 
     /**
@@ -231,8 +284,13 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
                 new NbGenerationConfig(List.of("IMAGE"))
         );
 
+        CopyOnWriteArrayList<String> savedUrls = new CopyOnWriteArrayList<>();
         List<CompletableFuture<String>> futures = IntStream.range(0, count)
-                .mapToObj(i -> CompletableFuture.supplyAsync(() -> callAndSave(requestBody)))
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> {
+                    String url = callAndSave(requestBody);
+                    savedUrls.add(url);
+                    return url;
+                }))
                 .toList();
 
         try {
@@ -242,6 +300,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             log.info("NanoBanana 합성 이미지 {}개 병렬 생성 완료 — urls: {}", count, imageUrls);
             return imageUrls;
         } catch (CompletionException e) {
+            savedUrls.forEach(this::deleteImageFile);
             if (e.getCause() instanceof BizException bizEx) throw bizEx;
             throw e;
         }
@@ -254,6 +313,21 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             case 500, 503, 504 -> ImageGenerationErrorCode.IMAGE_GENERATION_UNAVAILABLE;
             default -> ImageGenerationErrorCode.IMAGE_GENERATION_FAILED;
         };
+    }
+
+    private void deleteImageFile(String relativePath) {
+        String filename = Paths.get(relativePath).getFileName().toString();
+        Path filePath = Paths.get(storagePath, filename);
+        try {
+            boolean deleted = Files.deleteIfExists(filePath);
+            if (deleted) {
+                log.info("병렬 생성 실패 — 저장된 이미지 파일 정리 완료: {}", filePath);
+            } else {
+                log.warn("병렬 생성 실패 — 정리할 파일이 존재하지 않음: {}", filePath);
+            }
+        } catch (IOException e) {
+            log.error("병렬 생성 실패 — 이미지 파일 정리 중 오류: {}", filePath, e);
+        }
     }
 
     /**

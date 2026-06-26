@@ -71,7 +71,6 @@
 - [x] `HumanPromptServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지, `getSteps` 적용)
 - [x] `FusionImageServiceImpl` — 클래스 레벨 `readOnly = true` 추가 (기존 CUD 메서드 `@Transactional` 유지)
 - [x] 코딩 컨벤션 문서화 — `.cursor/rules/coding-convention.mdc`, `CLAUDE.md`, `GEMINI.md` `@Transactional` 패턴 섹션 추가
->>>>>>> main
 
 ---
 

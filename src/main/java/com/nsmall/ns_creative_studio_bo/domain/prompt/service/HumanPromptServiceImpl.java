@@ -5,7 +5,6 @@ import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.common.util.SecurityUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.HumanPromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
-import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.HumanPromptCreateReqDto;
@@ -22,6 +21,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.PromptHelper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -234,6 +234,12 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
                 personsStepValues, commonStepValues, isGroup,
                 dto.getRelationship(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio());
 
+        // 텍스트 오버레이 suffix — AI가 이미지 분위기에 맞게 자동 처리
+        String textOverlaySuffix = TextOverlayUtil.buildSuffix(dto.getTextContent(), dto.getDisclaimerText());
+        if (textOverlaySuffix != null) {
+            promptText = promptText.strip() + " " + textOverlaySuffix;
+        }
+
         // 7. PromptHistory 저장
         PromptHistory history = PromptHistory.builder()
                 .userId(userId)
@@ -245,6 +251,8 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
                 .imageUrl(null)
                 .purpose(null)
                 .additionalNotes(dto.getAdditionalNotes())
+                .textContent(dto.getTextContent())
+                .disclaimerText(dto.getDisclaimerText())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
