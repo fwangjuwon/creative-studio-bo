@@ -15,6 +15,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.TextOverlayUtil;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryPathDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
@@ -132,6 +133,12 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
         String promptText = geminiService.generateGoodsPrompt(goodsCategoryName, tagNames,
                 dto.getImageAspectRatio(), dto.getPurpose(), dto.getAdditionalNotes(), promptStyle);
 
+        // 텍스트 오버레이 suffix — AI가 이미지 분위기에 맞게 자동 처리
+        String textOverlaySuffix = TextOverlayUtil.buildSuffix(dto.getTextContent(), dto.getDisclaimerText());
+        if (textOverlaySuffix != null) {
+            promptText = promptText.strip() + " " + textOverlaySuffix;
+        }
+
         // 5. PromptHistory 저장
         LocalDateTime now = LocalDateTime.now();
         String requesterId = SecurityUtil.getCurrentLoginId();
@@ -145,6 +152,8 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
                 .imageAspectRatio(dto.getImageAspectRatio())
                 .purpose(dto.getPurpose())
                 .additionalNotes(dto.getAdditionalNotes())
+                .textContent(dto.getTextContent())
+                .disclaimerText(dto.getDisclaimerText())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)
@@ -271,10 +280,13 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
                         List<Long> tagIds = finalTagIdsMap.getOrDefault(history.getId(), List.of());
                         List<String> tagNames = finalTagNamesMap.getOrDefault(history.getId(), List.of());
                         return PromptHistoryRespDto.fromGoods(history, categoryPath, tagIds, tagNames, imageBaseUrl);
-                    } else {
+                    } else if (PromptType.PERSON.name().equals(history.getPromptType())) {
                         List<PromptHistoryRespDto.PersonOptionGroupDto> personOptions =
                                 finalPersonOptionsMap.getOrDefault(history.getId(), List.of());
                         return PromptHistoryRespDto.fromHuman(history, personOptions, imageBaseUrl);
+                    } else {
+                        // FUSION, TEXT_OVL
+                        return PromptHistoryRespDto.fromFusion(history, imageBaseUrl);
                     }
                 })
                 .toList();
@@ -314,9 +326,10 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
                         "프롬프트 이력을 찾을 수 없습니다. id=" + id));
 
         // 1. 자식 레코드 먼저 삭제 (매핑 테이블)
+        // FUSION, TEXT_OVL 타입은 자식 매핑 레코드 없음
         if (PromptType.PRODUCT.name().equals(history.getPromptType())) {
             goodsPromptHistoryTagMapper.deleteByPromptHistoryId(id);
-        } else {
+        } else if (PromptType.PERSON.name().equals(history.getPromptType())) {
             humanPromptHistoryOptionMapper.deleteByPromptHistoryId(id);
         }
 

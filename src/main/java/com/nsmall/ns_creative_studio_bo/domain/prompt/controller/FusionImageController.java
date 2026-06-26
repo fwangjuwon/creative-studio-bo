@@ -52,10 +52,33 @@ public class FusionImageController {
             @RequestParam MultipartFile personImage,
             @RequestParam(required = false) String pose,
             @RequestParam(required = false) String instruction,
-            @RequestParam(required = false) String imageAspectRatio) {
+            @RequestParam(required = false) String imageAspectRatio,
+            @RequestParam(required = false) String textContent,
+            @RequestParam(required = false) String disclaimerText) {
 
         List<String> imageUrls = fusionImageService.generateFusionImages(
-                userDetails.getId(), productImage, personImage, pose, instruction, imageAspectRatio);
+                userDetails.getId(), productImage, personImage, pose, instruction, imageAspectRatio, textContent, disclaimerText);
+
+        return CommonResponse.success(ImageGenerateRespDto.builder().imageUrls(imageUrls).build());
+    }
+
+    @Operation(
+            summary = "텍스트 합성 이미지 생성 (NanoBanana)",
+            description = "기존 이미지에 텍스트를 합성하여 이미지 URL 목록을 반환한다. " +
+                          "허용 MIME 타입: jpeg, png, webp / 최대 파일 크기: 15MB"
+    )
+    @ApiResponse(responseCode = "200", description = "텍스트 합성 이미지 생성 성공")
+    @ApiResponse(responseCode = "400", description = "이미지 누락 / 허용되지 않는 MIME 타입 / 파일 크기 15MB 초과")
+    @ApiResponse(responseCode = "401", description = "인증 필요")
+    @PostMapping(value = "/text-overlay", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public CommonResponse<ImageGenerateRespDto> generateTextOverlayImage(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            @RequestParam MultipartFile image,
+            @RequestParam(required = false) String textContent,
+            @RequestParam(required = false) String disclaimerText) {
+
+        List<String> imageUrls = fusionImageService.generateTextOverlayImages(
+                userDetails.getId(), image, textContent, disclaimerText);
 
         return CommonResponse.success(ImageGenerateRespDto.builder().imageUrls(imageUrls).build());
     }

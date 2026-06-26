@@ -78,4 +78,13 @@ public class HumanPromptCreateReqDto {
 
     /** 이미지 비율 (선택, 예: "1:1", "4:3", "16:9", "9:16") */
     private String imageAspectRatio;
+
+    // 텍스트 오버레이 — 입력 시 AI가 이미지 분위기에 맞게 자동 처리
+    /** 삽입할 메인 텍스트 (없으면 오버레이 비활성화) */
+    @Size(max = 500, message = "텍스트 문구는 500자 이하여야 합니다.")
+    private String textContent;
+
+    /** 단서 문구 텍스트 — 메인 텍스트 아래 작은 글씨로 배치 (없으면 단서 문구 없음) */
+    @Size(max = 300, message = "단서 문구는 300자 이하여야 합니다.")
+    private String disclaimerText;
 }

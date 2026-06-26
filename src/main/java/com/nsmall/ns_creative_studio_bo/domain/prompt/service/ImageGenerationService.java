@@ -17,6 +17,7 @@ public interface ImageGenerationService {
 
     /**
      * 영문 프롬프트와 참조 이미지(byte[])로 이미지를 생성하고 서버에 저장 후 접근 URL을 반환한다.
+     * 참조 이미지를 스타일/구도 가이드로 활용하여 새 이미지를 생성한다 (인물·상품 참조이미지 기반 생성용).
      *
      * @param prompt     영문 이미지 생성 프롬프트
      * @param imageBytes 참조 이미지 바이너리
@@ -24,6 +25,18 @@ public interface ImageGenerationService {
      * @return 생성된 이미지 접근 URL (예: /images/{uuid}.jpg)
      */
     String generateImageMime(String prompt, byte[] imageBytes, String mimeType);
+
+    /**
+     * 기존 완성 이미지에 텍스트를 합성하여 count개 병렬 생성 후 URL 목록을 반환한다.
+     * TEXT_OVERLAY_SYSTEM_PROMPT를 주입하여 원본 이미지 보존 + 텍스트 추가만 수행한다.
+     *
+     * @param prompt     텍스트 합성 지시 프롬프트
+     * @param imageBytes 원본 이미지 바이너리
+     * @param mimeType   원본 이미지 MIME 타입 (예: image/jpeg)
+     * @param count      생성할 이미지 수
+     * @return 생성된 이미지 접근 URL 목록
+     */
+    List<String> generateTextOverlayImages(String prompt, byte[] imageBytes, String mimeType, int count);
 
     /**
      * 영문 프롬프트로 이미지를 count개 병렬 생성하고 접근 URL 목록을 반환한다.

@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request;
 
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -45,4 +46,12 @@ public class GoodsPromptCreateReqDto {
 
     private String purpose;          // 생성 목적 (선택)
     private String additionalNotes;  // 추가 지시 사항 (선택)
+
+    // 텍스트 오버레이 — 입력 시 AI가 이미지 분위기에 맞게 자동 처리
+    @Size(max = 500, message = "텍스트 문구는 500자 이하여야 합니다.")
+    private String textContent;      // 삽입할 메인 텍스트 (없으면 오버레이 비활성화)
+
+    /** 단서 문구 텍스트 — 메인 텍스트 아래 작은 글씨로 배치 (없으면 단서 문구 없음) */
+    @Size(max = 300, message = "단서 문구는 300자 이하여야 합니다.")
+    private String disclaimerText;
 }

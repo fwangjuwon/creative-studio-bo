@@ -50,7 +50,7 @@ public class GeminiServiceImpl implements GeminiService {
      */
     private static final String GOODS_SYSTEM_PROMPT = """
         You are a professional commercial photographer and prompt engineer.
-        Your goal is to create a vivid, 3-5 sentence narrative English prompt for high-end product photography.
+        Your goal is to create a vivid, 5-7 sentence narrative English prompt for high-end product photography.
 
         STRUCTURE:
         1. OPENING: Shot type + Detailed product description (Focus on materials like 'brushed metal', 'matte ceramic', 'translucent glass').
@@ -72,7 +72,7 @@ public class GeminiServiceImpl implements GeminiService {
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        - no unintentional text artifacts, no watermark, no logo
         - no overexposure, no blown highlights
 
         COMPOSITION:
@@ -82,7 +82,7 @@ public class GeminiServiceImpl implements GeminiService {
         - Return ONLY the final prompt text.
 
         EXAMPLE:
-        "A high-resolution 45-degree product photograph of a premium matte-finish skincare bottle. It is placed on a damp dark slate surface with subtle water ripples. The lighting is a cool-toned side softbox that highlights the bottle's elegant silhouette and creates soft contact shadows. Captured with a 100mm macro lens for a clean professional focus."
+        "A high-resolution 45-degree product photograph of a premium matte-finish skincare bottle. It is placed on a damp dark slate surface with subtle water ripples. The lighting is a cool-toned side softbox that highlights the bottle's elegant silhouette and creates soft contact shadows. The rim of the bottle catches a subtle warm highlight from a secondary fill light, emphasizing its refined contour. Captured with a 100mm macro lens at f/4 for a clean professional focus with a soft bokeh background. The overall palette is cool grey and slate, evoking a sense of clinical purity and premium skincare luxury."
         """;
 
     /**
@@ -113,7 +113,7 @@ public class GeminiServiceImpl implements GeminiService {
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        - no unintentional text artifacts, no watermark, no logo
         - no overexposure, no blown highlights
 
         COMPOSITION:
@@ -160,7 +160,7 @@ public class GeminiServiceImpl implements GeminiService {
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        - no watermark, no unintentional text artifacts, no logo
         - no overexposure, no blown highlights
 
         HAND & ANATOMY:
@@ -194,7 +194,7 @@ public class GeminiServiceImpl implements GeminiService {
 
         NEGATIVE:
         - no distortion, no warped geometry, no unrealistic proportions
-        - no watermark, no text artifacts, no logo
+        - no watermark, no unintentional text artifacts, no logo
         - no overexposure, no blown highlights
 
         HAND & ANATOMY:
