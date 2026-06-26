@@ -17,12 +17,18 @@ import java.util.List;
  * <pre>
  * promptType에 따라 유효한 필드가 다르다.
  *
- * PRODUCT: categoryId, categoryPath, tagIds, tagNames, purpose, additionalNotes 사용
- *          personOptions 는 null
+ * PRODUCT  : categoryId, categoryPath, tagIds, tagNames, purpose, additionalNotes 사용
+ *            personOptions 는 null
  *
- * PERSON : purpose, additionalNotes, personOptions 사용
- *          categoryId, categoryPath, tagIds, tagNames 는 null
- *          personOptions: personIndex -1(공통), 0 이상(인물 인덱스) 로 그룹핑
+ * PERSON   : purpose, additionalNotes, personOptions 사용
+ *            categoryId, categoryPath, tagIds, tagNames 는 null
+ *            personOptions: personIndex -1(공통), 0 이상(인물 인덱스) 로 그룹핑
+ *
+ * FUSION   : imageAspectRatio, textContent, disclaimerText 사용
+ *            personOptions, categoryId, categoryPath, tagIds, tagNames 는 null
+ *
+ * TEXT_OVL : textContent, disclaimerText 사용
+ *            imageAspectRatio, personOptions, categoryId, categoryPath, tagIds, tagNames 는 null
  *
  * imageUrl  : DB에 저장된 원본값 (단일 URL 또는 JSON 배열 문자열)
  * imageUrls : imageUrl을 파싱한 이미지 URL 목록 (항상 List 형태)
@@ -62,8 +68,9 @@ public class PromptHistoryRespDto {
     /** 인물별 선택 옵션 그룹 목록 (personIndex -1=공통, 0~N=인물 인덱스) */
     private List<PersonOptionGroupDto> personOptions;
 
-    // 텍스트 오버레이 (공통)
+    // 텍스트 오버레이 (FUSION·TEXT_OVL 공통, 나머지는 null)
     private String textContent;
+    private String disclaimerText;
 
     /**
      * 인물별 선택 옵션 그룹 DTO
@@ -142,6 +149,7 @@ public class PromptHistoryRespDto {
                 .purpose(history.getPurpose())
                 .additionalNotes(history.getAdditionalNotes())
                 .textContent(history.getTextContent())
+                .disclaimerText(history.getDisclaimerText())
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())
@@ -170,6 +178,31 @@ public class PromptHistoryRespDto {
                 .additionalNotes(history.getAdditionalNotes())
                 .personOptions(personOptions)
                 .textContent(history.getTextContent())
+                .disclaimerText(history.getDisclaimerText())
+                .initRegiPic(history.getInitRegiPic())
+                .initRegiDttm(history.getInitRegiDttm())
+                .finalRvisDttm(history.getFinalRvisDttm())
+                .build();
+    }
+
+    /**
+     * 합성·텍스트합성(FUSION·TEXT_OVL) 프롬프트 이력 응답 생성.
+     * personOptions, categoryId, categoryPath, tagIds, tagNames 는 null.
+     *
+     * @param imageBaseUrl 이미지 서빙 기준 URL (예: https://bo.nsmall.com)
+     */
+    public static PromptHistoryRespDto fromFusion(PromptHistory history, String imageBaseUrl) {
+        return PromptHistoryRespDto.builder()
+                .id(history.getId())
+                .userId(history.getUserId())
+                .promptType(history.getPromptType())
+                .promptStyle(history.getPromptStyle())
+                .promptText(history.getPromptText())
+                .imageAspectRatio(history.getImageAspectRatio())
+                .imageUrl(history.getImageUrl())
+                .imageUrls(parseImageUrls(history.getImageUrl(), imageBaseUrl))
+                .textContent(history.getTextContent())
+                .disclaimerText(history.getDisclaimerText())
                 .initRegiPic(history.getInitRegiPic())
                 .initRegiDttm(history.getInitRegiDttm())
                 .finalRvisDttm(history.getFinalRvisDttm())

@@ -26,8 +26,23 @@ public interface FusionImageService {
      * @param pose             포즈/행동 지시사항 (nullable)
      * @param instruction      추가 지시사항 (nullable)
      * @param imageAspectRatio 이미지 비율 (nullable, 예: "1:1", "9:16")
+     * @param textContent      이미지에 삽입할 메인 텍스트 문구 (nullable, 줄바꿈 허용)
+     * @param disclaimerText   단서 문구 텍스트 (nullable — null이면 단서 문구 없음)
      * @return 생성된 합성 이미지 절대 URL 목록
      */
     List<String> generateFusionImages(Long userId, MultipartFile productImage, MultipartFile personImage,
-                                      String pose, String instruction, String imageAspectRatio);
+                                      String pose, String instruction, String imageAspectRatio,
+                                      String textContent, String disclaimerText);
+
+    /**
+     * 기존 이미지에 텍스트를 합성하여 이미지 URL 목록을 반환한다.
+     *
+     * @param userId          요청 사용자 ID (일일 한도 체크 + 이력 저장)
+     * @param image           텍스트를 합성할 원본 이미지 (필수)
+     * @param textContent     합성할 텍스트 내용 (필수)
+     * @param disclaimerText  단서 문구 텍스트 (nullable — null이면 단서 문구 없이 메인 텍스트만 삽입)
+     * @return 생성된 이미지 절대 URL 목록
+     */
+    List<String> generateTextOverlayImages(Long userId, MultipartFile image,
+                                           String textContent, String disclaimerText);
 }

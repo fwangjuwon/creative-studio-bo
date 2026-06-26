@@ -235,7 +235,7 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
                 dto.getRelationship(), dto.getAdditionalNotes(), style, dto.getImageAspectRatio());
 
         // 텍스트 오버레이 suffix — AI가 이미지 분위기에 맞게 자동 처리
-        String textOverlaySuffix = TextOverlayUtil.buildSuffix(dto.getTextContent());
+        String textOverlaySuffix = TextOverlayUtil.buildSuffix(dto.getTextContent(), dto.getDisclaimerText());
         if (textOverlaySuffix != null) {
             promptText = promptText.strip() + " " + textOverlaySuffix;
         }
@@ -252,6 +252,7 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
                 .purpose(null)
                 .additionalNotes(dto.getAdditionalNotes())
                 .textContent(dto.getTextContent())
+                .disclaimerText(dto.getDisclaimerText())
                 .initRegiPic(requesterId)
                 .initRegiDttm(now)
                 .finalRvisPic(requesterId)

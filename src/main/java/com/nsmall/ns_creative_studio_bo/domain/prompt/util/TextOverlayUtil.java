@@ -17,16 +17,64 @@ public class TextOverlayUtil {
 
     /**
      * 텍스트 오버레이 suffix 문자열을 생성한다.
-     * AI가 이미지 분위기에 맞게 텍스트를 자연스럽게 통합하도록 지시한다.
      *
-     * @param textContent 삽입할 텍스트 내용 (null/blank이면 null 반환)
-     * @return 프롬프트 suffix 문자열, textContent 없으면 null
+     * <pre>
+     * textContent만  → 메인 텍스트를 이미지 분위기에 맞게 자연스럽게 삽입
+     * disclaimerText만 → 이미지 내 기존 메인 텍스트 아래 작은 단서 문구로 삽입
+     * 둘 다           → 메인 텍스트 삽입 후 단서 문구를 그 바로 아래에 배치
+     * 둘 다 없음      → null 반환
+     * </pre>
+     *
+     * @param textContent    삽입할 메인 텍스트 (null/blank 허용)
+     * @param disclaimerText 단서 문구 텍스트 (null/blank 허용)
+     * @return 프롬프트 suffix 문자열, 둘 다 없으면 null
      */
-    public static String buildSuffix(String textContent) {
-        if (textContent == null || textContent.isBlank()) return null;
+    public static String buildSuffix(String textContent, String disclaimerText) {
+        boolean hasMain       = textContent    != null && !textContent.isBlank();
+        boolean hasDisclaimer = disclaimerText != null && !disclaimerText.isBlank();
 
-        return "Naturally integrate the text \"" + textContent.strip() + "\" into the image," +
-               " ensuring the exact spelling is rendered correctly and remains highly legible." +
-               " Choose the font style, size, placement, and color that best complements the overall mood and composition.";
+        if (!hasMain && !hasDisclaimer) return null;
+
+        StringBuilder sb = new StringBuilder();
+
+        if (hasMain) {
+            String stripped = textContent.strip();
+            String display  = stripped.replace("\n", " / ");
+            String hint     = stripped.contains("\n")
+                    ? " Each ' / ' in the text represents a line break — render each segment on a separate line."
+                    : "";
+            sb.append("Naturally integrate the text \"").append(display).append("\" into the image,")
+              .append(hint)
+              .append(" ensuring the exact spelling is rendered correctly and remains highly legible.")
+              .append(" Choose the font style, size, placement, and color that best complements the overall mood and composition.");
+        }
+
+        if (hasDisclaimer) {
+            if (sb.length() > 0) sb.append(" ");
+            String stripped = disclaimerText.strip();
+            String display  = stripped.replace("\n", " / ");
+            String hint     = stripped.contains("\n")
+                    ? " Each ' / ' represents a line break — render each segment on a separate line."
+                    : "";
+            if (hasMain) {
+                sb.append("Also add the disclaimer text \"").append(display).append("\" as a small fine-print disclaimer")
+                  .append(hint)
+                  .append(" positioned directly below the main text just added,");
+            } else {
+                sb.append("Add the text \"").append(display).append("\" as a small fine-print disclaimer")
+                  .append(hint)
+                  .append(" positioned below the main text elements in the image,");
+            }
+            sb.append(" using a font size noticeably smaller than the headline or main title text,")
+              .append(" keeping it subtle yet clearly legible — similar to a product notice or legal disclaimer.")
+              .append(" Ensure the exact spelling is rendered correctly.");
+        }
+
+        return sb.toString();
+    }
+
+    /** {@link #buildSuffix(String, String)} — disclaimerText 없는 단축 오버로드 */
+    public static String buildSuffix(String textContent) {
+        return buildSuffix(textContent, (String) null);
     }
 }
