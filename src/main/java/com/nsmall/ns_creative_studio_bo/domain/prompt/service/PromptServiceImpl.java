@@ -182,7 +182,14 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
         String savedCategoryPath = String.join(" > ", categoryPath);
         List<Long> savedTagIds = goodsPromptHistoryTagMapper.selectTagIdsByPromptHistoryId(history.getId());
         List<String> savedTagNames = goodsPromptHistoryTagMapper.selectTagNamesByPromptHistoryId(history.getId());
-        return PromptHistoryRespDto.fromGoods(history, savedCategoryPath, savedTagIds, savedTagNames, imageBaseUrl);
+        // 히스토리 복원용 ID 체인(lcs/mcs/scs) — 목록 조회와 동일하게 전체 체인을 채워 응답 일관성 유지
+        CategoryPathDto categoryChain = categoryMapper.selectCategoryPathsByIds(List.of(dto.getGoodsCategoryId()))
+                .stream().findFirst().orElse(null);
+        Long lcsId = categoryChain != null ? categoryChain.getLcsId() : null;
+        Long mcsId = categoryChain != null ? categoryChain.getMcsId() : null;
+        Long scsId = categoryChain != null ? categoryChain.getScsId() : dto.getGoodsCategoryId();
+        return PromptHistoryRespDto.fromGoods(history, savedCategoryPath, savedTagIds, savedTagNames,
+                lcsId, mcsId, scsId, imageBaseUrl);
     }
 
     @Override
@@ -205,7 +212,7 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
 
         // 쿼리 2: PRODUCT — 카테고리 경로 배치 조회
         // 쿼리 3: PRODUCT — 태그 상세(tagId + tagName) 배치 조회
-        Map<Long, String> categoryPathMap = Map.of();
+        Map<Long, CategoryPathDto> categoryDtoMap = Map.of();
         Map<Long, List<Long>> tagIdsMap = Map.of();
         Map<Long, List<String>> tagNamesMap = Map.of();
 
@@ -216,9 +223,9 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
                     .distinct()
                     .toList();
 
-            categoryPathMap = categoryMapper.selectCategoryPathsByIds(categoryIds)
+            categoryDtoMap = categoryMapper.selectCategoryPathsByIds(categoryIds)
                     .stream()
-                    .collect(Collectors.toMap(CategoryPathDto::getId, CategoryPathDto::getCategoryPath));
+                    .collect(Collectors.toMap(CategoryPathDto::getId, dto -> dto));
 
             List<GoodsTagDetailDto> tagDetails =
                     goodsPromptHistoryTagMapper.selectTagDetailsByPromptHistoryIds(productHistoryIds);
@@ -240,17 +247,18 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
             List<HumanOptionDetailDto> details = humanPromptHistoryOptionMapper
                     .selectOptionDetailsByHistoryIds(humanHistoryIds);
 
-            // historyId → ( personIndex → optionNames ) 2단계 그룹핑
-            Map<Long, Map<Integer, List<String>>> grouped = details.stream()
+            // historyId → ( personIndex → 옵션 상세 목록 ) 2단계 그룹핑
+            // optionName(표시용) + optionId(복원용)를 함께 보존해야 하므로 DTO 자체를 모은다
+            Map<Long, Map<Integer, List<HumanOptionDetailDto>>> grouped = details.stream()
                     .collect(Collectors.groupingBy(
                             HumanOptionDetailDto::getPromptHistoryId,
                             Collectors.groupingBy(
                                     HumanOptionDetailDto::getPersonIndex,
-                                    Collectors.mapping(HumanOptionDetailDto::getOptionName, Collectors.toList())
+                                    Collectors.toList()
                             )
                     ));
 
-            // personIndex 오름차순 정렬 후 PersonOptionGroupDto 변환
+            // personIndex 오름차순 정렬 후 PersonOptionGroupDto 변환 (쿼리 ORDER BY로 옵션 순서 보장)
             personOptionsMap = grouped.entrySet().stream()
                     .collect(Collectors.toMap(
                             Map.Entry::getKey,
@@ -259,14 +267,17 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
                                     .map(pe -> PromptHistoryRespDto.PersonOptionGroupDto.builder()
                                             .personIndex(pe.getKey())
                                             .label(pe.getKey() == -1 ? "공통" : "사람 " + (pe.getKey() + 1))
-                                            .optionNames(pe.getValue())
+                                            .optionNames(pe.getValue().stream()
+                                                    .map(HumanOptionDetailDto::getOptionName).toList())
+                                            .optionIds(pe.getValue().stream()
+                                                    .map(HumanOptionDetailDto::getOptionId).toList())
                                             .build())
                                     .toList()
                     ));
         }
 
         // Java에서 조립 (추가 쿼리 없음)
-        final Map<Long, String> finalCategoryPathMap = categoryPathMap;
+        final Map<Long, CategoryPathDto> finalCategoryDtoMap = categoryDtoMap;
         final Map<Long, List<Long>> finalTagIdsMap = tagIdsMap;
         final Map<Long, List<String>> finalTagNamesMap = tagNamesMap;
         final Map<Long, List<PromptHistoryRespDto.PersonOptionGroupDto>> finalPersonOptionsMap = personOptionsMap;
@@ -274,18 +285,23 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
         List<PromptHistoryRespDto> items = list.stream()
                 .map(history -> {
                     if (PromptType.PRODUCT.name().equals(history.getPromptType())) {
-                        String categoryPath = history.getCategoryId() != null
-                                ? finalCategoryPathMap.get(history.getCategoryId())
+                        CategoryPathDto catDto = history.getCategoryId() != null
+                                ? finalCategoryDtoMap.get(history.getCategoryId())
                                 : null;
+                        String categoryPath = catDto != null ? catDto.getCategoryPath() : null;
+                        Long lcsId = catDto != null ? catDto.getLcsId() : null;
+                        Long mcsId = catDto != null ? catDto.getMcsId() : null;
+                        Long scsId = catDto != null ? catDto.getScsId() : null;
                         List<Long> tagIds = finalTagIdsMap.getOrDefault(history.getId(), List.of());
                         List<String> tagNames = finalTagNamesMap.getOrDefault(history.getId(), List.of());
-                        return PromptHistoryRespDto.fromGoods(history, categoryPath, tagIds, tagNames, imageBaseUrl);
+                        return PromptHistoryRespDto.fromGoods(history, categoryPath, tagIds, tagNames,
+                                lcsId, mcsId, scsId, imageBaseUrl);
                     } else if (PromptType.PERSON.name().equals(history.getPromptType())) {
                         List<PromptHistoryRespDto.PersonOptionGroupDto> personOptions =
                                 finalPersonOptionsMap.getOrDefault(history.getId(), List.of());
                         return PromptHistoryRespDto.fromHuman(history, personOptions, imageBaseUrl);
                     } else {
-                        // FUSION, TEXT_OVL
+                        // FUSION, TEXT_OVL: 매핑 테이블 없이 공통 필드(promptText, imageAspectRatio, imageUrls, textContent)만 사용
                         return PromptHistoryRespDto.fromFusion(history, imageBaseUrl);
                     }
                 })

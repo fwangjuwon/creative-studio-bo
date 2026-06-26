@@ -55,6 +55,7 @@
         SELECT
             hpho.prompt_history_id,
             hpho.person_index,
+            hpho.option_id AS option_id,
             hpo.name AS option_name
         FROM human_prompt_history_option hpho
         JOIN human_prompt_option hpo ON hpho.option_id = hpo.id

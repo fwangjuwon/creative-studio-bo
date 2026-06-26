@@ -61,6 +61,10 @@ public class PromptHistoryRespDto {
     private String categoryPath;     // "식품 > 건강식품 > 인삼"
     private List<Long> tagIds;
     private List<String> tagNames;
+    // 카테고리 드릴다운 복원용 ID 체인 (히스토리 → 생성 폼)
+    private Long lcsId;
+    private Long mcsId;
+    private Long scsId;
 
     // 인물 프롬프트 전용
     private String purpose;
@@ -85,6 +89,8 @@ public class PromptHistoryRespDto {
         /** "공통", "사람 1", "사람 2" ... */
         private String label;
         private List<String> optionNames;
+        /** 선택 옵션 ID 목록 (히스토리 → 생성 폼 복원용) */
+        private List<Long> optionIds;
     }
 
     // 감사 컬럼
@@ -132,6 +138,9 @@ public class PromptHistoryRespDto {
                                                  String categoryPath,
                                                  List<Long> tagIds,
                                                  List<String> tagNames,
+                                                 Long lcsId,
+                                                 Long mcsId,
+                                                 Long scsId,
                                                  String imageBaseUrl) {
         return PromptHistoryRespDto.builder()
                 .id(history.getId())
@@ -146,6 +155,9 @@ public class PromptHistoryRespDto {
                 .categoryPath(categoryPath)
                 .tagIds(tagIds)
                 .tagNames(tagNames)
+                .lcsId(lcsId)
+                .mcsId(mcsId)
+                .scsId(scsId)
                 .purpose(history.getPurpose())
                 .additionalNotes(history.getAdditionalNotes())
                 .textContent(history.getTextContent())

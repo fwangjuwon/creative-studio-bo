@@ -28,5 +28,6 @@ public class HumanOptionDetailDto {
 
     private Long promptHistoryId;
     private int personIndex;
+    private Long optionId;
     private String optionName;
 }

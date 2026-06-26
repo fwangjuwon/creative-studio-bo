@@ -28,4 +28,9 @@ public class CategoryPathDto {
 
     private Long id;
     private String categoryPath;
+
+    /** 상위 계층 ID 체인 (히스토리 → 생성 폼 카테고리 드릴다운 복원용) */
+    private Long lcsId;
+    private Long mcsId;
+    private Long scsId;
 }
