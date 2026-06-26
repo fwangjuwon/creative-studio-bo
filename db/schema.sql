@@ -83,6 +83,7 @@ CREATE TABLE tag_group (
     name             VARCHAR(100)    NOT NULL,
     is_multi_select  BOOLEAN         NOT NULL DEFAULT FALSE,
     sort_order       INT             NOT NULL DEFAULT 0,
+    is_featured      CHAR(1)         NOT NULL DEFAULT 'N', -- 추천/노출 여부 (Y: 추천, N: 일반)
     init_regi_pic    VARCHAR(50),
     init_regi_dttm   TIMESTAMP,
     final_rvis_pic   VARCHAR(50),
