@@ -54,10 +54,18 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     @Value("${image.storage-path}")
     private String storagePath;
 
+    /** 생성 이미지 내 텍스트에 적용되는 폰트 라이선스 가드 — 모든 이미지 생성 경로에 공통 적용 */
+    private static final String FONT_LICENSE_SYSTEM_PROMPT = """
+            [Rule]
+            If any text appears in the generated image, render it using only commercially free fonts
+            (e.g. Google Fonts, Open Font License). Never use proprietary or paid fonts.
+            """;
+
     private String generateImage(String prompt) {
         log.debug("NanoBanana 이미지 생성 호출 — model: {}", geminiProperties.getImageModel());
 
         NbRequest requestBody = new NbRequest(
+                new NbSystemInstruction(List.of(new NbPart(FONT_LICENSE_SYSTEM_PROMPT))),
                 List.of(new NbContent("user", List.of(new NbPart(prompt)))),
                 new NbGenerationConfig(List.of("IMAGE"))
         );
@@ -85,6 +93,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         String base64Image = Base64.getEncoder().encodeToString(imageBytes);
 
         NbRequest requestBody = new NbRequest(
+                new NbSystemInstruction(List.of(new NbPart(FONT_LICENSE_SYSTEM_PROMPT))),
                 List.of(new NbContent("user", List.of(
                         new NbPart(prompt),
                         new NbPart(null, new NbInlineData(mimeType, base64Image))
@@ -248,7 +257,10 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
 
             [Style]
             - Use unified studio lighting and a clean commercial photography look.
-            - Avoid artificial text, dates, watermarks, or unrelated background elements.
+            - Avoid artificial text, dates, watermarks, or unrelated background elements,
+              unless text is explicitly requested in the user message below.
+            - If any text is rendered, use only commercially free fonts (e.g. Google Fonts, Open Font License).
+              Never use proprietary or paid fonts.
         """;
 
     @Override

@@ -107,4 +107,73 @@ public class TextOverlayUtilTest {
     void 성공_suffix생성_둘다null() {
         assertThat(TextOverlayUtil.buildSuffix(null, (String) null)).isNull();
     }
+
+    // ─── 강조 텍스트 (**단어**) 파싱 ──────────────────────────────────────────
+
+    @Test
+    @DisplayName("[성공] 강조 파싱 - 마커 제거 후 표시 텍스트와 강조 단어 추출")
+    void 성공_강조파싱_마커제거및단어추출() {
+        TextOverlayUtil.EmphasisResult result =
+                TextOverlayUtil.parseEmphasis("기능성 **냉감** 만능팬츠 4종");
+
+        assertThat(result.displayText()).isEqualTo("기능성 냉감 만능팬츠 4종");
+        assertThat(result.emphasizedWords()).containsExactly("냉감");
+    }
+
+    @Test
+    @DisplayName("[성공] 강조 파싱 - 강조 마커 없으면 빈 리스트 반환")
+    void 성공_강조파싱_마커없음() {
+        TextOverlayUtil.EmphasisResult result = TextOverlayUtil.parseEmphasis("특가 30% 할인");
+
+        assertThat(result.displayText()).isEqualTo("특가 30% 할인");
+        assertThat(result.emphasizedWords()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("[성공] 강조 파싱 - 강조 마커 여러 개면 순서대로 모두 추출")
+    void 성공_강조파싱_여러개() {
+        TextOverlayUtil.EmphasisResult result =
+                TextOverlayUtil.parseEmphasis("**겨울** 단 하루 **최저가**");
+
+        assertThat(result.displayText()).isEqualTo("겨울 단 하루 최저가");
+        assertThat(result.emphasizedWords()).containsExactly("겨울", "최저가");
+    }
+
+    @Test
+    @DisplayName("[성공] suffix 생성 - 강조 마커 포함 시 강조 지시문 추가 및 마커 제거")
+    void 성공_suffix생성_강조마커_지시문추가() {
+        String result = TextOverlayUtil.buildSuffix("기능성 **냉감** 만능팬츠 4종");
+
+        assertThat(result).contains("기능성 냉감 만능팬츠 4종");
+        assertThat(result).contains("\"냉감\"");
+        assertThat(result).contains("focal point");
+        assertThat(result).doesNotContain("**");
+    }
+
+    @Test
+    @DisplayName("[성공] suffix 생성 - 강조 마커 없으면 강조 지시문 미포함")
+    void 성공_suffix생성_강조마커없음() {
+        String result = TextOverlayUtil.buildSuffix("특가 30% 할인");
+
+        assertThat(result).doesNotContain("focal point");
+    }
+
+    // ─── 방송 자막 스타일 (홈쇼핑) ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("[성공] suffix 생성 - 메인 텍스트는 강조 마커 유무와 무관하게 항상 방송 자막 스타일 적용")
+    void 성공_suffix생성_방송자막스타일_항상적용() {
+        String result = TextOverlayUtil.buildSuffix("특가 30% 할인");
+
+        assertThat(result).contains("broadcast");
+        assertThat(result).contains("outline");
+    }
+
+    @Test
+    @DisplayName("[성공] suffix 생성 - 포스터형 구도 선택권 지시 포함")
+    void 성공_suffix생성_포스터구도_선택권포함() {
+        String result = TextOverlayUtil.buildSuffix("특가 30% 할인");
+
+        assertThat(result).contains("poster");
+    }
 }
