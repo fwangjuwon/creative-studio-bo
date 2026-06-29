@@ -215,14 +215,15 @@ public class FusionImageServiceImpl implements FusionImageService {
     }
 
     private String buildMainOnlyMessage(String text) {
-        String display = text.replace("\n", " / ");
-        String lineBreakHint = text.contains("\n")
-                ? " Each ' / ' represents a line break — render each segment on a separate line."
+        TextOverlayUtil.EmphasisResult emphasis = TextOverlayUtil.parseEmphasis(text);
+        String display = emphasis.displayText().replace("\n", " / ");
+        String lineBreakHint = emphasis.displayText().contains("\n")
+                ? " Each ' / ' marks a suggested line break, but feel free to adjust the line layout as described below if a different breakdown looks better."
                 : "";
         return "Add the main text: \"" + display + "\"" + lineBreakHint
-                + " Choose placement, font style, size, and color that best harmonizes "
-                + "with the existing image composition and mood. "
-                + "Ensure exact spelling is rendered correctly.";
+                + " Ensure exact spelling is rendered correctly."
+                + TextOverlayUtil.buildBroadcastStyleHint()
+                + TextOverlayUtil.buildEmphasisHint(emphasis.emphasizedWords());
     }
 
     private String buildDisclaimerOnlyMessage(String text) {
@@ -242,9 +243,10 @@ public class FusionImageServiceImpl implements FusionImageService {
     }
 
     private String buildBothMessage(String mainText, String disclaimerText) {
-        String mainDisplay = mainText.replace("\n", " / ");
-        String mainHint = mainText.contains("\n")
-                ? " Each ' / ' represents a line break — render each segment on a separate line."
+        TextOverlayUtil.EmphasisResult emphasis = TextOverlayUtil.parseEmphasis(mainText);
+        String mainDisplay = emphasis.displayText().replace("\n", " / ");
+        String mainHint = emphasis.displayText().contains("\n")
+                ? " Each ' / ' marks a suggested line break, but feel free to adjust the line layout as described below if a different breakdown looks better."
                 : "";
         String disclaimerDisplay = disclaimerText.replace("\n", " / ");
         String disclaimerHint = disclaimerText.contains("\n")
@@ -252,9 +254,9 @@ public class FusionImageServiceImpl implements FusionImageService {
                 : "";
         return "Add the following two text elements: "
                 + "1. Main text: \"" + mainDisplay + "\"" + mainHint
-                + " — choose placement, font style, size, and color that best harmonizes "
-                + "with the existing image composition and mood. "
-                + "2. Disclaimer text: \"" + disclaimerDisplay + "\"" + disclaimerHint
+                + TextOverlayUtil.buildBroadcastStyleHint()
+                + TextOverlayUtil.buildEmphasisHint(emphasis.emphasizedWords())
+                + " 2. Disclaimer text: \"" + disclaimerDisplay + "\"" + disclaimerHint
                 + " — place DIRECTLY BELOW the main text added in step 1, with a small gap between them. "
                 + "NOT at the very bottom of the image frame — it should sit just under the main text. "
                 + "Align it to match the horizontal alignment of the main text. "
