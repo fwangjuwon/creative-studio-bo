@@ -5,6 +5,7 @@ import com.nsmall.ns_creative_studio_bo.common.config.GeminiProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.AspectRatioUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
@@ -301,7 +302,7 @@ public class GeminiServiceImpl implements GeminiService {
                 promptText = promptText.strip()
                         .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
                         .strip() + ", " + formatSuffix;
-            } else if (isWideRatio(imageAspectRatio)) {
+            } else if (AspectRatioUtil.isWideRatio(imageAspectRatio)) {
                 promptText = formatSuffix + " " + promptText.strip();
             } else {
                 promptText = promptText.strip() + " " + formatSuffix;
@@ -382,7 +383,7 @@ public class GeminiServiceImpl implements GeminiService {
                 promptText = promptText.strip()
                         .replaceAll(",?\\s*--ar\\s+\\d+:\\d+", "")
                         .strip() + ", " + formatSuffix;
-            } else if (isWideRatio(imageAspectRatio)) {
+            } else if (AspectRatioUtil.isWideRatio(imageAspectRatio)) {
                 promptText = formatSuffix + " " + promptText.strip();
             } else {
                 promptText = promptText.strip() + " " + formatSuffix;
@@ -411,27 +412,13 @@ public class GeminiServiceImpl implements GeminiService {
         if (isMidJourney) {
             return "--ar " + imageAspectRatio;
         }
-        if (isWideRatio(imageAspectRatio)) {
+        if (AspectRatioUtil.isWideRatio(imageAspectRatio)) {
             return "Aspect ratio " + imageAspectRatio + "."
                     + " CRITICAL: This is ONE single continuous ultra-wide photograph."
                     + " NOT a triptych. NOT a diptych. NOT a collage. NOT tiles. NOT a repeated pattern."
                     + " The subject appears exactly once. Do not repeat any element, scene, or composition.";
         }
         return "Aspect ratio " + imageAspectRatio + ".";
-    }
-
-    /**
-     * 가로:세로 비율이 4:1 이상이면 true (미디어월 등 초광각 비율 감지용).
-     */
-    private boolean isWideRatio(String aspectRatio) {
-        try {
-            String[] parts = aspectRatio.split(":");
-            if (parts.length != 2) return false;
-            double ratio = Double.parseDouble(parts[0]) / Double.parseDouble(parts[1]);
-            return ratio >= 4.0;
-        } catch (NumberFormatException e) {
-            return false;
-        }
     }
 
     private String buildGoodsUserMessage(String goodsCategoryName, List<String> tagNames,

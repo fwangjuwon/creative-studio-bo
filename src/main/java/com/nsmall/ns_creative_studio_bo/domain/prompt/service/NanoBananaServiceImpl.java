@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.nsmall.ns_creative_studio_bo.common.config.GeminiProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.AspectRatioUtil;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageUpscaleUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,6 +56,14 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     @Value("${image.storage-path}")
     private String storagePath;
 
+    /**
+     * 모든 이미지 생성 호출에 적용되는 생성 옵션 — Gemini 기본값(1K) 그대로 사용한다.
+     * 초광각/초장축 비율을 모델에 직접 4K로 요청하면 고스팅·디테일 붕괴가 발생해(참조 이미지와 결합 시 특히 심함),
+     * 모델은 항상 안전한 기본 해상도로 생성하고 목표 해상도는 {@link ImageUpscaleUtil}로 후처리 확대한다.
+     */
+    private static final NbGenerationConfig IMAGE_GENERATION_CONFIG =
+            new NbGenerationConfig(List.of("IMAGE"));
+
     /** 생성 이미지 내 텍스트에 적용되는 폰트 라이선스 가드 — 모든 이미지 생성 경로에 공통 적용 */
     private static final String FONT_LICENSE_SYSTEM_PROMPT = """
             [Rule]
@@ -61,16 +71,17 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             (e.g. Google Fonts, Open Font License). Never use proprietary or paid fonts.
             """;
 
-    private String generateImage(String prompt) {
-        log.debug("NanoBanana 이미지 생성 호출 — model: {}", geminiProperties.getImageModel());
+    private String generateImage(String prompt, String imageAspectRatio) {
+        log.debug("NanoBanana 이미지 생성 호출 — model: {}, imageAspectRatio: {}",
+                geminiProperties.getImageModel(), imageAspectRatio);
 
         NbRequest requestBody = new NbRequest(
                 new NbSystemInstruction(List.of(new NbPart(FONT_LICENSE_SYSTEM_PROMPT))),
                 List.of(new NbContent("user", List.of(new NbPart(prompt)))),
-                new NbGenerationConfig(List.of("IMAGE"))
+                IMAGE_GENERATION_CONFIG
         );
 
-        return callAndSave(requestBody);
+        return callAndSave(requestBody, imageAspectRatio);
     }
 
     private static final String TEXT_OVERLAY_SYSTEM_PROMPT = """
@@ -87,8 +98,9 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             """;
 
     @Override
-    public String generateImageMime(String prompt, byte[] imageBytes, String mimeType) {
-        log.debug("NanoBanana 이미지 생성 호출 (참조 이미지 포함) — model: {}", geminiProperties.getImageModel());
+    public String generateImageMime(String prompt, byte[] imageBytes, String mimeType, String imageAspectRatio) {
+        log.debug("NanoBanana 이미지 생성 호출 (참조 이미지 포함) — model: {}, imageAspectRatio: {}",
+                geminiProperties.getImageModel(), imageAspectRatio);
 
         String base64Image = Base64.getEncoder().encodeToString(imageBytes);
 
@@ -98,10 +110,10 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
                         new NbPart(prompt),
                         new NbPart(null, new NbInlineData(mimeType, base64Image))
                 ))),
-                new NbGenerationConfig(List.of("IMAGE"))
+                IMAGE_GENERATION_CONFIG
         );
 
-        return callAndSave(requestBody);
+        return callAndSave(requestBody, imageAspectRatio);
     }
 
     private String generateTextOverlayImage(String prompt, byte[] imageBytes, String mimeType) {
@@ -113,10 +125,10 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
                         new NbPart(prompt),
                         new NbPart(null, new NbInlineData(mimeType, base64Image))
                 ))),
-                new NbGenerationConfig(List.of("IMAGE"))
+                IMAGE_GENERATION_CONFIG
         );
 
-        return callAndSave(requestBody);
+        return callAndSave(requestBody, null);
     }
 
     @Override
@@ -145,8 +157,9 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
 
     /**
      * Gemini 이미지 생성 API를 호출하고 응답에서 이미지를 추출·저장한 뒤 URL을 반환한다.
+     * 극단 비율(초광각/초장축)은 태그 픽셀값 기준으로, 그 외는 2x 배율로 {@link ImageUpscaleUtil} 업스케일 후 저장한다.
      */
-    private String callAndSave(NbRequest requestBody) {
+    private String callAndSave(NbRequest requestBody, String imageAspectRatio) {
         String uri = String.format("/models/%s:generateContent", geminiProperties.getImageModel());
 
         NbResponse response;
@@ -184,19 +197,32 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             throw new BizException(ImageGenerationErrorCode.EMPTY_IMAGE_RESPONSE);
         }
 
-        String imageUrl = saveImage(inlineData.data(), inlineData.mimeType());
+        byte[] imageBytes = Base64.getDecoder().decode(inlineData.data());
+        // 극단 비율(초광각/초장축)은 태그에 저장된 정확한 픽셀 크기로, 그 외는 2x 배율로 업스케일
+        int[] exactTarget = AspectRatioUtil.isWideRatio(imageAspectRatio) || AspectRatioUtil.isTallRatio(imageAspectRatio)
+                ? AspectRatioUtil.parseTargetDimensions(imageAspectRatio)
+                : null;
+        if (exactTarget != null) {
+            log.debug("극단 비율 — 정확한 목표 픽셀로 업스케일: {} -> {}x{}", imageAspectRatio, exactTarget[0], exactTarget[1]);
+            imageBytes = ImageUpscaleUtil.upscale(imageBytes, inlineData.mimeType(), exactTarget[0], exactTarget[1]);
+        } else {
+            log.debug("2x 업스케일 적용 — imageAspectRatio: {}", imageAspectRatio);
+            imageBytes = ImageUpscaleUtil.upscale(imageBytes, inlineData.mimeType(), 2.0);
+        }
+
+        String imageUrl = saveImage(imageBytes, inlineData.mimeType());
         log.debug("NanoBanana 이미지 저장 완료 — url: {}", imageUrl);
 
         return imageUrl;
     }
 
     @Override
-    public List<String> generateImages(String prompt, int count) {
-        log.debug("NanoBanana 이미지 {}개 병렬 생성 시작", count);
+    public List<String> generateImages(String prompt, int count, String imageAspectRatio) {
+        log.debug("NanoBanana 이미지 {}개 병렬 생성 시작 — imageAspectRatio: {}", count, imageAspectRatio);
 
         // count개 CompletableFuture 생성 후 병렬 실행
         List<CompletableFuture<String>> futures = IntStream.range(0, count)
-                .mapToObj(i -> CompletableFuture.supplyAsync(() -> generateImage(prompt)))
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> generateImage(prompt, imageAspectRatio)))
                 .toList();
 
         try {
@@ -267,8 +293,8 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     public List<String> generateFusionImages(String userMessage,
                                              byte[] personImageBytes, String personMimeType,
                                              byte[] productImageBytes, String productMimeType,
-                                             int count) {
-        log.debug("NanoBanana 합성 이미지 {}개 병렬 생성 시작", count);
+                                             int count, String imageAspectRatio) {
+        log.debug("NanoBanana 합성 이미지 {}개 병렬 생성 시작 — imageAspectRatio: {}", count, imageAspectRatio);
 
         String personBase64  = Base64.getEncoder().encodeToString(personImageBytes);
         String productBase64 = Base64.getEncoder().encodeToString(productImageBytes);
@@ -293,13 +319,13 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
                                 """),
                         new NbPart(userMessage)
                 ))),
-                new NbGenerationConfig(List.of("IMAGE"))
+                IMAGE_GENERATION_CONFIG
         );
 
         CopyOnWriteArrayList<String> savedUrls = new CopyOnWriteArrayList<>();
         List<CompletableFuture<String>> futures = IntStream.range(0, count)
                 .mapToObj(i -> CompletableFuture.supplyAsync(() -> {
-                    String url = callAndSave(requestBody);
+                    String url = callAndSave(requestBody, imageAspectRatio);
                     savedUrls.add(url);
                     return url;
                 }))
@@ -343,12 +369,10 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
     }
 
     /**
-     * base64 인코딩된 이미지 데이터를 디코딩하여 파일로 저장하고 접근 URL을 반환한다.
+     * 이미지 바이너리를 파일로 저장하고 접근 URL을 반환한다.
      */
-    private String saveImage(String base64Data, String mimeType) {
+    private String saveImage(byte[] imageBytes, String mimeType) {
         try {
-            byte[] imageBytes = Base64.getDecoder().decode(base64Data);
-
             String ext = (mimeType != null && mimeType.contains("png")) ? "png" : "jpg";
             String filename = UUID.randomUUID() + "." + ext;
 

@@ -43,6 +43,7 @@ import org.mockito.ArgumentCaptor;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -853,7 +854,7 @@ public class PromptServiceTest {
     @Test
     @DisplayName("[성공] 상품 이미지 생성 - 참조 이미지 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
     void 성공_상품_이미지_생성_참조이미지_가이드_워딩_적용() throws IOException {
-        given(imageGenerationService.generateImageMime(any(), any(), any()))
+        given(imageGenerationService.generateImageMime(any(), any(), any(), any()))
                 .willReturn("/images/test-uuid.jpg");
 
         MultipartFile file = mock(MultipartFile.class);
@@ -869,7 +870,7 @@ public class PromptServiceTest {
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         verify(imageGenerationService, times(3))
-                .generateImageMime(promptCaptor.capture(), any(), any());
+                .generateImageMime(promptCaptor.capture(), any(), any(), isNull());
         String capturedPrompt = promptCaptor.getValue();
         assertThat(capturedPrompt)
                 .startsWith("Use the provided reference image as the primary visual guide.")

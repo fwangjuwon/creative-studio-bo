@@ -89,7 +89,7 @@ public class FusionImageServiceTest {
     @Test
     @DisplayName("[성공] 합성 이미지 생성 - 정상 케이스")
     void 성공_합성_이미지_생성_정상() {
-        given(imageGenerationService.generateFusionImages(any(), any(), any(), any(), any(), anyInt()))
+        given(imageGenerationService.generateFusionImages(any(), any(), any(), any(), any(), anyInt(), any()))
                 .willReturn(List.of("/images/fusion-1.jpg", "/images/fusion-2.jpg", "/images/fusion-3.jpg"));
 
         List<String> result = fusionImageService.generateFusionImages(
@@ -106,7 +106,7 @@ public class FusionImageServiceTest {
     @Test
     @DisplayName("[성공] 합성 이미지 생성 - pose/instruction/imageAspectRatio 모두 null")
     void 성공_합성_이미지_생성_선택_파라미터_null() {
-        given(imageGenerationService.generateFusionImages(any(), any(), any(), any(), any(), anyInt()))
+        given(imageGenerationService.generateFusionImages(any(), any(), any(), any(), any(), anyInt(), any()))
                 .willReturn(List.of("/images/fusion-1.jpg"));
 
         List<String> result = fusionImageService.generateFusionImages(
@@ -118,7 +118,7 @@ public class FusionImageServiceTest {
     @Test
     @DisplayName("[성공] 합성 이미지 생성 - userMessage에 pose/instruction/aspectRatio 포함 검증")
     void 성공_합성_이미지_생성_userMessage_구성_검증() {
-        given(imageGenerationService.generateFusionImages(any(), any(), any(), any(), any(), anyInt()))
+        given(imageGenerationService.generateFusionImages(any(), any(), any(), any(), any(), anyInt(), any()))
                 .willReturn(List.of("/images/fusion-1.jpg"));
 
         fusionImageService.generateFusionImages(
@@ -127,7 +127,7 @@ public class FusionImageServiceTest {
 
         ArgumentCaptor<String> messageCaptor = ArgumentCaptor.forClass(String.class);
         verify(imageGenerationService).generateFusionImages(
-                messageCaptor.capture(), any(), any(), any(), any(), eq(PromptConstants.IMAGE_GENERATE_COUNT));
+                messageCaptor.capture(), any(), any(), any(), any(), eq(PromptConstants.IMAGE_GENERATE_COUNT), eq("16:9"));
 
         String captured = messageCaptor.getValue();
         assertThat(captured).contains("상품을 들고 있는");
