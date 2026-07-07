@@ -68,4 +68,11 @@ public interface ImageGenerationService {
                                       byte[] personImageBytes, String personMimeType,
                                       byte[] productImageBytes, String productMimeType,
                                       int count, String imageAspectRatio);
+
+    /**
+     * 저장된 이미지 파일을 삭제한다. 병렬 생성 중 일부 실패 시 이미 저장된 파일 정리에 사용.
+     *
+     * @param relativeUrl 삭제할 이미지의 상대 경로 (예: /images/{uuid}.jpg)
+     */
+    void deleteImageFile(String relativeUrl);
 }

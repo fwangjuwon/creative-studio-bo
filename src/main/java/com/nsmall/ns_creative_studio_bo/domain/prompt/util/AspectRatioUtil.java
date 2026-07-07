@@ -31,6 +31,7 @@ public class AspectRatioUtil {
             if (parts.length != 2) return false;
             double width = Double.parseDouble(parts[0]);
             double height = Double.parseDouble(parts[1]);
+            if (width <= 0 || height <= 0) return false;
             double ratio = inverted ? height / width : width / height;
             return ratio >= threshold;
         } catch (NumberFormatException e) {
@@ -45,14 +46,16 @@ public class AspectRatioUtil {
      *
      * @return {targetWidth, targetHeight}, 파싱 실패 시 null
      */
+    private static final int MAX_PIXEL = 30_000;
+
     public static int[] parseTargetDimensions(String aspectRatio) {
         if (aspectRatio == null) return null;
         try {
             String[] parts = aspectRatio.split(":");
             if (parts.length != 2) return null;
-            int width = (int) Double.parseDouble(parts[0]);
-            int height = (int) Double.parseDouble(parts[1]);
-            if (width <= 0 || height <= 0) return null;
+            int width = Integer.parseInt(parts[0].trim());
+            int height = Integer.parseInt(parts[1].trim());
+            if (width <= 0 || height <= 0 || width > MAX_PIXEL || height > MAX_PIXEL) return null;
             return new int[]{width, height};
         } catch (NumberFormatException e) {
             return null;

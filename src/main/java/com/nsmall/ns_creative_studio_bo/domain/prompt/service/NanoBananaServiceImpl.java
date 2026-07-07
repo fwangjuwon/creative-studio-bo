@@ -26,6 +26,8 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
 /**
@@ -55,6 +57,9 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
 
     @Value("${image.storage-path}")
     private String storagePath;
+
+    /** 이미지 생성 API 호출당 최대 대기 시간 — 초과 시 IMAGE_GENERATION_FAILED 처리 */
+    private static final long IMAGE_GENERATION_TIMEOUT_SECONDS = 120;
 
     /**
      * 모든 이미지 생성 호출에 적용되는 생성 옵션 — Gemini 기본값(1K) 그대로 사용한다.
@@ -141,7 +146,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
                     String url = generateTextOverlayImage(prompt, imageBytes, mimeType);
                     savedUrls.add(url);
                     return url;
-                }))
+                }).orTimeout(IMAGE_GENERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .toList();
 
         try {
@@ -151,6 +156,10 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         } catch (CompletionException e) {
             savedUrls.forEach(this::deleteImageFile);
             if (e.getCause() instanceof BizException bizEx) throw bizEx;
+            if (e.getCause() instanceof TimeoutException) {
+                log.error("NanoBanana 이미지 생성 타임아웃 ({}s 초과)", IMAGE_GENERATION_TIMEOUT_SECONDS);
+                throw new BizException(ImageGenerationErrorCode.IMAGE_GENERATION_FAILED);
+            }
             throw e;
         }
     }
@@ -191,8 +200,13 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             throw new BizException(ImageGenerationErrorCode.EMPTY_IMAGE_RESPONSE);
         }
 
-        NbInlineData inlineData = content.parts().get(0).inlineData();
-        if (inlineData == null || inlineData.data() == null || inlineData.data().isBlank()) {
+        // Gemini는 텍스트 파트 + 이미지 파트 순으로 응답할 수 있으므로 전체 파트 탐색
+        NbInlineData inlineData = content.parts().stream()
+                .map(NbPart::inlineData)
+                .filter(d -> d != null && d.data() != null && !d.data().isBlank())
+                .findFirst()
+                .orElse(null);
+        if (inlineData == null) {
             log.error("NanoBanana 응답에 inlineData가 없습니다");
             throw new BizException(ImageGenerationErrorCode.EMPTY_IMAGE_RESPONSE);
         }
@@ -206,7 +220,11 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             log.debug("극단 비율 — 정확한 목표 픽셀로 업스케일: {} -> {}x{}", imageAspectRatio, exactTarget[0], exactTarget[1]);
             imageBytes = ImageUpscaleUtil.upscale(imageBytes, inlineData.mimeType(), exactTarget[0], exactTarget[1]);
         } else {
-            log.debug("2x 업스케일 적용 — imageAspectRatio: {}", imageAspectRatio);
+            if (AspectRatioUtil.isWideRatio(imageAspectRatio) || AspectRatioUtil.isTallRatio(imageAspectRatio)) {
+                log.warn("극단 비율이지만 parseTargetDimensions 실패 — 2x fallback 적용. aspectRatio: {}", imageAspectRatio);
+            } else {
+                log.debug("2x 업스케일 적용 — imageAspectRatio: {}", imageAspectRatio);
+            }
             imageBytes = ImageUpscaleUtil.upscale(imageBytes, inlineData.mimeType(), 2.0);
         }
 
@@ -221,8 +239,13 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         log.debug("NanoBanana 이미지 {}개 병렬 생성 시작 — imageAspectRatio: {}", count, imageAspectRatio);
 
         // count개 CompletableFuture 생성 후 병렬 실행
+        CopyOnWriteArrayList<String> savedUrls = new CopyOnWriteArrayList<>();
         List<CompletableFuture<String>> futures = IntStream.range(0, count)
-                .mapToObj(i -> CompletableFuture.supplyAsync(() -> generateImage(prompt, imageAspectRatio)))
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> {
+                    String url = generateImage(prompt, imageAspectRatio);
+                    savedUrls.add(url);
+                    return url;
+                }).orTimeout(IMAGE_GENERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .toList();
 
         try {
@@ -232,10 +255,11 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             log.info("NanoBanana 이미지 {}개 병렬 생성 완료 — urls: {}", count, imageUrls);
             return imageUrls;
         } catch (CompletionException e) {
-            // CompletableFuture 내부에서 발생한 BizException을 unwrap하여 재throw
-            // → GlobalExceptionHandler의 BizException 핸들러가 올바르게 처리
-            if (e.getCause() instanceof BizException bizEx) {
-                throw bizEx;
+            savedUrls.forEach(this::deleteImageFile);
+            if (e.getCause() instanceof BizException bizEx) throw bizEx;
+            if (e.getCause() instanceof TimeoutException) {
+                log.error("NanoBanana 이미지 생성 타임아웃 ({}s 초과)", IMAGE_GENERATION_TIMEOUT_SECONDS);
+                throw new BizException(ImageGenerationErrorCode.IMAGE_GENERATION_FAILED);
             }
             throw e;
         }
@@ -328,7 +352,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
                     String url = callAndSave(requestBody, imageAspectRatio);
                     savedUrls.add(url);
                     return url;
-                }))
+                }).orTimeout(IMAGE_GENERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .toList();
 
         try {
@@ -340,6 +364,10 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         } catch (CompletionException e) {
             savedUrls.forEach(this::deleteImageFile);
             if (e.getCause() instanceof BizException bizEx) throw bizEx;
+            if (e.getCause() instanceof TimeoutException) {
+                log.error("NanoBanana 이미지 생성 타임아웃 ({}s 초과)", IMAGE_GENERATION_TIMEOUT_SECONDS);
+                throw new BizException(ImageGenerationErrorCode.IMAGE_GENERATION_FAILED);
+            }
             throw e;
         }
     }
@@ -353,7 +381,8 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
         };
     }
 
-    private void deleteImageFile(String relativePath) {
+    @Override
+    public void deleteImageFile(String relativePath) {
         String filename = Paths.get(relativePath).getFileName().toString();
         Path filePath = Paths.get(storagePath, filename);
         try {
@@ -373,7 +402,7 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
      */
     private String saveImage(byte[] imageBytes, String mimeType) {
         try {
-            String ext = (mimeType != null && mimeType.contains("png")) ? "png" : "jpg";
+            String ext = (mimeType != null && mimeType.equalsIgnoreCase("image/png")) ? "png" : "jpg";
             String filename = UUID.randomUUID() + "." + ext;
 
             Path dir = Paths.get(storagePath);
