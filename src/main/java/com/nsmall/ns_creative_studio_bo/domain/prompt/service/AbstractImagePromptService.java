@@ -1,10 +1,15 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
 /**
@@ -19,7 +24,10 @@ import java.util.stream.IntStream;
  * @author iamjy
  * @since 2026-05-20
  */
+@Slf4j
 public abstract class AbstractImagePromptService {
+
+    private static final long IMAGE_GENERATION_TIMEOUT_SECONDS = 120;
 
     /** 자식 클래스가 보유한 ImageGenerationService 인스턴스를 노출 */
     protected abstract ImageGenerationService imageGenerationService();
@@ -34,28 +42,35 @@ public abstract class AbstractImagePromptService {
      * @param userPrompt 사용자 프롬프트(가이드 합성 입력)
      * @param bytes      참조 이미지 바이너리
      * @param mimeType   참조 이미지 MIME 타입
-     * @param count      병렬 생성 개수
+     * @param count            병렬 생성 개수
+     * @param imageAspectRatio 사용자가 선택한 이미지 비율 태그값 (nullable) — 초광각/초장축 비율이면
+     *                         모델은 기본 해상도로 생성 후 Java에서 목표 해상도로 업스케일한다
      * @return 생성된 이미지 접근 URL 목록
      */
     protected final List<String> generateImagesWithReference(
-            String userPrompt, byte[] bytes, String mimeType, int count) {
+            String userPrompt, byte[] bytes, String mimeType, int count, String imageAspectRatio) {
 
         String guide = buildReferenceGuide(userPrompt);
         ImageGenerationService svc = imageGenerationService();
 
+        CopyOnWriteArrayList<String> savedUrls = new CopyOnWriteArrayList<>();
         List<CompletableFuture<String>> futures = IntStream.range(0, count)
-                .mapToObj(i -> CompletableFuture.supplyAsync(
-                        () -> svc.generateImageMime(guide, bytes, mimeType)))
+                .mapToObj(i -> CompletableFuture.supplyAsync(() -> {
+                    String url = svc.generateImageMime(guide, bytes, mimeType, imageAspectRatio);
+                    savedUrls.add(url);
+                    return url;
+                }).orTimeout(IMAGE_GENERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .toList();
         try {
             return futures.stream()
                     .map(CompletableFuture::join)
                     .toList();
         } catch (CompletionException e) {
-            // CompletableFuture 내부에서 발생한 BizException을 unwrap하여 재throw
-            // → GlobalExceptionHandler의 BizException 핸들러가 올바르게 처리
-            if (e.getCause() instanceof BizException bizEx) {
-                throw bizEx;
+            savedUrls.forEach(svc::deleteImageFile);
+            if (e.getCause() instanceof BizException bizEx) throw bizEx;
+            if (e.getCause() instanceof TimeoutException) {
+                log.error("참조 이미지 기반 이미지 생성 타임아웃 ({}s 초과)", IMAGE_GENERATION_TIMEOUT_SECONDS);
+                throw new BizException(ImageGenerationErrorCode.IMAGE_GENERATION_FAILED);
             }
             throw e;
         }

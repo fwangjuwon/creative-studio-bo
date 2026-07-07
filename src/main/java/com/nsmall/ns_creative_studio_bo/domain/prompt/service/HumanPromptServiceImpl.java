@@ -285,14 +285,19 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
     @Override
     @Transactional
     public List<String> generateImage(Long historyId, String promptText, MultipartFile referenceImage) {
-        // 1. 이미지 PromptConstants.IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
+        // 0. 이력에 저장된 imageAspectRatio 조회 — 극단 비율(초광각/초장축)이면 NanoBananaServiceImpl이 Java 업스케일 적용
+        String imageAspectRatio = historyId != null
+                ? promptHistoryMapper.selectById(historyId).map(PromptHistory::getImageAspectRatio).orElse(null)
+                : null;
+
+        // 1. IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
         List<String> imageUrls;
         ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
         if (refImage != null) {
             imageUrls = generateImagesWithReference(
-                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT);
+                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio);
         } else {
-            imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT);
+            imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio);
         }
 
         // 2. 이력에 상대 경로 JSON 배열로 저장 (image_url 컬럼에 "[/images/uuid.jpg, ...]" 형태)

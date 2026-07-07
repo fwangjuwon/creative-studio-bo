@@ -37,6 +37,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -552,7 +554,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 이미지 생성 - 이미지URL과 최종수정자 이력에 업데이트됨")
     void 성공_이미지_생성_이미지URL_최종수정자_업데이트() {
-        given(imageGenerationService.generateImages(any(), org.mockito.ArgumentMatchers.anyInt()))
+        given(imageGenerationService.generateImages(any(), anyInt(), any()))
                 .willReturn(List.of("/images/test-uuid-1.jpg", "/images/test-uuid-2.jpg", "/images/test-uuid-3.jpg"));
 
         UserRespDto user = 유저_생성("img_gen_user", "USER", "팀E", 5);
@@ -574,7 +576,7 @@ public class HumanPromptServiceTest {
     @Rollback
     @DisplayName("[성공] 이미지 생성 - 이력ID 없으면 이력 미업데이트")
     void 성공_이미지_생성_이력ID_없으면_이력_미업데이트() {
-        given(imageGenerationService.generateImages(any(), org.mockito.ArgumentMatchers.anyInt()))
+        given(imageGenerationService.generateImages(any(), anyInt(), any()))
                 .willReturn(List.of("/images/test-uuid-1.jpg", "/images/test-uuid-2.jpg", "/images/test-uuid-3.jpg"));
 
         UserRespDto user = 유저_생성("img_gen_nohistory", "USER", "팀F", 5);
@@ -597,7 +599,7 @@ public class HumanPromptServiceTest {
     @Test
     @DisplayName("[성공] 이미지 생성 - 참조 이미지 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
     void 성공_이미지_생성_참조이미지_가이드_워딩_적용() throws IOException {
-        given(imageGenerationService.generateImageMime(any(), any(), any()))
+        given(imageGenerationService.generateImageMime(any(), any(), any(), any()))
                 .willReturn("/images/test-uuid.jpg");
 
         MultipartFile file = mock(MultipartFile.class);
@@ -612,7 +614,7 @@ public class HumanPromptServiceTest {
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         verify(imageGenerationService, times(3))
-                .generateImageMime(promptCaptor.capture(), any(), any());
+                .generateImageMime(promptCaptor.capture(), any(), any(), isNull());
         String capturedPrompt = promptCaptor.getValue();
         assertThat(capturedPrompt)
                 .startsWith("Use the provided reference image as the visual guide for the product/object only.")

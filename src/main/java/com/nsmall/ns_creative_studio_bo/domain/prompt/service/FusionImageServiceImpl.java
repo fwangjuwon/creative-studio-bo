@@ -81,7 +81,7 @@ public class FusionImageServiceImpl implements FusionImageService {
                 userMessage,
                 validatedPerson.bytes(),  validatedPerson.mimeType(),
                 validatedProduct.bytes(), validatedProduct.mimeType(),
-                PromptConstants.IMAGE_GENERATE_COUNT
+                PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio
         );
 
         // 4. PromptHistory 저장
