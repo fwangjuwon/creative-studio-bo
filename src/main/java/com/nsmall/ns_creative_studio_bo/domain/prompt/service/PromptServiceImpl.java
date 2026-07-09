@@ -75,8 +75,10 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
 
     @Override
     protected String buildReferenceGuide(String userPrompt) {
-        return "Use the provided reference image as the primary visual guide. "
-                + "Strictly preserve all of the following from the reference: "
+        return "Use the provided reference image(s) as the primary visual guide for the products. "
+                + "Each reference image shows a distinct product, and ALL of these products must appear together "
+                + "in the generated image — do not omit any of them. "
+                + "For each product, strictly preserve all of the following from its reference image: "
                 + "(1) exact product shape, silhouette, and overall form without any distortion; "
                 + "(2) original proportions and scale of the product; "
                 + "(3) surface texture, material finish, and fine structural details; "
@@ -312,7 +314,7 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
 
     @Override
     @Transactional
-    public List<String> generateGoodsImage(Long historyId, String promptText, MultipartFile referenceImage) {
+    public List<String> generateGoodsImage(Long historyId, String promptText, List<MultipartFile> referenceImages) {
         // 0. 이력에 저장된 imageAspectRatio 조회 — 극단 비율(초광각/초장축)이면 NanoBananaServiceImpl이 Java 업스케일 적용
         String imageAspectRatio = historyId != null
                 ? promptHistoryMapper.selectById(historyId).map(PromptHistory::getImageAspectRatio).orElse(null)
@@ -320,10 +322,10 @@ public class PromptServiceImpl extends AbstractImagePromptService implements Pro
 
         // 1. IMAGE_GENERATE_COUNT개 병렬 생성 (참조 이미지 있으면 참조 이미지 기반, 없으면 텍스트만)
         List<String> imageUrls;
-        ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
-        if (refImage != null) {
+        List<ValidatedImage> refImages = ImageValidationUtil.validateList(referenceImages);
+        if (!refImages.isEmpty()) {
             imageUrls = generateImagesWithReference(
-                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio);
+                    promptText, refImages, PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio);
         } else {
             imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio);
         }

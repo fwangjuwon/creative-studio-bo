@@ -6,6 +6,7 @@ import com.nsmall.ns_creative_studio_bo.domain.category.CategoryType;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.request.CategoryCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.dto.response.CategoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.category.service.CategoryService;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptStyle;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptType;
@@ -14,6 +15,7 @@ import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistoryS
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.PromptHistoryRespDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.entity.PromptHistory;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.mapper.PromptHistoryMapper;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.request.TagGroupCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.tag.dto.response.TagGroupRespDto;
@@ -36,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.mockito.ArgumentCaptor;
@@ -852,9 +855,9 @@ public class PromptServiceTest {
     // ================================================================
 
     @Test
-    @DisplayName("[성공] 상품 이미지 생성 - 참조 이미지 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
+    @DisplayName("[성공] 상품 이미지 생성 - 참조 이미지 1장 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
     void 성공_상품_이미지_생성_참조이미지_가이드_워딩_적용() throws IOException {
-        given(imageGenerationService.generateImageMime(any(), any(), any(), any()))
+        given(imageGenerationService.generateImageMime(any(), any(), any()))
                 .willReturn("/images/test-uuid.jpg");
 
         MultipartFile file = mock(MultipartFile.class);
@@ -863,18 +866,58 @@ public class PromptServiceTest {
         given(file.getContentType()).willReturn("image/jpeg");
         given(file.getBytes()).willReturn(new byte[]{1, 2, 3});
 
-        List<String> imageUrls = promptService.generateGoodsImage(null, MOCK_PROMPT, file);
+        List<String> imageUrls = promptService.generateGoodsImage(null, MOCK_PROMPT, List.of(file));
 
         assertThat(imageUrls).hasSize(3);
         assertThat(imageUrls).allMatch(u -> u.endsWith("/images/test-uuid.jpg"));
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         verify(imageGenerationService, times(3))
-                .generateImageMime(promptCaptor.capture(), any(), any(), isNull());
+                .generateImageMime(promptCaptor.capture(), any(), isNull());
         String capturedPrompt = promptCaptor.getValue();
         assertThat(capturedPrompt)
-                .startsWith("Use the provided reference image as the primary visual guide.")
+                .startsWith("Use the provided reference image(s) as the primary visual guide for the products.")
                 .endsWith(MOCK_PROMPT);
+    }
+
+    @Test
+    @DisplayName("[성공] 상품 이미지 생성 - 참조 이미지 여러 장 전달 시 동일 목록으로 generateImageMime 호출")
+    void 성공_상품_이미지_생성_참조이미지_여러장() throws IOException {
+        given(imageGenerationService.generateImageMime(any(), any(), any()))
+                .willReturn("/images/test-uuid.jpg");
+
+        List<MultipartFile> files = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            MultipartFile file = mock(MultipartFile.class);
+            given(file.isEmpty()).willReturn(false);
+            given(file.getSize()).willReturn(1024L);
+            given(file.getContentType()).willReturn("image/jpeg");
+            given(file.getBytes()).willReturn(new byte[]{1, 2, 3});
+            files.add(file);
+        }
+
+        List<String> imageUrls = promptService.generateGoodsImage(null, MOCK_PROMPT, files);
+
+        assertThat(imageUrls).hasSize(3);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<ValidatedImage>> imagesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(imageGenerationService, times(3))
+                .generateImageMime(any(), imagesCaptor.capture(), isNull());
+        assertThat(imagesCaptor.getValue()).hasSize(3);
+    }
+
+    @Test
+    @DisplayName("[실패] 상품 이미지 생성 - 참조 이미지 개수 초과 (4장)")
+    void 실패_상품_이미지_생성_참조이미지_개수초과() {
+        List<MultipartFile> files = List.of(
+                mock(MultipartFile.class), mock(MultipartFile.class),
+                mock(MultipartFile.class), mock(MultipartFile.class));
+
+        assertThatThrownBy(() -> promptService.generateGoodsImage(null, MOCK_PROMPT, files))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.TOO_MANY_REFERENCE_IMAGES));
     }
 
     // ================================================================

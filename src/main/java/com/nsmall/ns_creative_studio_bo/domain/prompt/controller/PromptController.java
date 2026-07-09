@@ -3,6 +3,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.controller;
 import com.nsmall.ns_creative_studio_bo.common.CommonResponse;
 import com.nsmall.ns_creative_studio_bo.common.page.PageRespDto;
 import com.nsmall.ns_creative_studio_bo.common.security.CustomUserDetails;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.GoodsPromptCreateReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.request.PromptHistorySearchReqDto;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.dto.response.ImageGenerateRespDto;
@@ -60,20 +61,22 @@ public class PromptController {
     @Operation(
             summary = "상품 이미지 생성 (NanoBanana)",
             description = "영문 프롬프트 텍스트를 NanoBanana(gemini-3-pro-image-preview)에 전달하여 이미지를 생성하고 " +
-                          "서버에 저장 후 접근 URL을 반환한다. historyId를 전달하면 이력의 imageUrl도 업데이트된다.",
+                          "서버에 저장 후 접근 URL을 반환한다. historyId를 전달하면 이력의 imageUrl도 업데이트된다. " +
+                          "referenceImages는 최대 " + PromptConstants.MAX_REFERENCE_IMAGES + "장까지 첨부 가능하다.",
 
             security = @SecurityRequirement(name = "bearerAuth")
     )
     @ApiResponse(responseCode = "200", description = "이미지 생성 성공")
-    @ApiResponse(responseCode = "400", description = "promptText 누락 또는 빈 문자열 / 허용되지 않는 MIME 타입 (jpeg, png, webp만 허용) / 파일 크기 15MB 초과")
+    @ApiResponse(responseCode = "400", description = "promptText 누락 또는 빈 문자열 / 허용되지 않는 MIME 타입 (jpeg, png, webp만 허용) / " +
+                                                       "파일 크기 15MB 초과 / 참조 이미지 개수 초과 (최대 " + PromptConstants.MAX_REFERENCE_IMAGES + "장)")
     @ApiResponse(responseCode = "401", description = "인증 필요")
     @PreAuthorize("hasRole('USER')")
     @PostMapping(value = "/goods/generate-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public CommonResponse<ImageGenerateRespDto> generateGoodsImage(
             @RequestParam(required = false) Long historyId,
             @NotBlank @RequestParam String promptText,
-            @RequestParam(required = false) MultipartFile referenceImage) {
-        List<String> imageUrls = promptService.generateGoodsImage(historyId, promptText, referenceImage);
+            @RequestParam(required = false) List<MultipartFile> referenceImages) {
+        List<String> imageUrls = promptService.generateGoodsImage(historyId, promptText, referenceImages);
         return CommonResponse.success(ImageGenerateRespDto.builder().imageUrls(imageUrls).build());
     }
 

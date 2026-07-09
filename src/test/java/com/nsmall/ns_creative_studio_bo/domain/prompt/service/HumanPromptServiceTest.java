@@ -599,7 +599,7 @@ public class HumanPromptServiceTest {
     @Test
     @DisplayName("[성공] 이미지 생성 - 참조 이미지 + 가이드 워딩 prefix가 generateImageMime 인자에 포함")
     void 성공_이미지_생성_참조이미지_가이드_워딩_적용() throws IOException {
-        given(imageGenerationService.generateImageMime(any(), any(), any(), any()))
+        given(imageGenerationService.generateImageMime(any(), any(), any()))
                 .willReturn("/images/test-uuid.jpg");
 
         MultipartFile file = mock(MultipartFile.class);
@@ -614,7 +614,7 @@ public class HumanPromptServiceTest {
 
         ArgumentCaptor<String> promptCaptor = ArgumentCaptor.forClass(String.class);
         verify(imageGenerationService, times(3))
-                .generateImageMime(promptCaptor.capture(), any(), any(), isNull());
+                .generateImageMime(promptCaptor.capture(), any(), isNull());
         String capturedPrompt = promptCaptor.getValue();
         assertThat(capturedPrompt)
                 .startsWith("Use the provided reference image as the visual guide for the product/object only.")

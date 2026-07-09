@@ -7,6 +7,7 @@ import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.AspectRatioUtil;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageUpscaleUtil;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -103,18 +105,19 @@ public class NanoBananaServiceImpl implements ImageGenerationService {
             """;
 
     @Override
-    public String generateImageMime(String prompt, byte[] imageBytes, String mimeType, String imageAspectRatio) {
-        log.debug("NanoBanana 이미지 생성 호출 (참조 이미지 포함) — model: {}, imageAspectRatio: {}",
-                geminiProperties.getImageModel(), imageAspectRatio);
+    public String generateImageMime(String prompt, List<ValidatedImage> images, String imageAspectRatio) {
+        log.debug("NanoBanana 이미지 생성 호출 (참조 이미지 {}장 포함) — model: {}, imageAspectRatio: {}",
+                images.size(), geminiProperties.getImageModel(), imageAspectRatio);
 
-        String base64Image = Base64.getEncoder().encodeToString(imageBytes);
+        List<NbPart> parts = new ArrayList<>();
+        parts.add(new NbPart(prompt));
+        for (ValidatedImage image : images) {
+            parts.add(new NbPart(null, new NbInlineData(image.mimeType(), image.base64())));
+        }
 
         NbRequest requestBody = new NbRequest(
                 new NbSystemInstruction(List.of(new NbPart(FONT_LICENSE_SYSTEM_PROMPT))),
-                List.of(new NbContent("user", List.of(
-                        new NbPart(prompt),
-                        new NbPart(null, new NbInlineData(mimeType, base64Image))
-                ))),
+                List.of(new NbContent("user", parts)),
                 IMAGE_GENERATION_CONFIG
         );
 
