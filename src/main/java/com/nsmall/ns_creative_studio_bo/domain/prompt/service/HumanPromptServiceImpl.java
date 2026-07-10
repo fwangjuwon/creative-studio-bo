@@ -295,7 +295,7 @@ public class HumanPromptServiceImpl extends AbstractImagePromptService implement
         ValidatedImage refImage = ImageValidationUtil.validate(referenceImage);
         if (refImage != null) {
             imageUrls = generateImagesWithReference(
-                    promptText, refImage.bytes(), refImage.mimeType(), PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio);
+                    promptText, List.of(refImage), PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio);
         } else {
             imageUrls = imageGenerationService.generateImages(promptText, PromptConstants.IMAGE_GENERATE_COUNT, imageAspectRatio);
         }

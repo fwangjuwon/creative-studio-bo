@@ -2,10 +2,13 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.util;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Base64;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -46,6 +49,36 @@ public final class ImageValidationUtil {
         if (file == null || file.isEmpty()) {
             return null;
         }
+        validateMetadata(file);
+        return readValidated(file);
+    }
+
+    /**
+     * 참조 이미지 목록 검증.
+     * empty 파일은 개수 제한 계산 전에 먼저 제외하고, 모든 파일의 크기/MIME 타입(메타데이터)을
+     * 먼저 검사한 뒤에야 바이트를 읽는다 — 뒤쪽 파일이 검증에 실패해 요청 전체가 거부될 경우
+     * 앞쪽 파일들을 불필요하게 메모리에 읽어들이는 낭비를 막는다.
+     *
+     * @param files 검증할 MultipartFile 목록 (null/empty 허용)
+     * @return null/empty 입력 시 빈 리스트, 그 외에는 검증 통과한 이미지 목록 (empty 파일은 제외)
+     * @throws BizException 개수 초과(IG015) / 개별 파일 검증 실패 (validate()와 동일)
+     */
+    public static List<ValidatedImage> validateList(List<MultipartFile> files) {
+        if (files == null || files.isEmpty()) {
+            return List.of();
+        }
+        List<MultipartFile> nonEmptyFiles = files.stream()
+                .filter(file -> file != null && !file.isEmpty())
+                .toList();
+        if (nonEmptyFiles.size() > PromptConstants.MAX_REFERENCE_IMAGES) {
+            throw new BizException(ImageGenerationErrorCode.TOO_MANY_REFERENCE_IMAGES);
+        }
+        nonEmptyFiles.forEach(ImageValidationUtil::validateMetadata);
+        return nonEmptyFiles.stream().map(ImageValidationUtil::readValidated).toList();
+    }
+
+    /** 크기/MIME 타입 검사 — 바이트를 읽지 않는 저비용 검증 */
+    private static void validateMetadata(MultipartFile file) {
         if (file.getSize() > MAX_BYTES) {
             throw new BizException(ImageGenerationErrorCode.IMAGE_TOO_LARGE);
         }
@@ -57,13 +90,22 @@ public final class ImageValidationUtil {
             log.warn("허용되지 않은 MIME 타입 — mimeType={}", mimeType);
             throw new BizException(ImageGenerationErrorCode.UNSUPPORTED_IMAGE_TYPE);
         }
+    }
+
+    /** 메타데이터 검증 통과 후 바이트를 읽어 ValidatedImage 로 변환 */
+    private static ValidatedImage readValidated(MultipartFile file) {
         try {
-            return new ValidatedImage(file.getBytes(), mimeType);
+            return new ValidatedImage(file.getBytes(), file.getContentType());
         } catch (IOException e) {
             log.error("참조 이미지 읽기 실패", e);
             throw new BizException(ImageGenerationErrorCode.IMAGE_READ_FAILED);
         }
     }
 
-    public record ValidatedImage(byte[] bytes, String mimeType) {}
+    /** base64 는 Gemini 요청 페이로드용으로 생성 시점에 1회만 인코딩해 재사용한다 (병렬 N회 생성 시 중복 인코딩 방지) */
+    public record ValidatedImage(byte[] bytes, String mimeType, String base64) {
+        public ValidatedImage(byte[] bytes, String mimeType) {
+            this(bytes, mimeType, Base64.getEncoder().encodeToString(bytes));
+        }
+    }
 }

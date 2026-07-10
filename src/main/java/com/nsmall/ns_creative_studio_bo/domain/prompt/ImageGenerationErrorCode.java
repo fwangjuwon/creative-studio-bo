@@ -28,7 +28,8 @@ public enum ImageGenerationErrorCode implements ErrorCode {
     FUSION_IMAGE_REQUIRED("IG011", "합성 이미지 생성에는 상품 이미지와 인물 이미지가 모두 필요합니다.", HttpStatus.BAD_REQUEST.value()),
     TEXT_OVERLAY_IMAGE_REQUIRED("IG012", "텍스트 합성에 사용할 이미지가 필요합니다.", HttpStatus.BAD_REQUEST.value()),
     TEXT_OVERLAY_TEXT_REQUIRED("IG013", "삽입할 텍스트가 필요합니다. 메인 텍스트 또는 단서 문구 중 하나 이상을 입력해 주세요.", HttpStatus.BAD_REQUEST.value()),
-    IMAGE_UPSCALE_FAILED("IG014", "이미지 업스케일에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value());
+    IMAGE_UPSCALE_FAILED("IG014", "이미지 업스케일에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR.value()),
+    TOO_MANY_REFERENCE_IMAGES("IG015", "참조 이미지는 최대 " + PromptConstants.MAX_REFERENCE_IMAGES + "장까지 첨부할 수 있습니다.", HttpStatus.BAD_REQUEST.value());
 
     private final String code;
     private final String message;

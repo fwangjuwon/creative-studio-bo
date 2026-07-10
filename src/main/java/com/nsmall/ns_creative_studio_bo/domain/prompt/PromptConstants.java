@@ -12,4 +12,7 @@ public final class PromptConstants {
 
     /** 이미지 생성 시 기본 생성 장 수 */
     public static final int IMAGE_GENERATE_COUNT = 3;
+
+    /** 참조 이미지 최대 첨부 개수 */
+    public static final int MAX_REFERENCE_IMAGES = 3;
 }

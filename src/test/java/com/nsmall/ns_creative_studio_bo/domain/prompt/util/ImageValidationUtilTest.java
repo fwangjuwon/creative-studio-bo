@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.util;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.PromptConstants;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -115,5 +118,70 @@ public class ImageValidationUtilTest {
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_READ_FAILED));
+    }
+
+    @Test
+    @DisplayName("[성공] 목록 검증 - null 입력 → 빈 리스트 반환")
+    void 성공_목록검증_null입력() {
+        List<ValidatedImage> result = ImageValidationUtil.validateList(null);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("[성공] 목록 검증 - 빈 리스트 입력 → 빈 리스트 반환")
+    void 성공_목록검증_빈리스트입력() {
+        List<ValidatedImage> result = ImageValidationUtil.validateList(List.of());
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("[성공] 목록 검증 - 최대 개수 이내의 유효한 파일들 → 검증된 목록 반환")
+    void 성공_목록검증_최대개수이내() throws IOException {
+        List<MultipartFile> files = new ArrayList<>();
+        for (int i = 0; i < PromptConstants.MAX_REFERENCE_IMAGES; i++) {
+            MultipartFile file = mock(MultipartFile.class);
+            given(file.isEmpty()).willReturn(false);
+            given(file.getSize()).willReturn(1024L);
+            given(file.getContentType()).willReturn("image/jpeg");
+            given(file.getBytes()).willReturn(new byte[]{1, 2, 3});
+            files.add(file);
+        }
+
+        List<ValidatedImage> result = ImageValidationUtil.validateList(files);
+
+        assertThat(result).hasSize(PromptConstants.MAX_REFERENCE_IMAGES);
+    }
+
+    @Test
+    @DisplayName("[예외] 목록 검증 - 최대 개수 초과")
+    void 예외_목록검증_최대개수초과() {
+        List<MultipartFile> files = new ArrayList<>();
+        for (int i = 0; i < PromptConstants.MAX_REFERENCE_IMAGES + 1; i++) {
+            files.add(mock(MultipartFile.class));
+        }
+
+        assertThatThrownBy(() -> ImageValidationUtil.validateList(files))
+                .isInstanceOf(BizException.class)
+                .satisfies(e -> assertThat(((BizException) e).getErrorCode())
+                        .isEqualTo(ImageGenerationErrorCode.TOO_MANY_REFERENCE_IMAGES));
+    }
+
+    @Test
+    @DisplayName("[성공] 목록 검증 - empty 파일은 결과에서 제외")
+    void 성공_목록검증_empty파일_제외() throws IOException {
+        MultipartFile validFile = mock(MultipartFile.class);
+        given(validFile.isEmpty()).willReturn(false);
+        given(validFile.getSize()).willReturn(1024L);
+        given(validFile.getContentType()).willReturn("image/jpeg");
+        given(validFile.getBytes()).willReturn(new byte[]{1, 2, 3});
+
+        MultipartFile emptyFile = mock(MultipartFile.class);
+        given(emptyFile.isEmpty()).willReturn(true);
+
+        List<ValidatedImage> result = ImageValidationUtil.validateList(List.of(validFile, emptyFile));
+
+        assertThat(result).hasSize(1);
     }
 }

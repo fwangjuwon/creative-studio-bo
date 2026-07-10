@@ -2,6 +2,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -40,15 +41,14 @@ public abstract class AbstractImagePromptService {
      * CompletionException 으로 감싸진 BizException 은 unwrap 후 재throw.
      *
      * @param userPrompt 사용자 프롬프트(가이드 합성 입력)
-     * @param bytes      참조 이미지 바이너리
-     * @param mimeType   참조 이미지 MIME 타입
+     * @param images           참조 이미지 목록 (1장 이상)
      * @param count            병렬 생성 개수
      * @param imageAspectRatio 사용자가 선택한 이미지 비율 태그값 (nullable) — 초광각/초장축 비율이면
      *                         모델은 기본 해상도로 생성 후 Java에서 목표 해상도로 업스케일한다
      * @return 생성된 이미지 접근 URL 목록
      */
     protected final List<String> generateImagesWithReference(
-            String userPrompt, byte[] bytes, String mimeType, int count, String imageAspectRatio) {
+            String userPrompt, List<ValidatedImage> images, int count, String imageAspectRatio) {
 
         String guide = buildReferenceGuide(userPrompt);
         ImageGenerationService svc = imageGenerationService();
@@ -56,7 +56,7 @@ public abstract class AbstractImagePromptService {
         CopyOnWriteArrayList<String> savedUrls = new CopyOnWriteArrayList<>();
         List<CompletableFuture<String>> futures = IntStream.range(0, count)
                 .mapToObj(i -> CompletableFuture.supplyAsync(() -> {
-                    String url = svc.generateImageMime(guide, bytes, mimeType, imageAspectRatio);
+                    String url = svc.generateImageMime(guide, images, imageAspectRatio);
                     savedUrls.add(url);
                     return url;
                 }).orTimeout(IMAGE_GENERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS))

@@ -3,6 +3,7 @@ package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 import com.nsmall.ns_creative_studio_bo.common.config.GeminiProperties;
 import com.nsmall.ns_creative_studio_bo.common.exception.BizException;
 import com.nsmall.ns_creative_studio_bo.domain.prompt.ImageGenerationErrorCode;
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -74,7 +77,7 @@ public class NanoBananaServiceImplTest {
                         HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests",
                         new HttpHeaders(), new byte[0], null));
 
-        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", new byte[0], "image/jpeg", null))
+        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", List.of(new ValidatedImage(new byte[0], "image/jpeg")), null))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_GENERATION_RATE_LIMITED));
@@ -88,7 +91,7 @@ public class NanoBananaServiceImplTest {
                         HttpStatus.FORBIDDEN, "Forbidden",
                         new HttpHeaders(), new byte[0], null));
 
-        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", new byte[0], "image/jpeg", null))
+        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", List.of(new ValidatedImage(new byte[0], "image/jpeg")), null))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_GENERATION_AUTH_FAILED));
@@ -102,7 +105,7 @@ public class NanoBananaServiceImplTest {
                         HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
                         new HttpHeaders(), new byte[0], null));
 
-        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", new byte[0], "image/jpeg", null))
+        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", List.of(new ValidatedImage(new byte[0], "image/jpeg")), null))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_GENERATION_UNAVAILABLE));
@@ -116,7 +119,7 @@ public class NanoBananaServiceImplTest {
                         HttpStatus.SERVICE_UNAVAILABLE, "Service Unavailable",
                         new HttpHeaders(), new byte[0], null));
 
-        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", new byte[0], "image/jpeg", null))
+        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", List.of(new ValidatedImage(new byte[0], "image/jpeg")), null))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_GENERATION_UNAVAILABLE));
@@ -130,7 +133,7 @@ public class NanoBananaServiceImplTest {
                         HttpStatus.GATEWAY_TIMEOUT, "Gateway Timeout",
                         new HttpHeaders(), new byte[0], null));
 
-        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", new byte[0], "image/jpeg", null))
+        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", List.of(new ValidatedImage(new byte[0], "image/jpeg")), null))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_GENERATION_UNAVAILABLE));
@@ -142,7 +145,7 @@ public class NanoBananaServiceImplTest {
         given(responseSpec.body(any(Class.class)))
                 .willThrow(new ResourceAccessException("Connection refused"));
 
-        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", new byte[0], "image/jpeg", null))
+        assertThatThrownBy(() -> nanoBananaService.generateImageMime("prompt", List.of(new ValidatedImage(new byte[0], "image/jpeg")), null))
                 .isInstanceOf(BizException.class)
                 .satisfies(e -> assertThat(((BizException) e).getErrorCode())
                         .isEqualTo(ImageGenerationErrorCode.IMAGE_GENERATION_FAILED));

@@ -1,5 +1,7 @@
 package com.nsmall.ns_creative_studio_bo.domain.prompt.service;
 
+import com.nsmall.ns_creative_studio_bo.domain.prompt.util.ImageValidationUtil.ValidatedImage;
+
 import java.util.List;
 
 /**
@@ -16,17 +18,16 @@ import java.util.List;
 public interface ImageGenerationService {
 
     /**
-     * 영문 프롬프트와 참조 이미지(byte[])로 이미지를 생성하고 서버에 저장 후 접근 URL을 반환한다.
+     * 영문 프롬프트와 참조 이미지 목록(1장 이상)으로 이미지를 생성하고 서버에 저장 후 접근 URL을 반환한다.
      * 참조 이미지를 스타일/구도 가이드로 활용하여 새 이미지를 생성한다 (인물·상품 참조이미지 기반 생성용).
      *
      * @param prompt           영문 이미지 생성 프롬프트
-     * @param imageBytes       참조 이미지 바이너리
-     * @param mimeType         참조 이미지 MIME 타입 (예: image/jpeg)
+     * @param images           참조 이미지 목록 (1장 이상)
      * @param imageAspectRatio 사용자가 선택한 이미지 비율 태그값 (nullable) — 초광각/초장축 비율이면
      *                         모델은 기본 해상도로 생성 후 Java에서 목표 해상도로 업스케일한다
      * @return 생성된 이미지 접근 URL (예: /images/{uuid}.jpg)
      */
-    String generateImageMime(String prompt, byte[] imageBytes, String mimeType, String imageAspectRatio);
+    String generateImageMime(String prompt, List<ValidatedImage> images, String imageAspectRatio);
 
     /**
      * 기존 완성 이미지에 텍스트를 합성하여 count개 병렬 생성 후 URL 목록을 반환한다.

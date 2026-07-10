@@ -6,7 +6,8 @@ spring:
   servlet:
     multipart:
       max-file-size: 15MB
-      max-request-size: 15MB
+      # 참조 이미지 최대 3장(장당 15MB) + 텍스트 필드 여유분
+      max-request-size: 50MB
 
 logging:
   level:
