@@ -52,6 +52,20 @@ CREATE TABLE nsist_emp_mapping (
 
 
 -- -----------------------------------------------------------------------------
+-- TABLE: nsist_org_mapping
+-- Organization mapping required by the SSO login fallback (see docs/erd.md).
+-- -----------------------------------------------------------------------------
+CREATE TABLE nsist_org_mapping (
+    id              BIGINT      GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    org_cd          VARCHAR(20) NOT NULL UNIQUE,
+    user_id         BIGINT      NOT NULL,
+    init_regi_pic   VARCHAR(50),
+    init_regi_dttm  TIMESTAMP,
+    final_rvis_pic  VARCHAR(50),
+    final_rvis_dttm TIMESTAMP
+);
+
+-- -----------------------------------------------------------------------------
 -- TABLE: category
 -- 설명: 상품 카테고리 3단계 계층 (LCS → MCS → SCS)
 --       self-reference 구조로 관리. LCS는 parent_id = NULL

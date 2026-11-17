@@ -63,3 +63,4 @@ dist-ssr
 gemini_api_key
 .env
 generated-images/
+docker-compose.override.yml
