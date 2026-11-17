@@ -1,0 +1,9 @@
+// Run individual test classes without also discovering the repository's aggregate suites.
+// Usage: gradlew -I gradle/focused-tests.init.gradle test --tests 'fully.qualified.TestClass'
+allprojects {
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform {
+            excludeEngines 'junit-platform-suite'
+        }
+    }
+}
